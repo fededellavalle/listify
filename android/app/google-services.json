@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "943128152863",
+    "project_id": "app-listas-eccd1",
+    "storage_bucket": "app-listas-eccd1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:943128152863:android:d0f2f0433b1e6031223e2a",
+        "android_client_info": {
+          "package_name": "com.example.app_listas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhYUkswvJIoucewmh3gaIkIa8hy2bt_fc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
