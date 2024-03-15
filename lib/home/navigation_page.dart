@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'company.dart';
 import 'events.dart';
 import 'home.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class NavigationPage extends StatefulWidget {
@@ -36,13 +34,18 @@ class _NavigationPageState extends State<NavigationPage> {
 
   Future<void> _getProfileImageUrl() async {
     try {
-      String url = await FirebaseStorage.instance
-          .ref()
-          .child('users/${widget.uid}/profile_image.jpg')
-          .getDownloadURL();
-      setState(() {
-        _profileImageUrl = url;
-      });
+      // Obtener la URL de la imagen desde la base de datos
+      String? imageUrl = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.uid)
+          .get()
+          .then((doc) => doc.data()?['imageUrl']);
+
+      if (imageUrl != null) {
+        setState(() {
+          _profileImageUrl = imageUrl;
+        });
+      }
     } catch (error) {
       print('Error obteniendo la URL de la foto de perfil: $error');
     }
@@ -132,11 +135,11 @@ class _NavigationPageState extends State<NavigationPage> {
               ),
             ),
             ListTile(
-              title: Text(
+              title: const Text(
                 'Home',
                 style: TextStyle(color: Colors.white),
               ),
-              leading: Icon(
+              leading: const Icon(
                 Icons.home,
                 color: Color.fromARGB(255, 242, 187, 29), // Cambia el color del icono a negro
               ),
@@ -148,11 +151,11 @@ class _NavigationPageState extends State<NavigationPage> {
               },
             ),
             ListTile(
-              title: Text(
+              title: const Text(
                 'Events',
                 style: TextStyle(color: Colors.white),
               ),
-              leading: Icon(
+              leading: const Icon(
                 Icons.event,
                 color: Color.fromARGB(255, 242, 187, 29), // Cambia el color del icono a negro
               ),
@@ -164,11 +167,11 @@ class _NavigationPageState extends State<NavigationPage> {
               },
             ),
             ListTile(
-              title: Text(
+              title: const Text(
                 'Invitaciones',
                 style: TextStyle(color: Colors.white),
               ),
-              leading: Icon(
+              leading: const Icon(
                 Icons.business,
                 color: Color.fromARGB(255, 242, 187, 29), // Cambia el color del icono a negro
               ),

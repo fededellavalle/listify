@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/widgets.dart';
 import '../home/navigation_page.dart'; // Importa HomePage desde la carpeta home
 import 'register.dart';
+import 'services/auth_google.dart';
 
 class LoginPage extends StatelessWidget {
   @override
@@ -239,7 +240,7 @@ class _LoginFormState extends State<LoginForm> {
                 
                     ElevatedButton(
                       onPressed: () {
-                        // Acción al presionar el botón
+                        AuthService().signInWithGoogle(context);
                       },
                       style: ButtonStyle(
                         overlayColor: MaterialStateProperty.all<Color>(Colors.white), // Color del overlay (sombra) al presionar el botón
@@ -272,7 +273,8 @@ class _LoginFormState extends State<LoginForm> {
                         ],
                       ),
                     ),
-                
+                    /*
+                                      Parte de poder iniciar sesion con Apple
                     SizedBox(height: 15),
                 
                     ElevatedButton(
@@ -309,7 +311,7 @@ class _LoginFormState extends State<LoginForm> {
                           ),
                         ],
                       ),
-                    ),
+                    ),*/
                   ],
                 ),
               ),
