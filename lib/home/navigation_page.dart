@@ -4,6 +4,8 @@ import 'company.dart';
 import 'events.dart';
 import 'home.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../login/services/auth_google.dart';
+import '../login/login.dart';
 
 class NavigationPage extends StatefulWidget {
   final String? uid;
@@ -199,17 +201,43 @@ class _NavigationPageState extends State<NavigationPage> {
               },
             ),
             ListTile(
-              title: Text(
+              title: const Text(
                 'Cerrar Sesión',
                 style: TextStyle(color: Colors.white),
               ),
-              leading: Icon(
+              leading: const Icon(
                 Icons.logout,
                 color: Color.fromARGB(255, 242, 187, 29), // Cambia el color del icono a negro
               ),
               onTap: () async {
+                showDialog(
+                  context: context,
+                  barrierDismissible: false, // Evita que se cierre la alerta al tocar fuera de ella
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Cerrando sesión'),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(), // Indicador de carga
+                          SizedBox(height: 16), // Espacio adicional
+                          Text('Por favor, espere...'), // Mensaje de espera
+                        ],
+                      ),
+                    );
+                  },
+                );
+
+                // Realizar el cierre de sesión en Firebase y Google
                 await FirebaseAuth.instance.signOut();
-                Navigator.pushReplacementNamed(context, '/login');
+                await AuthService().signOutGoogle();
+
+                // Cerrar la alerta y navegar a la pantalla de inicio de sesión
+                Navigator.of(context).pop(); // Cerrar la alerta
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()), // Reemplaza LoginPage con el nombre correcto de tu widget de inicio de sesión
+                );
               },
             ),
           ],

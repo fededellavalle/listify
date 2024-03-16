@@ -1,3 +1,4 @@
+import 'package:app_listas/login/services/forgotpassword.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -27,6 +28,7 @@ class _LoginFormState extends State<LoginForm> {
   final _formKey = GlobalKey<FormState>();
   late String _email;
   late String _password;
+  bool _keepSignedIn = false;
 
   @override
   Widget build(BuildContext context) {
@@ -121,12 +123,36 @@ class _LoginFormState extends State<LoginForm> {
                         },
                       ),
                       SizedBox(height: 10.0),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Checkbox(
+                            value: _keepSignedIn,
+                            onChanged: (value) {
+                              setState(() {
+                                _keepSignedIn = value ?? false;
+                              });
+                            },
+                          ),
+                          Text(
+                            'Mantener sesión iniciada',
+                            style: TextStyle(color: Colors.white70),
+                            ),
+                        ],
+                      ),
                       GestureDetector(
                         onTap: () {
-                          print('Olvide mi contrasenha presionado');
+                          Navigator.push(
+                            context, 
+                            MaterialPageRoute(
+                              builder: (context){
+                                return ForgotPasswordPage();
+                              },
+                            ),
+                          );
                         },
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
                               'Olvidaste tu Contraseña?',
@@ -135,7 +161,7 @@ class _LoginFormState extends State<LoginForm> {
                           ],
                         )
                       ),
-                      SizedBox(height: 10.0),
+                      SizedBox(height: 20.0),
                       ElevatedButton(
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {

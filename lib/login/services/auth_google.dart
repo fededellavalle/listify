@@ -24,6 +24,7 @@ class AuthService {
       print(userCredential.user?.displayName);
       print(userCredential.user?.email);
       print(userCredential.user?.photoURL);
+      print(userCredential.user?.phoneNumber);
 
       // Navegar a la página de navegación pasando el UID y el nombre de usuario
       Navigator.push(
@@ -32,9 +33,27 @@ class AuthService {
           builder: (context) => NavigationPage(uid: userCredential.user?.uid, userName: userCredential.user?.displayName),
         ),
       );
+
     } catch (e) {
       // Manejar errores si ocurren
       print('Error signing in with Google: $e');
+    }
+  }
+
+  // Método para cerrar sesión en Google
+  Future<void> signOutGoogle() async {
+    try {
+      // Obtener instancia de GoogleSignIn
+      GoogleSignIn googleSignIn = GoogleSignIn();
+      
+      // Desconectar la sesión de Google
+      await googleSignIn.disconnect();
+
+      // Imprimir mensaje o realizar otras acciones después de cerrar sesión
+      print('Google sign out successful');
+    } catch (e) {
+      // Manejar errores si ocurren
+      print('Error signing out from Google: $e');
     }
   }
 }
