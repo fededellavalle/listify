@@ -4,7 +4,63 @@ import 'package:flutter/material.dart';
 import '../../home/navigation_page.dart'; // Importar la página de navegación (NavigationPage)
 
 class AuthService {
-  // Método para iniciar sesión con Google
+  // Método para iniciar sesión con email y contraseña
+  Future<UserCredential?> signIn(BuildContext context, String email, String password) async {
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      
+      return userCredential; // Devolver el UserCredential si la autenticación es exitosa
+    } on FirebaseAuthException catch (e) {
+      String errorMessage = getFirebaseAuthErrorMessage(e); // Obtener mensaje de error
+      showErrorDialog(context, errorMessage); // Mostrar dialogo de error al usuario
+      print('Error signing in: $errorMessage');
+      return null; // Devolver null en caso de error
+    } catch (e) {
+      print('Error signing in: $e');
+      return null; // Devolver null en caso de error
+    }
+  }
+
+  // Método para obtener el mensaje de error de FirebaseAuthException
+  String getFirebaseAuthErrorMessage(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'user-not-found':
+        return 'Usuario no encontrado. Por favor, regístrate primero.';
+      case 'wrong-password':
+        return 'Contraseña incorrecta. Por favor, inténtalo de nuevo.';
+      case 'invalid-email':
+        return 'Email inválido. Por favor, verifica tu email.';
+      case 'user-disabled':
+        return 'Usuario deshabilitado. Por favor, contacta al soporte.';
+      default:
+        return 'Error al iniciar sesión. Por favor, intenta de nuevo más tarde.';
+    }
+  }
+
+  // Método para mostrar un diálogo de error al usuario
+  void showErrorDialog(BuildContext context, String errorMessage) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Error de Autenticación'),
+          content: Text(errorMessage),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar el diálogo
+              },
+              child: Text('Cerrar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  
   Future<void> signInWithGoogle(BuildContext context) async {
     try {
       // Iniciar sesión con Google

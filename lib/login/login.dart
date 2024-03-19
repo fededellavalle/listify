@@ -166,7 +166,7 @@ class _LoginFormState extends State<LoginForm> {
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {
                             _formKey.currentState!.save();
-                            UserCredential? userCredential = await signIn(context, _email, _password);
+                            UserCredential? userCredential = await AuthService().signIn(context, _email, _password);
                             if (userCredential != null) {
                               String uid = userCredential.user!.uid;
                               DocumentSnapshot userData =

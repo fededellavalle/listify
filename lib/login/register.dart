@@ -116,7 +116,7 @@ class _RegisterFormState extends State<RegisterForm> {
                     borderSide: BorderSide(color: Colors.white),
                   ),
                 ),
-                style: TextStyle(color: Colors.black),
+                style: TextStyle(color: Colors.white),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Por favor, ingrese su email';
@@ -139,7 +139,7 @@ class _RegisterFormState extends State<RegisterForm> {
                     borderSide: BorderSide(color: Colors.white),
                   ),
                 ),
-                style: TextStyle(color: Colors.black),
+                style: TextStyle(color: Colors.white),
                 obscureText: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -165,6 +165,7 @@ class _RegisterFormState extends State<RegisterForm> {
                   //fillColor: Colors.white,
                   //filled: true,
                 ),
+                style: TextStyle(color: Colors.white),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Por favor, ingrese su Nombre';
@@ -189,6 +190,7 @@ class _RegisterFormState extends State<RegisterForm> {
                   //fillColor: Colors.white,
                   //filled: true,
                 ),
+                style: TextStyle(color: Colors.white),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Por favor, ingrese su Apellido';
