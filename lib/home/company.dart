@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../styles/button.dart';
+import '../styles/color.dart';
 
 class CompanyPage extends StatelessWidget {
   final String? uid;
@@ -42,23 +45,78 @@ class CompanyPage extends StatelessWidget {
         } else {
           List<Map<String, dynamic>> companies = snapshot.data ?? [];
 
+          if (companies.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Text(
+                      style: GoogleFonts.openSans(
+                        fontSize: 18,
+                        color: Colors.white,
+                      ),
+                      'Todavía no tienes empresa. ¿Quieres crear una ya?',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      _showAddCompanyDialog(context);
+                    },
+                    child: Text(
+                      'Agregar una empresa',
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Text(
+                      style: GoogleFonts.roboto(
+                        fontSize: 18,
+                        color: Colors.white,
+                      ),
+                      'O puedes recibir invitacions para unirte a una empresa',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    style: buttonPrimary,
+                    onPressed: () {
+                      _showAddCompanyDialog(context);
+                    },
+                    label: Text(
+                      'Invitaciones',
+                      style: GoogleFonts.openSans(
+                        color: white,
+                      ),
+                    ),
+                    icon: const Icon(Icons.send),
+                  ),
+                ],
+              ),
+            );
+          }
+
           return ListView(
-            padding: EdgeInsets.all(20), // Añadir espacio alrededor de la lista
+            padding: EdgeInsets.all(20),
             children: [
-              // Mostrar cada empresa en la lista
               for (var companyData in companies) ...[
                 SizedBox(height: 20),
-                // Botón rectangular con el nombre de la empresa y el tipo
                 SizedBox(
-                  width: double.infinity, // Ocupar todo el ancho disponible
+                  width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
                       // Acción al presionar el botón (si es necesario)
                     },
                     style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+                      padding:
+                          EdgeInsets.symmetric(vertical: 20, horizontal: 40),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.zero, // Sin radio de borde
+                        borderRadius: BorderRadius.zero,
                       ),
                     ),
                     child: Column(
@@ -77,21 +135,25 @@ class CompanyPage extends StatelessWidget {
                   ),
                 ),
               ],
-              // Botón para agregar una nueva empresa
               SizedBox(height: 20),
               SizedBox(
-                width: double.infinity, // Ocupar todo el ancho disponible
+                width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Acción al presionar el botón para agregar una empresa
                     _showAddCompanyDialog(context);
                   },
                   style: ElevatedButton.styleFrom(
+                    backgroundColor: Color.fromARGB(255, 242, 187, 29),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero, // Sin radio de borde
+                      borderRadius: BorderRadius.zero,
                     ),
                   ),
-                  child: Text('Agregar una empresa'),
+                  child: Text(
+                    'Agregar una empresa',
+                    style: TextStyle(
+                      color: Colors.black,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -100,9 +162,6 @@ class CompanyPage extends StatelessWidget {
       },
     );
   }
-
-
-
 
   // Función para mostrar un diálogo para agregar una nueva empresa
   void _showAddCompanyDialog(BuildContext context) {
@@ -143,15 +202,20 @@ class CompanyPage extends StatelessWidget {
                 String companyType = typeController.text.trim();
                 String ownerUid = uid ?? '';
 
-                if (companyName.isNotEmpty && companyType.isNotEmpty && ownerUid.isNotEmpty) {
+                if (companyName.isNotEmpty &&
+                    companyType.isNotEmpty &&
+                    ownerUid.isNotEmpty) {
                   try {
-                    await FirebaseFirestore.instance.collection('companies').add({
+                    await FirebaseFirestore.instance
+                        .collection('companies')
+                        .add({
                       'name': companyName,
                       'type': companyType,
                       'ownerUid': ownerUid,
                     });
 
-                    Navigator.pop(context); // Cerrar el diálogo después de agregar la empresa
+                    Navigator.pop(
+                        context); // Cerrar el diálogo después de agregar la empresa
                   } catch (e) {
                     print('Error adding company: $e');
                     // Manejar el error si ocurriera al agregar la empresa

@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/widgets.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../home/navigation_page.dart'; // Importa HomePage desde la carpeta home
 import 'register.dart';
 import 'services/auth_google.dart';
+import '../styles/button.dart';
 
 class LoginPage extends StatelessWidget {
   @override
@@ -16,13 +18,10 @@ class LoginPage extends StatelessWidget {
   }
 }
 
-
-
 class LoginForm extends StatefulWidget {
   @override
   _LoginFormState createState() => _LoginFormState();
 }
-
 
 class _LoginFormState extends State<LoginForm> {
   final _formKey = GlobalKey<FormState>();
@@ -70,7 +69,8 @@ class _LoginFormState extends State<LoginForm> {
                       TextFormField(
                         decoration: const InputDecoration(
                           labelText: 'Email',
-                          labelStyle: TextStyle(color: Color.fromARGB(255, 242, 187, 29)),
+                          labelStyle: TextStyle(
+                              color: Color.fromARGB(255, 242, 187, 29)),
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
                           ),
@@ -81,8 +81,6 @@ class _LoginFormState extends State<LoginForm> {
                           //filled: true,
                         ),
                         style: TextStyle(color: Colors.white),
-                        
-                        
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Por favor, ingrese su email';
@@ -97,7 +95,8 @@ class _LoginFormState extends State<LoginForm> {
                       TextFormField(
                         decoration: const InputDecoration(
                           labelText: 'Contraseña',
-                          labelStyle: TextStyle(color: Color.fromARGB(255, 242, 187, 29)),
+                          labelStyle: TextStyle(
+                              color: Color.fromARGB(255, 242, 187, 29)),
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
                           ),
@@ -123,7 +122,7 @@ class _LoginFormState extends State<LoginForm> {
                         },
                       ),
                       SizedBox(height: 10.0),
-                      Row(
+                      /*Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Checkbox(
@@ -139,45 +138,49 @@ class _LoginFormState extends State<LoginForm> {
                             style: TextStyle(color: Colors.white70),
                             ),
                         ],
-                      ),
+                      ),*/
                       GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context, 
-                            MaterialPageRoute(
-                              builder: (context){
-                                return ForgotPasswordPage();
-                              },
-                            ),
-                          );
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Olvidaste tu Contraseña?',
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                          ],
-                        )
-                      ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) {
+                                  return ForgotPasswordPage();
+                                },
+                              ),
+                            );
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Text(
+                                'Olvidaste tu Contraseña?',
+                                style: TextStyle(color: Colors.white70),
+                              ),
+                            ],
+                          )),
                       SizedBox(height: 20.0),
                       ElevatedButton(
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {
                             _formKey.currentState!.save();
-                            UserCredential? userCredential = await AuthService().signIn(context, _email, _password);
+                            UserCredential? userCredential = await AuthService()
+                                .signIn(context, _email, _password);
                             if (userCredential != null) {
                               String uid = userCredential.user!.uid;
                               DocumentSnapshot userData =
-                                  await FirebaseFirestore.instance.collection('users').doc(uid).get();
-                            
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(uid)
+                                      .get();
+
                               String _userName = userData['nombre'];
-                            
+
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => NavigationPage(uid: uid, userName: _userName),
+                                  builder: (context) => NavigationPage(
+                                      uid: uid, userName: _userName),
                                 ),
                               );
                             } else {
@@ -186,7 +189,8 @@ class _LoginFormState extends State<LoginForm> {
                                 builder: (context) {
                                   return AlertDialog(
                                     title: Text('Error'),
-                                    content: Text('Email o Contraseña invalido'),
+                                    content:
+                                        Text('Email o Contraseña invalido'),
                                     actions: <Widget>[
                                       TextButton(
                                         onPressed: () {
@@ -201,25 +205,31 @@ class _LoginFormState extends State<LoginForm> {
                             }
                           }
                         },
-                        style: ButtonStyle(
-                          padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                          EdgeInsets.all(20), // Ajusta el padding del botón según sea necesario
+                        style: buttonPrimary,
+                        /*ButtonStyle(
+                          padding:
+                              MaterialStateProperty.all<EdgeInsetsGeometry>(
+                            EdgeInsets.all(
+                                20), // Ajusta el padding del botón según sea necesario
                           ),
-                          foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
-                          backgroundColor: MaterialStateProperty.all<Color>(Color.fromARGB(255, 242, 187, 29)), // Cambia el color de fondo del botón
-                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          foregroundColor:
+                              MaterialStateProperty.all<Color>(Colors.black),
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                              Color.fromARGB(255, 242, 187,
+                                  29)), // Cambia el color de fondo del botón
+                          shape:
+                              MaterialStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10.0),
                             ),
                           ),
-                        ),
+                        ),*/
                         child: Text(
                           'Iniciar Sesion',
                           style: TextStyle(
                             fontSize: 16,
                           ),
                         ),
-                        
                       ),
                     ],
                   ),
@@ -247,11 +257,10 @@ class _LoginFormState extends State<LoginForm> {
                       ),
                     ),
                     Expanded(
-                      child: Divider(
-                        thickness: 0.5,
-                        color: Colors.grey[400],
-                      )
-                    )
+                        child: Divider(
+                      thickness: 0.5,
+                      color: Colors.grey[400],
+                    ))
                   ],
                 ),
               ),
@@ -262,25 +271,31 @@ class _LoginFormState extends State<LoginForm> {
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children:[
-                
+                  children: [
                     ElevatedButton(
                       onPressed: () {
                         AuthService().signInWithGoogle(context);
                       },
-                      style: ButtonStyle(
-                        overlayColor: MaterialStateProperty.all<Color>(Colors.white), // Color del overlay (sombra) al presionar el botón
-                        backgroundColor: MaterialStateProperty.all<Color>(Colors.black.withOpacity(0.0)), // Color de fondo del botón con opacidad
-                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      style: buttonPrimary,
+                      /*ButtonStyle(
+                        overlayColor: MaterialStateProperty.all<Color>(Colors
+                            .white), // Color del overlay (sombra) al presionar el botón
+                        backgroundColor: MaterialStateProperty.all<Color>(
+                            Colors.black.withOpacity(
+                                0.0)), // Color de fondo del botón con opacidad
+                        shape:
+                            MaterialStateProperty.all<RoundedRectangleBorder>(
                           RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10.0),
-                            side: BorderSide(color: Colors.white), // Borde blanco
+                            side:
+                                BorderSide(color: Colors.white), // Borde blanco
                           ),
                         ),
                         padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                          EdgeInsets.all(20), // Ajusta el padding del botón según sea necesario
+                          EdgeInsets.all(
+                              20), // Ajusta el padding del botón según sea necesario
                         ),
-                      ),
+                      ),*/
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -288,11 +303,12 @@ class _LoginFormState extends State<LoginForm> {
                             'lib/assets/images/google.png',
                             height: 20,
                           ),
-                          SizedBox(width: 8), // Espacio entre la imagen y el texto
+                          SizedBox(
+                              width: 8), // Espacio entre la imagen y el texto
                           Text(
                             'Continuar con Google',
-                            style: TextStyle(
-                              color: Colors.white,
+                            style: GoogleFonts.roboto(
+                              color: Colors.black,
                               fontSize: 16,
                             ),
                           ),
@@ -378,14 +394,15 @@ class _LoginFormState extends State<LoginForm> {
   }
 }
 
-
-Future<UserCredential?> signIn(BuildContext context, String email, String password) async {
+Future<UserCredential?> signIn(
+    BuildContext context, String email, String password) async {
   try {
-    UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+    UserCredential userCredential =
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
       email: email,
       password: password,
     );
-    
+
     return userCredential; // Devolver el UserCredential
   } catch (e) {
     print('Error signing in: $e');

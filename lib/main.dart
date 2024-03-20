@@ -8,7 +8,7 @@ import 'package:device_preview/device_preview.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeFirebase();
-  
+
   runApp(
     DevicePreview(
       enabled: !kReleaseMode,
@@ -29,9 +29,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-
-
 
 Future<void> initializeFirebase() async {
   await Firebase.initializeApp(
