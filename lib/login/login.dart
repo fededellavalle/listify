@@ -7,7 +7,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../home/navigation_page.dart'; // Importa HomePage desde la carpeta home
 import 'register.dart';
 import 'services/auth_google.dart';
-import '../styles/button.dart';
 
 class LoginPage extends StatelessWidget {
   @override
@@ -205,8 +204,7 @@ class _LoginFormState extends State<LoginForm> {
                             }
                           }
                         },
-                        style: buttonPrimary,
-                        /*ButtonStyle(
+                        style: ButtonStyle(
                           padding:
                               MaterialStateProperty.all<EdgeInsetsGeometry>(
                             EdgeInsets.all(
@@ -223,10 +221,10 @@ class _LoginFormState extends State<LoginForm> {
                               borderRadius: BorderRadius.circular(10.0),
                             ),
                           ),
-                        ),*/
+                        ),
                         child: Text(
                           'Iniciar Sesion',
-                          style: TextStyle(
+                          style: GoogleFonts.roboto(
                             fontSize: 16,
                           ),
                         ),
@@ -253,7 +251,7 @@ class _LoginFormState extends State<LoginForm> {
                       padding: const EdgeInsets.symmetric(horizontal: 10.0),
                       child: Text(
                         'O puedes',
-                        style: TextStyle(color: Colors.grey[500]),
+                        style: GoogleFonts.roboto(color: Colors.grey[500]),
                       ),
                     ),
                     Expanded(
@@ -276,10 +274,9 @@ class _LoginFormState extends State<LoginForm> {
                       onPressed: () {
                         AuthService().signInWithGoogle(context);
                       },
-                      style: buttonPrimary,
-                      /*ButtonStyle(
+                      style: ButtonStyle(
                         overlayColor: MaterialStateProperty.all<Color>(Colors
-                            .white), // Color del overlay (sombra) al presionar el botón
+                            .grey), // Color del overlay (sombra) al presionar el botón
                         backgroundColor: MaterialStateProperty.all<Color>(
                             Colors.black.withOpacity(
                                 0.0)), // Color de fondo del botón con opacidad
@@ -295,7 +292,7 @@ class _LoginFormState extends State<LoginForm> {
                           EdgeInsets.all(
                               20), // Ajusta el padding del botón según sea necesario
                         ),
-                      ),*/
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -308,7 +305,7 @@ class _LoginFormState extends State<LoginForm> {
                           Text(
                             'Continuar con Google',
                             style: GoogleFonts.roboto(
-                              color: Colors.black,
+                              color: Colors.white,
                               fontSize: 16,
                             ),
                           ),
@@ -364,7 +361,7 @@ class _LoginFormState extends State<LoginForm> {
                 children: [
                   Text(
                     'No eres parte de app listas?',
-                    style: TextStyle(color: Colors.grey[700]),
+                    style: GoogleFonts.roboto(color: Colors.grey[700]),
                   ),
                   const SizedBox(width: 4),
                   GestureDetector(
@@ -377,7 +374,7 @@ class _LoginFormState extends State<LoginForm> {
                     },
                     child: Text(
                       'Registrate ahora',
-                      style: TextStyle(
+                      style: GoogleFonts.roboto(
                         color: Colors.blue,
                         fontWeight: FontWeight.bold,
                       ),

@@ -20,7 +20,7 @@ class NavigationPage extends StatefulWidget {
 class _NavigationPageState extends State<NavigationPage> {
   int _selectedIndex = 0;
   late List<Widget> _widgetOptions;
-  String? _profileImageUrl; // URL de la foto de perfil del usuario
+  String? _profileImageUrl;
 
   @override
   void initState() {
@@ -54,9 +54,10 @@ class _NavigationPageState extends State<NavigationPage> {
   }
 
   Future<String> _getLastName(String? uid) async {
-  String lastName = '';
+    String lastName = '';
     try {
-      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      DocumentSnapshot userSnapshot =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (userSnapshot.exists) {
         lastName = userSnapshot.get('apellido');
       }
@@ -97,31 +98,33 @@ class _NavigationPageState extends State<NavigationPage> {
           children: [
             UserAccountsDrawerHeader(
               accountName: FutureBuilder<String>(
-              future: _getLastName(widget.uid), // Llama al método para obtener el apellido
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Text('Cargando...');
-                }
-                if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
-                }
-                String lastName = snapshot.data ?? '';
-                return Text('${widget.userName} ${lastName}');
-              },
-            ),
-            accountEmail: FutureBuilder<String>(
-              future: _getEmail(), // Llama al método para obtener el correo electrónico
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Text('Cargando...');
-                }
-                if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
-                }
-                String email = snapshot.data ?? '';
-                return Text(email);
-              },
-            ),
+                future: _getLastName(
+                    widget.uid), // Llama al método para obtener el apellido
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Text('Cargando...');
+                  }
+                  if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  }
+                  String lastName = snapshot.data ?? '';
+                  return Text('${widget.userName} ${lastName}');
+                },
+              ),
+              accountEmail: FutureBuilder<String>(
+                future:
+                    _getEmail(), // Llama al método para obtener el correo electrónico
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Text('Cargando...');
+                  }
+                  if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  }
+                  String email = snapshot.data ?? '';
+                  return Text(email);
+                },
+              ),
               currentAccountPicture: _profileImageUrl != null
                   ? CircleAvatar(
                       backgroundImage: NetworkImage(_profileImageUrl!),
@@ -143,7 +146,8 @@ class _NavigationPageState extends State<NavigationPage> {
               ),
               leading: const Icon(
                 Icons.home,
-                color: Color.fromARGB(255, 242, 187, 29), // Cambia el color del icono a negro
+                color: Color.fromARGB(
+                    255, 242, 187, 29), // Cambia el color del icono a negro
               ),
               onTap: () {
                 setState(() {
@@ -159,7 +163,8 @@ class _NavigationPageState extends State<NavigationPage> {
               ),
               leading: const Icon(
                 Icons.event,
-                color: Color.fromARGB(255, 242, 187, 29), // Cambia el color del icono a negro
+                color: Color.fromARGB(
+                    255, 242, 187, 29), // Cambia el color del icono a negro
               ),
               onTap: () {
                 setState(() {
@@ -175,7 +180,8 @@ class _NavigationPageState extends State<NavigationPage> {
               ),
               leading: const Icon(
                 Icons.business,
-                color: Color.fromARGB(255, 242, 187, 29), // Cambia el color del icono a negro
+                color: Color.fromARGB(
+                    255, 242, 187, 29), // Cambia el color del icono a negro
               ),
               onTap: () {
                 setState(() {
@@ -191,7 +197,8 @@ class _NavigationPageState extends State<NavigationPage> {
               ),
               leading: Icon(
                 Icons.business,
-                color: Color.fromARGB(255, 242, 187, 29), // Cambia el color del icono a negro
+                color: Color.fromARGB(
+                    255, 242, 187, 29), // Cambia el color del icono a negro
               ),
               onTap: () {
                 setState(() {
@@ -207,12 +214,14 @@ class _NavigationPageState extends State<NavigationPage> {
               ),
               leading: const Icon(
                 Icons.logout,
-                color: Color.fromARGB(255, 242, 187, 29), // Cambia el color del icono a negro
+                color: Color.fromARGB(
+                    255, 242, 187, 29), // Cambia el color del icono a negro
               ),
               onTap: () async {
                 showDialog(
                   context: context,
-                  barrierDismissible: false, // Evita que se cierre la alerta al tocar fuera de ella
+                  barrierDismissible:
+                      false, // Evita que se cierre la alerta al tocar fuera de ella
                   builder: (BuildContext context) {
                     return AlertDialog(
                       title: Text('Cerrando sesión'),
@@ -236,7 +245,9 @@ class _NavigationPageState extends State<NavigationPage> {
                 Navigator.of(context).pop(); // Cerrar la alerta
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => LoginPage()), // Reemplaza LoginPage con el nombre correcto de tu widget de inicio de sesión
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          LoginPage()), // Reemplaza LoginPage con el nombre correcto de tu widget de inicio de sesión
                 );
               },
             ),
