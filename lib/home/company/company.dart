@@ -6,6 +6,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
+import 'functionsCompany/insideCompany.dart';
 
 class CompanyPage extends StatefulWidget {
   final String? uid;
@@ -18,11 +19,21 @@ class CompanyPage extends StatefulWidget {
 
 class _CompanyPageState extends State<CompanyPage> {
   File? _image;
-  String? _companyImageUrl;
 
   @override
   void initState() {
     super.initState();
+  }
+
+  void _openCompanyDetails(Map<String, dynamic> companyData) {
+    print('Company Data: $companyData');
+    print("entre al boton");
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CompanyWidget(companyData: companyData),
+      ),
+    );
   }
 
   Future<List<Map<String, dynamic>>> _fetchCompanyData(String? uid) async {
@@ -35,13 +46,23 @@ class _CompanyPageState extends State<CompanyPage> {
 
         List<Map<String, dynamic>> companies = [];
 
-        companySnapshot.docs.forEach((doc) {
-          companies.add(doc.data() as Map<String, dynamic>);
-          print(doc.id);
-          _getCompanyImageUrl(
-              doc.id); // Obtener la URL de la imagen para esta compañía
+        await Future.forEach(companySnapshot.docs, (doc) async {
+          String companyId = doc.id;
+          String companyName = (doc.data() as Map<String, dynamic>)['name'];
+          String companyType = (doc.data() as Map<String, dynamic>)['type'];
+          String? imageUrl = (doc.data() as Map<String, dynamic>)['imageUrl'];
+
+          Map<String, dynamic> companyData = {
+            'companyId': companyId,
+            'name': companyName,
+            'type': companyType,
+            'imageUrl': imageUrl,
+          };
+
+          companies.add(companyData);
         });
 
+        print(companies);
         return companies;
       } catch (e) {
         print('Error fetching company data: $e');
@@ -49,26 +70,6 @@ class _CompanyPageState extends State<CompanyPage> {
       }
     } else {
       return [];
-    }
-  }
-
-  Future<void> _getCompanyImageUrl(String companyId) async {
-    try {
-      // Obtener la URL de la imagen desde la base de datos
-      String? imageUrl = await FirebaseFirestore.instance
-          .collection('company_images')
-          .doc(
-              companyId) // Utilizar el ID de la compañía en lugar del UID del usuario
-          .get()
-          .then((doc) => doc.data()?['imageUrl']);
-
-      if (imageUrl != null) {
-        setState(() {
-          _companyImageUrl = imageUrl;
-        });
-      }
-    } catch (error) {
-      print('Error obteniendo la URL de la foto de la compañía: $error');
     }
   }
 
@@ -102,15 +103,34 @@ class _CompanyPageState extends State<CompanyPage> {
     return Scaffold(
       backgroundColor:
           Colors.black.withOpacity(0.0), // Color de fondo del Scaffold
-      body: FutureBuilder(
-        future: _fetchCompanyData(widget.uid),
-        builder: (context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('companies')
+            .where('ownerUid', isEqualTo: widget.uid)
+            .snapshots(),
+        builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Error fetching data'));
           } else {
-            List<Map<String, dynamic>> companies = snapshot.data ?? [];
+            List<Map<String, dynamic>> companies = [];
+
+            snapshot.data?.docs.forEach((doc) {
+              String companyId = doc.id;
+              String companyName = doc['name'];
+              String companyType = doc['type'];
+              String? imageUrl = doc['imageUrl'];
+
+              Map<String, dynamic> companyData = {
+                'companyId': companyId,
+                'name': companyName,
+                'type': companyType,
+                'imageUrl': imageUrl,
+              };
+
+              companies.add(companyData);
+            });
 
             if (companies.isEmpty) {
               return Center(
@@ -147,49 +167,63 @@ class _CompanyPageState extends State<CompanyPage> {
                   SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () {
-                      // Acción al presionar el botón (si es necesario)
+                      print('Company Details button pressed');
+                      _openCompanyDetails(companyData);
                     },
                     style: ButtonStyle(
-                      overlayColor: MaterialStateProperty.all<Color>(Colors
-                          .grey), // Color del overlay (sombra) al presionar el botón
                       backgroundColor: MaterialStateProperty.all<Color>(
-                          Colors.black.withOpacity(
-                              0.0)), // Color de fondo del botón con opacidad
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                          side: BorderSide(color: Colors.white), // Borde blanco
-                        ),
+                        Colors.red,
                       ),
                       padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                        EdgeInsets.all(
-                            20), // Ajusta el padding del botón según sea necesario
+                        EdgeInsets.all(20),
+                      ),
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          side: BorderSide(color: Colors.white),
+                        ),
                       ),
                     ),
-                    child: Column(
+                    child: Row(
                       children: [
-                        if (_companyImageUrl != null)
-                          CircleAvatar(
-                            backgroundImage: NetworkImage(_companyImageUrl!),
+                        if (companyData['imageUrl'] != null)
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              image: DecorationImage(
+                                image: NetworkImage(companyData['imageUrl']),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           )
                         else
                           IconButton(
                             icon: Icon(Icons.question_mark),
                             onPressed: () {},
                           ),
-                        Text(
-                          companyData['name'],
-                          style: GoogleFonts.roboto(
-                            fontSize: 24,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        Text(
-                          'Tipo: ${companyData['type']}',
-                          style: GoogleFonts.roboto(
-                            fontSize: 16,
-                            color: Colors.white,
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                companyData['name'] ?? '',
+                                style: GoogleFonts.roboto(
+                                  fontSize: 24,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(height: 5),
+                              Text(
+                                'Tipo: ${companyData['type'] ?? ''}',
+                                style: GoogleFonts.roboto(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],

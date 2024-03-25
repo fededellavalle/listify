@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'company.dart';
+import 'company/company.dart';
 import 'events.dart';
 import 'home.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -264,6 +264,32 @@ class _NavigationPageState extends State<NavigationPage> {
         backgroundColor: Colors.black,
         centerTitle: true,
         actions: [
+          PopupMenuButton(
+            icon: Icon(Icons.notifications),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                child: ListTile(
+                  leading: Icon(Icons.message),
+                  title: Text('Mensaje 1'),
+                  onTap: () {
+                    // Acción al seleccionar el primer elemento del menú
+                  },
+                ),
+              ),
+              PopupMenuItem(
+                child: ListTile(
+                  leading: Icon(Icons.message),
+                  title: Text('Mensaje 2'),
+                  onTap: () {
+                    // Acción al seleccionar el segundo elemento del menú
+                  },
+                ),
+              ),
+              // Agrega más elementos del menú si es necesario
+            ],
+            offset: Offset(0,
+                kToolbarHeight), // Ajusta la posición vertical del menú emergente
+          ),
           if (_profileImageUrl != null)
             CircleAvatar(
               backgroundImage: NetworkImage(_profileImageUrl!),
