@@ -392,6 +392,7 @@ Future<bool> register(String email, String password, String nombre,
           .set({
         'nombre': nombre,
         'apellido': apellido,
+        'email:': email,
         'fechaNacimiento': fechaNacimientoTimestamp,
         'imageUrl': imageUrl, // URL de descarga de la imagen
       });

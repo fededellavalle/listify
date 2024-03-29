@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
 import 'functionsCompany/insideCompany.dart';
+import 'package:unicons/unicons.dart';
 
 class CompanyPage extends StatefulWidget {
   final String? uid;
@@ -128,7 +129,6 @@ class _CompanyPageState extends State<CompanyPage> {
                 'type': companyType,
                 'imageUrl': imageUrl,
               };
-
               companies.add(companyData);
             });
 
@@ -161,35 +161,50 @@ class _CompanyPageState extends State<CompanyPage> {
             }
 
             return ListView(
-              padding: EdgeInsets.all(20),
               children: [
                 for (var companyData in companies) ...[
-                  SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () {
-                      print('Company Details button pressed');
-                      _openCompanyDetails(companyData);
+                      Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  CompanyWidget(
+                            companyData: companyData,
+                          ),
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                            return SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(1,
+                                    0), // Posición inicial (fuera de la pantalla a la derecha)
+                                end: Offset
+                                    .zero, // Posición final (centro de la pantalla)
+                              ).animate(animation),
+                              child: child,
+                            );
+                          },
+                        ),
+                      );
                     },
                     style: ButtonStyle(
                       backgroundColor: MaterialStateProperty.all<Color>(
-                        Colors.red,
+                        Colors.black.withOpacity(0.0),
                       ),
                       padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
                         EdgeInsets.all(20),
                       ),
                       shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: BorderSide(color: Colors.white),
-                        ),
+                        RoundedRectangleBorder(),
                       ),
                     ),
                     child: Row(
                       children: [
                         if (companyData['imageUrl'] != null)
                           Container(
-                            width: 80,
-                            height: 80,
+                            width: 70,
+                            height: 70,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               image: DecorationImage(
@@ -206,18 +221,18 @@ class _CompanyPageState extends State<CompanyPage> {
                         SizedBox(width: 10),
                         Expanded(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 companyData['name'] ?? '',
                                 style: GoogleFonts.roboto(
-                                  fontSize: 24,
+                                  fontSize: 20,
                                   color: Colors.white,
                                 ),
                               ),
                               SizedBox(height: 5),
                               Text(
-                                'Tipo: ${companyData['type'] ?? ''}',
+                                'Siguiente evento: ${companyData['type'] ?? ''}',
                                 style: GoogleFonts.roboto(
                                   fontSize: 16,
                                   color: Colors.white,
@@ -226,8 +241,21 @@ class _CompanyPageState extends State<CompanyPage> {
                             ],
                           ),
                         ),
+                        Icon(
+                          UniconsLine.angle_right_b,
+                          size: 40,
+                          color: Colors.white,
+                        )
                       ],
                     ),
+                  ),
+                  const Divider(
+                    // Divider para la línea
+                    height: 1, // Altura de la línea
+                    thickness: 1, // Grosor de la línea
+                    color: Colors.white, // Color de la línea
+                    indent: 8, // Espacio a la izquierda de la línea
+                    endIndent: 8, // Espacio a la derecha de la línea
                   ),
                 ],
                 SizedBox(height: 20),
@@ -241,8 +269,13 @@ class _CompanyPageState extends State<CompanyPage> {
           _showAddCompanyDialog(context);
         },
         backgroundColor: Color.fromARGB(255, 242, 187, 29),
-        icon: Icon(Icons.add),
-        label: Text('Agregar empresa'),
+        icon: Icon(
+          UniconsLine.plus_circle,
+          size: 24,
+        ), // Icono animado de Unicons
+        label: const Text(
+          'Agregar empresa',
+        ),
       ),
     );
   }

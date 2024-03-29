@@ -6,6 +6,7 @@ import 'home.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../login/services/auth_google.dart';
 import '../login/login.dart';
+import 'package:unicons/unicons.dart';
 
 class NavigationPage extends StatefulWidget {
   final String? uid;
@@ -310,15 +311,15 @@ class _NavigationPageState extends State<NavigationPage> {
         selectedItemColor: Color.fromARGB(255, 242, 187, 29),
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: Icon(UniconsLine.home),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.event),
+            icon: Icon(UniconsLine.calendar_alt),
             label: 'Mis Eventos',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.business),
+            icon: Icon(UniconsLine.building),
             label: 'Mis Empresas',
           ),
         ],

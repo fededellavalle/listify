@@ -1,13 +1,46 @@
 import 'package:flutter/material.dart';
-import 'color.dart';
 
-final ButtonStyle buttonPrimary = ElevatedButton.styleFrom(
-  minimumSize: Size(327, 50),
-  backgroundColor: white, // Usa orange como color de fondo
-  elevation: 0,
-  shape: const RoundedRectangleBorder(
-    borderRadius: BorderRadius.all(
-      Radius.circular(50),
+final ButtonStyle buttonPrimary = ButtonStyle(
+  padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+    EdgeInsets.all(20), // Ajusta el padding del botón según sea necesario
+  ),
+  foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
+  backgroundColor: MaterialStateProperty.all<Color>(
+      Color.fromARGB(255, 242, 187, 29)), // Cambia el color de fondo del botón
+  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+    RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(10.0),
     ),
+  ),
+);
+
+final ButtonStyle buttonSecondary = ButtonStyle(
+  overlayColor: MaterialStateProperty.all<Color>(
+      Colors.grey), // Color del overlay (sombra) al presionar el botón
+  backgroundColor: MaterialStateProperty.all<Color>(
+      Colors.black.withOpacity(0.0)), // Color de fondo del botón con opacidad
+  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+    RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(10.0),
+      side: BorderSide(color: Colors.white), // Borde blanco
+    ),
+  ),
+  padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+    EdgeInsets.all(20), // Ajusta el padding del botón según sea necesario
+  ),
+);
+
+final ButtonStyle buttonCompany = ButtonStyle(
+  overlayColor: MaterialStateProperty.all<Color>(Colors.grey),
+  backgroundColor: MaterialStateProperty.all<Color>(
+    Colors.black.withOpacity(0.0),
+  ),
+  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+    RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(0),
+    ),
+  ),
+  padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+    EdgeInsets.all(12),
   ),
 );

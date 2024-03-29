@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../home/navigation_page.dart'; // Importa HomePage desde la carpeta home
 import 'register.dart';
 import 'services/auth_google.dart';
+import '../styles/button.dart';
 
 class LoginPage extends StatelessWidget {
   @override
@@ -27,6 +28,7 @@ class _LoginFormState extends State<LoginForm> {
   late String _email;
   late String _password;
   bool _keepSignedIn = false;
+  bool _obscureText = true;
 
   @override
   Widget build(BuildContext context) {
@@ -92,20 +94,34 @@ class _LoginFormState extends State<LoginForm> {
                       ),
                       const SizedBox(height: 20),
                       TextFormField(
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Contraseña',
                           labelStyle: TextStyle(
-                              color: Color.fromARGB(255, 242, 187, 29)),
+                            color: Color.fromARGB(255, 242, 187, 29),
+                          ),
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
                           ),
                           focusedBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.white),
                           ),
-                          //fillColor: Colors.white,
-                          //filled: true,
+                          suffixIcon: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _obscureText =
+                                    !_obscureText; // Cambia el estado de la visibilidad de la contraseña
+                              });
+                            },
+                            child: Icon(
+                              _obscureText
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: Colors.grey, // Color del icono
+                            ),
+                          ),
                         ),
-                        obscureText: true,
+                        obscureText:
+                            _obscureText, // Estado de visibilidad de la contraseña
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -204,24 +220,7 @@ class _LoginFormState extends State<LoginForm> {
                             }
                           }
                         },
-                        style: ButtonStyle(
-                          padding:
-                              MaterialStateProperty.all<EdgeInsetsGeometry>(
-                            EdgeInsets.all(
-                                20), // Ajusta el padding del botón según sea necesario
-                          ),
-                          foregroundColor:
-                              MaterialStateProperty.all<Color>(Colors.black),
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                              Color.fromARGB(255, 242, 187,
-                                  29)), // Cambia el color de fondo del botón
-                          shape:
-                              MaterialStateProperty.all<RoundedRectangleBorder>(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10.0),
-                            ),
-                          ),
-                        ),
+                        style: buttonPrimary,
                         child: Text(
                           'Iniciar Sesion',
                           style: GoogleFonts.roboto(
@@ -274,25 +273,7 @@ class _LoginFormState extends State<LoginForm> {
                       onPressed: () {
                         AuthService().signInWithGoogle(context);
                       },
-                      style: ButtonStyle(
-                        overlayColor: MaterialStateProperty.all<Color>(Colors
-                            .grey), // Color del overlay (sombra) al presionar el botón
-                        backgroundColor: MaterialStateProperty.all<Color>(
-                            Colors.black.withOpacity(
-                                0.0)), // Color de fondo del botón con opacidad
-                        shape:
-                            MaterialStateProperty.all<RoundedRectangleBorder>(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                            side:
-                                BorderSide(color: Colors.white), // Borde blanco
-                          ),
-                        ),
-                        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                          EdgeInsets.all(
-                              20), // Ajusta el padding del botón según sea necesario
-                        ),
-                      ),
+                      style: buttonSecondary,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
