@@ -189,7 +189,7 @@ class _LoginFormState extends State<LoginForm> {
                                       .doc(uid)
                                       .get();
 
-                              String _userName = userData['nombre'];
+                              String _userName = userData['name'];
 
                               Navigator.push(
                                 context,

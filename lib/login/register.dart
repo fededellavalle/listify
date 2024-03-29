@@ -390,22 +390,26 @@ Future<bool> register(String email, String password, String nombre,
           .collection('users')
           .doc(userCredential.user!.uid)
           .set({
-        'nombre': nombre,
-        'apellido': apellido,
-        'email:': email,
-        'fechaNacimiento': fechaNacimientoTimestamp,
+        'name': nombre,
+        'lastname': apellido,
+        'email': email,
+        'birthDate': fechaNacimientoTimestamp,
         'imageUrl': imageUrl, // URL de descarga de la imagen
       });
     } else {
+      String imageUrl =
+          "https://firebasestorage.googleapis.com/v0/b/app-listas-eccd1.appspot.com/o/users%2Fprofile-image-standard.png?alt=media&token=f3a904df-f908-4743-8b16-1f3939986569";
       // No se proporcionó una imagen, guardar la información sin la URL de la imagen
       Timestamp fechaNacimientoTimestamp = Timestamp.fromDate(fechaNacimiento);
       await FirebaseFirestore.instance
           .collection('users')
           .doc(userCredential.user!.uid)
           .set({
-        'nombre': nombre,
-        'apellido': apellido,
-        'fechaNacimiento': fechaNacimientoTimestamp,
+        'name': nombre,
+        'lastname': apellido,
+        'birthDate': fechaNacimientoTimestamp,
+        'email': email,
+        'imageUrl': imageUrl,
       });
     }
 

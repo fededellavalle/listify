@@ -1,3 +1,4 @@
+import 'package:app_listas/home/invitations/invitations.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'company/company.dart';
@@ -60,7 +61,7 @@ class _NavigationPageState extends State<NavigationPage> {
       DocumentSnapshot userSnapshot =
           await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (userSnapshot.exists) {
-        lastName = userSnapshot.get('apellido');
+        lastName = userSnapshot.get('lastname');
       }
     } catch (error) {
       print('Error obteniendo el apellido del usuario: $error');
@@ -159,7 +160,7 @@ class _NavigationPageState extends State<NavigationPage> {
             ),
             ListTile(
               title: const Text(
-                'Events',
+                'Eventos',
                 style: TextStyle(color: Colors.white),
               ),
               leading: const Icon(
@@ -175,25 +176,8 @@ class _NavigationPageState extends State<NavigationPage> {
               },
             ),
             ListTile(
-              title: const Text(
-                'Invitaciones',
-                style: TextStyle(color: Colors.white),
-              ),
-              leading: const Icon(
-                Icons.business,
-                color: Color.fromARGB(
-                    255, 242, 187, 29), // Cambia el color del icono a negro
-              ),
-              onTap: () {
-                setState(() {
-                  _selectedIndex = 2;
-                  Navigator.pop(context);
-                });
-              },
-            ),
-            ListTile(
               title: Text(
-                'Company',
+                'Empresas',
                 style: TextStyle(color: Colors.white),
               ),
               leading: Icon(
@@ -206,6 +190,25 @@ class _NavigationPageState extends State<NavigationPage> {
                   _selectedIndex = 2;
                   Navigator.pop(context);
                 });
+              },
+            ),
+            ListTile(
+              title: const Text(
+                'Invitaciones',
+                style: TextStyle(color: Colors.white),
+              ),
+              leading: const Icon(
+                UniconsLine.envelope_alt, // Icono de carta de Unicons
+                color: Color.fromARGB(
+                    255, 242, 187, 29), // Cambia el color del icono a negro
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => InvitationsPage(),
+                  ),
+                );
               },
             ),
             ListTile(

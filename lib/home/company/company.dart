@@ -361,6 +361,9 @@ class _CompanyPageState extends State<CompanyPage> {
                       TaskSnapshot taskSnapshot =
                           await uploadTask.whenComplete(() => null);
                       imageUrl = await taskSnapshot.ref.getDownloadURL();
+                    } else {
+                      imageUrl =
+                          'https://firebasestorage.googleapis.com/v0/b/app-listas-eccd1.appspot.com/o/users%2Fcompany-image-standard.png?alt=media&token=215f501d-c691-4804-93d3-97187cf5e677';
                     }
 
                     // Guardar la información de la empresa en Firestore junto con la URL de la imagen

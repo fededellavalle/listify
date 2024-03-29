@@ -178,8 +178,6 @@ class _crearCategoriaPersonalState extends State<crearCategoriaPersonal> {
                                   onPressed: () {
                                     Navigator.of(context)
                                         .pop(); // Cerrar el AlertDialog
-                                    Navigator.of(context)
-                                        .pop(); // Volver a la pantalla anterior (login)
                                   },
                                   child: Text('OK'),
                                 ),
