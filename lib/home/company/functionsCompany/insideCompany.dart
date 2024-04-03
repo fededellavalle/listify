@@ -20,7 +20,7 @@ class CompanyWidget extends StatelessWidget {
     String companyImageUrl = companyData['imageUrl'] ?? '';
 
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.95),
+      backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
@@ -230,6 +230,68 @@ class CompanyWidget extends StatelessWidget {
                   ),
                 ),
               ),
+
+              SizedBox(height: 20),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade700
+                        .withOpacity(0.4), // Color de fondo del Container
+                    borderRadius: BorderRadius.circular(10), // Radio de borde
+                  ),
+                  child: Column(
+                    children: [
+
+                      //
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: buttonCompany,
+                        child: Row(
+                          mainAxisAlignment:
+                              MainAxisAlignment.start, // Alineación al inicio
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors
+                                    .red, // Color de fondo del contenedor
+                                borderRadius: BorderRadius.circular(
+                                    8), // Opcional: radio de borde para el contenedor
+                              ),
+                              child: const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Icon(
+                                  UniconsLine.trash,
+                                  size: 20, // Tamaño grande
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 15,
+                            ),
+                            Text(
+                              'Eliminar Compañia',
+                              style: GoogleFonts.roboto(
+                                color: Colors.white,
+                                fontSize: 18,
+                              ),
+                            ),
+                            Spacer(),
+                            Icon(
+                              UniconsLine.angle_right_b,
+                              size: 20, // Tamaño grande
+                              color: Colors.grey.shade600,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 20,),
             ],
           ),
         ),

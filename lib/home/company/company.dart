@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
 import 'functionsCompany/insideCompany.dart';
 import 'package:unicons/unicons.dart';
+import 'functionsCompany/createCompany.dart';
 
 class CompanyPage extends StatefulWidget {
   final String? uid;
@@ -50,13 +49,13 @@ class _CompanyPageState extends State<CompanyPage> {
         await Future.forEach(companySnapshot.docs, (doc) async {
           String companyId = doc.id;
           String companyName = (doc.data() as Map<String, dynamic>)['name'];
-          String companyType = (doc.data() as Map<String, dynamic>)['type'];
+          String companyUser = (doc.data() as Map<String, dynamic>)['username'];
           String? imageUrl = (doc.data() as Map<String, dynamic>)['imageUrl'];
 
           Map<String, dynamic> companyData = {
             'companyId': companyId,
             'name': companyName,
-            'type': companyType,
+            'username': companyUser,
             'imageUrl': imageUrl,
           };
 
@@ -74,36 +73,10 @@ class _CompanyPageState extends State<CompanyPage> {
     }
   }
 
-  Future<void> _getImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      CroppedFile? croppedFile = await _cropImage(File(pickedFile.path));
-      if (croppedFile != null) {
-        setState(() {
-          _image = File(croppedFile.path);
-        });
-      }
-    }
-  }
-
-  Future<CroppedFile?> _cropImage(File imageFile) async {
-    final imageCropper = ImageCropper(); // Crear una instancia de ImageCropper
-    CroppedFile? croppedFile = await imageCropper.cropImage(
-      sourcePath: imageFile.path,
-      aspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
-      compressQuality: 100,
-      maxWidth: 512,
-      maxHeight: 512,
-    );
-    return croppedFile;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          Colors.black.withOpacity(0.0), // Color de fondo del Scaffold
+      backgroundColor: Colors.black, // Color de fondo del Scaffold
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('companies')
@@ -120,13 +93,13 @@ class _CompanyPageState extends State<CompanyPage> {
             snapshot.data?.docs.forEach((doc) {
               String companyId = doc.id;
               String companyName = doc['name'];
-              String companyType = doc['type'];
+              String companyUser = doc['username'];
               String? imageUrl = doc['imageUrl'];
 
               Map<String, dynamic> companyData = {
                 'companyId': companyId,
                 'name': companyName,
-                'type': companyType,
+                'username': companyUser,
                 'imageUrl': imageUrl,
               };
               companies.add(companyData);
@@ -232,7 +205,7 @@ class _CompanyPageState extends State<CompanyPage> {
                               ),
                               SizedBox(height: 5),
                               Text(
-                                'Siguiente evento: ${companyData['type'] ?? ''}',
+                                'Siguiente evento: ${companyData['username'] ?? ''}',
                                 style: GoogleFonts.roboto(
                                   fontSize: 16,
                                   color: Colors.white,
@@ -266,7 +239,26 @@ class _CompanyPageState extends State<CompanyPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          _showAddCompanyDialog(context);
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  CreateCompany(
+                uid: widget.uid,
+              ),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(1,
+                        0), // Posición inicial (fuera de la pantalla a la derecha)
+                    end: Offset.zero, // Posición final (centro de la pantalla)
+                  ).animate(animation),
+                  child: child,
+                );
+              },
+            ),
+          );
         },
         backgroundColor: Color.fromARGB(255, 242, 187, 29),
         icon: Icon(
@@ -283,7 +275,7 @@ class _CompanyPageState extends State<CompanyPage> {
   // Función para mostrar un diálogo para agregar una nueva empresa
   void _showAddCompanyDialog(BuildContext context) {
     TextEditingController nameController = TextEditingController();
-    TextEditingController typeController = TextEditingController();
+    TextEditingController userController = TextEditingController();
 
     showDialog(
       context: context,
@@ -294,9 +286,7 @@ class _CompanyPageState extends State<CompanyPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               InkWell(
-                onTap: () async {
-                  await _getImage();
-                },
+                onTap: () async {},
                 child: CircleAvatar(
                   radius: 50,
                   backgroundColor: Colors.grey[
@@ -324,8 +314,10 @@ class _CompanyPageState extends State<CompanyPage> {
               ),
               SizedBox(height: 10),
               TextFormField(
-                controller: typeController,
-                decoration: InputDecoration(labelText: 'Tipo de empresa'),
+                controller: userController,
+                decoration: InputDecoration(
+                    labelText:
+                        'Username de la empresa(Esto identifica a la empresa)'),
               ),
             ],
           ),
@@ -341,13 +333,13 @@ class _CompanyPageState extends State<CompanyPage> {
               onPressed: () async {
                 // Acción al presionar el botón de agregar
                 String companyName = nameController.text.trim();
-                String companyType = typeController.text.trim();
+                String companyUser = userController.text.trim();
                 String ownerUid = widget.uid ?? '';
                 String companyId =
                     Uuid().v4(); // Generar un ID único para la compañía
 
                 if (companyName.isNotEmpty &&
-                    companyType.isNotEmpty &&
+                    companyUser.isNotEmpty &&
                     ownerUid.isNotEmpty) {
                   try {
                     String imageUrl = '';
@@ -372,7 +364,7 @@ class _CompanyPageState extends State<CompanyPage> {
                         .doc(companyId)
                         .set({
                       'name': companyName,
-                      'type': companyType,
+                      'username': companyUser,
                       'ownerUid': ownerUid,
                       'imageUrl': imageUrl,
                     });

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/widgets.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -10,6 +11,7 @@ class RegisterPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text(
           'Registrarse',
@@ -70,7 +72,6 @@ class _RegisterFormState extends State<RegisterForm> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black.withOpacity(0.9),
       padding: const EdgeInsets.all(20.0),
       child: SingleChildScrollView(
         child: Form(
@@ -115,15 +116,27 @@ class _RegisterFormState extends State<RegisterForm> {
               ),
               SizedBox(height: 20),
               TextFormField(
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Email',
                   labelStyle:
                       TextStyle(color: Color.fromARGB(255, 242, 187, 29)),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
+                  prefixIcon:
+                      Icon(Icons.email, color: Colors.grey), // Color del icono
+                  border: OutlineInputBorder(
+                    borderRadius:
+                        BorderRadius.circular(10), // Bordes redondeados
                   ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                        color: Color.fromARGB(
+                            255, 242, 187, 29)), // Borde resaltado al enfocar
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                        color:
+                            Color.fromARGB(255, 158, 128, 36)), // Borde regular
                   ),
                 ),
                 style: TextStyle(color: Colors.white),
@@ -139,15 +152,27 @@ class _RegisterFormState extends State<RegisterForm> {
               ),
               const SizedBox(height: 20),
               TextFormField(
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Contraseña',
                   labelStyle:
                       TextStyle(color: Color.fromARGB(255, 242, 187, 29)),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
+                  prefixIcon: Icon(Icons.password,
+                      color: Colors.grey), // Color del icono
+                  border: OutlineInputBorder(
+                    borderRadius:
+                        BorderRadius.circular(10), // Bordes redondeados
                   ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                        color: Color.fromARGB(
+                            255, 242, 187, 29)), // Borde resaltado al enfocar
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                        color:
+                            Color.fromARGB(255, 158, 128, 36)), // Borde regular
                   ),
                 ),
                 style: TextStyle(color: Colors.white),
@@ -164,18 +189,28 @@ class _RegisterFormState extends State<RegisterForm> {
               ),
               const SizedBox(height: 20),
               TextFormField(
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Nombre',
                   labelStyle:
                       TextStyle(color: Color.fromARGB(255, 242, 187, 29)),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
+                  prefixIcon:
+                      Icon(Icons.person, color: Colors.grey), // Color del icono
+                  border: OutlineInputBorder(
+                    borderRadius:
+                        BorderRadius.circular(10), // Bordes redondeados
                   ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                        color: Color.fromARGB(
+                            255, 242, 187, 29)), // Borde resaltado al enfocar
                   ),
-                  //fillColor: Colors.white,
-                  //filled: true,
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                        color:
+                            Color.fromARGB(255, 158, 128, 36)), // Borde regular
+                  ),
                 ),
                 style: TextStyle(color: Colors.white),
                 validator: (value) {
@@ -190,18 +225,28 @@ class _RegisterFormState extends State<RegisterForm> {
               ),
               const SizedBox(height: 20),
               TextFormField(
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Apellido',
                   labelStyle:
                       TextStyle(color: Color.fromARGB(255, 242, 187, 29)),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
+                  prefixIcon: Icon(Icons.person_2_outlined,
+                      color: Colors.grey), // Color del icono
+                  border: OutlineInputBorder(
+                    borderRadius:
+                        BorderRadius.circular(10), // Bordes redondeados
                   ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                        color: Color.fromARGB(
+                            255, 242, 187, 29)), // Borde resaltado al enfocar
                   ),
-                  //fillColor: Colors.white,
-                  //filled: true,
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                        color:
+                            Color.fromARGB(255, 158, 128, 36)), // Borde regular
+                  ),
                 ),
                 style: TextStyle(color: Colors.white),
                 validator: (value) {
@@ -220,18 +265,28 @@ class _RegisterFormState extends State<RegisterForm> {
                   _selectDate(context);
                 },
                 child: InputDecorator(
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Fecha de Nacimiento',
                     labelStyle:
                         TextStyle(color: Color.fromARGB(255, 242, 187, 29)),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey),
+                    prefixIcon: Icon(Icons.calendar_today,
+                        color: Colors.grey), // Color del icono
+                    border: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(10), // Bordes redondeados
                     ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                          color: Color.fromARGB(
+                              255, 242, 187, 29)), // Borde resaltado al enfocar
                     ),
-                    //fillColor: Colors.white,
-                    //filled: true,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                          color: Color.fromARGB(
+                              255, 158, 128, 36)), // Borde regular
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -240,7 +295,6 @@ class _RegisterFormState extends State<RegisterForm> {
                         '${_fechaNacimiento.day}/${_fechaNacimiento.month}/${_fechaNacimiento.year}',
                         style: TextStyle(color: Colors.white),
                       ),
-                      Icon(Icons.calendar_today, color: Colors.white),
                     ],
                   ),
                 ),

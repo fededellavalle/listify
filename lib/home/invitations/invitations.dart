@@ -12,20 +12,127 @@ class InvitationsPage extends StatefulWidget {
 }
 
 class _InvitationsPageState extends State<InvitationsPage> {
-  late String? currentUserEmail; // Email del usuario actual
+  late User? currentUser; // Usuario actual
 
   @override
   void initState() {
     super.initState();
-    User? user = FirebaseAuth.instance.currentUser;
-    currentUserEmail = user
-        ?.email; // Reemplaza esto con la lógica para obtener el email del usuario actual
+    currentUser = FirebaseAuth.instance.currentUser;
+  }
+
+  Future<void> acceptInvitation(String companyId, String category) async {
+    try {
+      // Agregar la relación de compañía al usuario actual
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser!.uid) // UID del usuario
+          .update({
+        'companyRelationship': FieldValue.arrayUnion([
+          {'companyUid': companyId, 'category': category}
+        ])
+      });
+
+      // Obtener información adicional del usuario
+      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser!.uid)
+          .get();
+
+      if (userSnapshot.exists) {
+        var userData = userSnapshot.data() as Map<String, dynamic>;
+        String userName = userData['name'] ?? 'Nombre no encontrado';
+        String lastName = userData['lastname'] ?? '';
+        String completeName =
+            lastName.isNotEmpty ? '$userName $lastName' : userName;
+        String userInstagram = userData['instagram'] ?? '-';
+
+        // Mover la invitación de la lista 'invitations' a la lista 'persons' en la compañía correspondiente
+        await FirebaseFirestore.instance
+            .collection('companies')
+            .doc(companyId)
+            .collection('personalCategories')
+            .doc(category)
+            .update({
+          'invitations': FieldValue.arrayRemove([currentUser!.email]),
+          'persons': FieldValue.arrayUnion([
+            {
+              'completeName': completeName,
+              'email': currentUser!.email,
+              'instagram': userInstagram
+            }
+          ])
+        });
+
+        await FirebaseFirestore.instance
+            .collection('invitations')
+            .doc(currentUser!.email)
+            .collection('receivedInvitations')
+            .where('company', isEqualTo: companyId)
+            .get()
+            .then((querySnapshot) {
+          querySnapshot.docs.forEach((doc) {
+            doc.reference.delete();
+          });
+        });
+
+        // Notificar al usuario que la invitación ha sido aceptada
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Invitación aceptada'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      } else {
+        throw Exception('Error al obtener los datos del usuario');
+      }
+    } catch (e) {
+      print('Error al aceptar la invitación: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al aceptar la invitación'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  Future<void> cancelInvitation(String companyId, String category) async {
+    await FirebaseFirestore.instance
+        .collection('invitations')
+        .doc(currentUser!.email)
+        .collection('receivedInvitations')
+        .where('company', isEqualTo: companyId)
+        .get()
+        .then((querySnapshot) {
+      querySnapshot.docs.forEach((doc) {
+        doc.reference.delete();
+      });
+    });
+
+    await FirebaseFirestore.instance
+        .collection('companies')
+        .doc(companyId)
+        .collection('personalCategories')
+        .doc(category)
+        .update({
+      'invitations': FieldValue.arrayRemove([
+        currentUser!.email
+      ]), // Remove directly the email without wrapping it in an array
+    });
+
+    // Notify the user that the invitation has been canceled
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Invitación rechazada'),
+        duration: Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.9),
+      backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
@@ -44,11 +151,20 @@ class _InvitationsPageState extends State<InvitationsPage> {
           children: [
             Container(
               child: StreamBuilder(
-                stream: FirebaseFirestore.instance
-                    .collection('invitations')
-                    .where('recipient', isEqualTo: currentUserEmail)
-                    .snapshots(),
-                builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                stream: currentUser != null
+                    ? FirebaseFirestore.instance
+                        .collection('invitations')
+                        .doc(currentUser!
+                            .email) // Uso del email del usuario actual
+                        .collection(
+                            'receivedInvitations') // Subcolección de invitaciones recibidas
+                        .snapshots()
+                    : null, // No se muestra nada si el usuario no está autenticado
+                builder: (context, AsyncSnapshot<QuerySnapshot>? snapshot) {
+                  if (snapshot == null) {
+                    return Text('Usuario no autenticado');
+                  }
+
                   if (snapshot.hasError) {
                     return Text('Error al cargar las invitaciones');
                   }
@@ -58,7 +174,16 @@ class _InvitationsPageState extends State<InvitationsPage> {
                   }
 
                   if (snapshot.data!.docs.isEmpty) {
-                    return Text('No hay invitaciones para mostrar');
+                    return Center(
+                      child: Text(
+                        'No tienes invitaciones',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.roboto(
+                          color: Colors.white,
+                          fontSize: 20, // Tamaño de fuente deseado
+                        ),
+                      ),
+                    );
                   }
 
                   // Si hay invitaciones, construye la lista de invitaciones
@@ -72,7 +197,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
                       String sender = invitation['sender'] ??
                           'Sin remitente'; // Email del remitente de la invitación
                       String category = invitation['category'] ??
-                          'Sin mensaje'; // Mensaje de la invitación
+                          'Sin mensaje'; // Categoría de la invitación
                       String companyId =
                           invitation['company']; // UID de la compañía
 
@@ -88,8 +213,6 @@ class _InvitationsPageState extends State<InvitationsPage> {
                             return Text(
                                 'Error al obtener el nombre del remitente');
                           }
-
-                          print('Sender: $sender');
 
                           if (userSnapshot.connectionState ==
                               ConnectionState.waiting) {
@@ -110,9 +233,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
                           String senderName = userData['name'] ??
                               'Nombre no encontrado'; // Nombre del remitente
                           String senderImage = userData['imageUrl'] ??
-                              'Imagen no encontrada'; // Nombre del remitente
-
-                          print('Name: $senderName');
+                              'Imagen no encontrada'; // Imagen del remitente
 
                           // Construir el widget de la invitación con el nombre del remitente
                           return FutureBuilder(
@@ -141,8 +262,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
                                   companyData['imageUrl'] ??
                                       ''; // URL de la imagen de la empresa
 
-                              print('Company Name: $companyName');
-
+                              // Construir el ListTile para mostrar la invitación
                               return ListTile(
                                 leading: companyImageUrl.isNotEmpty
                                     ? ClipOval(
@@ -159,7 +279,6 @@ class _InvitationsPageState extends State<InvitationsPage> {
                                           size: 62,
                                         ),
                                       ),
-
                                 title: Text(
                                   '$senderName te invita a unirte a $companyName como $category',
                                   style: GoogleFonts.roboto(
@@ -167,23 +286,24 @@ class _InvitationsPageState extends State<InvitationsPage> {
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                                contentPadding: EdgeInsets.fromLTRB(16, 8, 16,
-                                    8), // Ajuste del espacio interior
+                                contentPadding:
+                                    EdgeInsets.fromLTRB(16, 8, 16, 8),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
+                                    SizedBox(height: 4),
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         ElevatedButton(
                                           onPressed: () {
-                                            // Lógica para aceptar la invitación
+                                            acceptInvitation(
+                                                companyId, category);
                                           },
                                           style: ButtonStyle(
                                             padding: MaterialStateProperty.all<
                                                 EdgeInsetsGeometry>(
-                                              EdgeInsets.all(
-                                                  10), // Ajusta el padding del botón según sea necesario
+                                              EdgeInsets.all(10),
                                             ),
                                             foregroundColor:
                                                 MaterialStateProperty.all<
@@ -210,16 +330,22 @@ class _InvitationsPageState extends State<InvitationsPage> {
                                           ),
                                         ),
                                         SizedBox(
-                                            width:
-                                                8), // Espacio entre los botones
+                                          width: 13,
+                                        ),
                                         ElevatedButton(
                                           onPressed: () {
-                                            // Lógica para cancelar la invitación
+                                            cancelInvitation(
+                                                companyId, category);
                                           },
                                           style: ButtonStyle(
+                                            padding: MaterialStateProperty.all<
+                                                EdgeInsetsGeometry>(
+                                              EdgeInsets.all(
+                                                  10), // Ajusta el padding del botón según sea necesario
+                                            ),
                                             overlayColor: MaterialStateProperty
-                                                .all<Color>(Colors
-                                                    .grey), // Color del overlay (sombra) al presionar el botón
+                                                .all<Color>(Colors.red
+                                                    .shade300), // Color del overlay (sombra) al presionar el botón
                                             backgroundColor:
                                                 MaterialStateProperty.all<
                                                         Color>(
@@ -235,14 +361,9 @@ class _InvitationsPageState extends State<InvitationsPage> {
                                                         .red), // Borde blanco
                                               ),
                                             ),
-                                            padding: MaterialStateProperty.all<
-                                                EdgeInsetsGeometry>(
-                                              EdgeInsets.all(
-                                                  10), // Ajusta el padding del botón según sea necesario
-                                            ),
                                           ),
                                           child: Text(
-                                            'Cancelar',
+                                            'Rechazar',
                                             style: GoogleFonts.roboto(
                                               color: Colors.red,
                                             ),

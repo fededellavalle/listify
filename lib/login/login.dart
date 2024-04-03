@@ -34,7 +34,7 @@ class _LoginFormState extends State<LoginForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       //backgroundColor: Colors.black.withOpacity(0.9),
-      backgroundColor: Colors.black.withOpacity(0.9),
+      backgroundColor: Colors.black,
       body: Center(
         child: SingleChildScrollView(
           child: Column(
@@ -68,15 +68,27 @@ class _LoginFormState extends State<LoginForm> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
                       TextFormField(
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Email',
                           labelStyle: TextStyle(
                               color: Color.fromARGB(255, 242, 187, 29)),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
+                          prefixIcon: Icon(Icons.person,
+                              color: Colors.grey), // Color del icono
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(10), // Bordes redondeados
                           ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(
+                                color: Color.fromARGB(255, 242, 187,
+                                    29)), // Borde resaltado al enfocar
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(
+                                color: Color.fromARGB(
+                                    255, 158, 128, 36)), // Borde regular
                           ),
                           //fillColor: Colors.white,
                           //filled: true,
@@ -99,11 +111,23 @@ class _LoginFormState extends State<LoginForm> {
                           labelStyle: TextStyle(
                             color: Color.fromARGB(255, 242, 187, 29),
                           ),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
+                          prefixIcon: Icon(Icons.password,
+                              color: Colors.grey), // Color del icono
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(10), // Bordes redondeados
                           ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(
+                                color: Color.fromARGB(255, 242, 187,
+                                    29)), // Borde resaltado al enfocar
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(
+                                color: Color.fromARGB(
+                                    255, 158, 128, 36)), // Borde regular
                           ),
                           suffixIcon: GestureDetector(
                             onTap: () {

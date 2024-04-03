@@ -34,14 +34,27 @@ class _InsideCategoryState extends State<InsideCategory> {
 
     DocumentSnapshot categorySnapshot = await categoryRef.get();
 
-    Map<String, dynamic>? categoryData =
-        categorySnapshot.data() as Map<String, dynamic>?;
+    if (categorySnapshot.exists) {
+      Map<String, dynamic>? categoryData =
+          categorySnapshot.data() as Map<String, dynamic>?;
 
-    setState(() {
-      persons = categoryData?['persons'] ?? [];
-    });
+      if (categoryData != null && categoryData.containsKey('persons')) {
+        var personsData = categoryData['persons'];
 
-    print('Persons: $persons');
+        if (personsData is List && personsData.isNotEmpty) {
+          setState(() {
+            persons = List.from(personsData);
+            print(persons);
+          });
+        } else {
+          print('Error: personsData is not a non-empty list');
+        }
+      } else {
+        print('Error: categoryData does not contain key "persons"');
+      }
+    } else {
+      print('Error: categorySnapshot does not exist');
+    }
   }
 
   void loadInvitations() async {
@@ -73,6 +86,7 @@ class _InsideCategoryState extends State<InsideCategory> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
@@ -134,29 +148,48 @@ class _InsideCategoryState extends State<InsideCategory> {
             columnSpacing:
                 30, // Ajusta el espacio entre las columnas según sea necesario
             columns: [
-              DataColumn(label: Text('Nombre')),
-              DataColumn(label: Text('Email')),
-              DataColumn(label: Text('Instagram')),
+              DataColumn(
+                  label: Text(
+                'Nombre',
+                style: GoogleFonts.roboto(color: Colors.white),
+              )),
+              DataColumn(
+                  label: Text(
+                'Email',
+                style: GoogleFonts.roboto(color: Colors.white),
+              )),
+              DataColumn(
+                  label: Text(
+                'Instagram',
+                style: GoogleFonts.roboto(color: Colors.white),
+              )),
               DataColumn(label: Text('')),
             ],
             rows: [
-              ...persons.map((personEmail) {
-                String personName =
-                    ''; // Aquí deberías tener el nombre de la persona
-                String personInstagram =
-                    ''; // Aquí deberías tener el Instagram de la persona
+              ...persons.map((person) {
+                String personName = person['completeName'] ?? '';
+                String personEmail = person['email'] ?? '';
+                String personInstagram = person['instagram'] ?? '';
 
                 return DataRow(cells: [
-                  DataCell(Text(personName)),
-                  DataCell(Text(personEmail)),
-                  DataCell(Text(personInstagram)),
+                  DataCell(Text(
+                    personName,
+                    style: GoogleFonts.roboto(color: Colors.white),
+                  )),
+                  DataCell(Text(
+                    personEmail,
+                    style: GoogleFonts.roboto(color: Colors.white),
+                  )),
+                  DataCell(Text(
+                    personInstagram,
+                    style: GoogleFonts.roboto(color: Colors.white),
+                  )),
                   DataCell(
                     IconButton(
                       icon: Icon(Icons.close),
                       color: Colors.red,
                       onPressed: () {
-                        deleteInvitation(
-                            personEmail); // Llama al método para eliminar la invitación
+                        deleteInvitation(personEmail);
                       },
                     ),
                   ),
@@ -167,14 +200,21 @@ class _InsideCategoryState extends State<InsideCategory> {
           SizedBox(height: 20), // Agrega un espacio entre las dos DataTables
           DataTable(
             columns: [
-              DataColumn(label: Text('Email de persona invitada')),
+              DataColumn(
+                  label: Text(
+                'Email de persona invitada',
+                style: GoogleFonts.roboto(color: Colors.white),
+              )),
             ],
             rows: [
               ...invitations.map((personEmail) {
                 return DataRow(cells: [
                   DataCell(Row(
                     children: [
-                      Text(personEmail),
+                      Text(
+                        personEmail,
+                        style: GoogleFonts.roboto(color: Colors.white),
+                      ),
                       Spacer(),
                       IconButton(
                         icon: Icon(Icons.close),

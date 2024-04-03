@@ -42,7 +42,7 @@ class _GestionPersonalState extends State<GestionPersonal> {
   Widget build(BuildContext context) {
     print('personalCategories isEmpty: ${_categoriesStream?.isEmpty}');
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.95),
+      backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
@@ -55,6 +55,7 @@ class _GestionPersonalState extends State<GestionPersonal> {
           color: Colors.white,
         ),
         actions: [
+          SizedBox(height: 10),
           Container(
             margin: EdgeInsets.only(right: 10),
             child: Stack(

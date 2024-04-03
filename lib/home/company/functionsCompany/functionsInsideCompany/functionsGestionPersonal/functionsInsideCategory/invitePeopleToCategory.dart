@@ -25,13 +25,20 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
   TextEditingController userController = TextEditingController();
 
   Future<void> sendInvitation(String inviteEmail, User? user) async {
-    // Save the invitation in the database
-    await FirebaseFirestore.instance.collection('invitations').add({
+    // Obtener una referencia a la colección de invitaciones para el destinatario
+    CollectionReference invitationsCollection =
+        FirebaseFirestore.instance.collection('invitations');
+
+    // Guardar la invitación en la subcolección "ReceivedInvitations" dentro del documento del destinatario
+    DocumentReference recipientDocRef = invitationsCollection.doc(inviteEmail);
+    CollectionReference receivedInvitationsCollection =
+        recipientDocRef.collection('receivedInvitations');
+
+    await receivedInvitationsCollection.add({
       'sender': user?.email,
       'recipient': inviteEmail,
       'company': widget.companyData['companyId'],
       'category': widget.categoryName,
-      'status': 'pending',
     });
 
     print('Invitacion enviada a $inviteEmail');

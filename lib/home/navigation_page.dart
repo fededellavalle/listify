@@ -92,7 +92,7 @@ class _NavigationPageState extends State<NavigationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.9),
+      backgroundColor: Colors.black,
       drawer: Drawer(
         backgroundColor: Colors.black.withOpacity(0.9),
         child: ListView(
