@@ -366,7 +366,7 @@ class _LoginFormState extends State<LoginForm> {
                 children: [
                   Text(
                     'No eres parte de app listas?',
-                    style: GoogleFonts.roboto(color: Colors.grey[700]),
+                    style: GoogleFonts.roboto(color: Colors.grey),
                   ),
                   const SizedBox(width: 4),
                   GestureDetector(
@@ -375,12 +375,11 @@ class _LoginFormState extends State<LoginForm> {
                         context,
                         MaterialPageRoute(builder: (context) => RegisterPage()),
                       );
-                      print('Registrate ahora presionado');
                     },
                     child: Text(
-                      'Registrate ahora',
+                      'Registrate aquí',
                       style: GoogleFonts.roboto(
-                        color: Colors.blue,
+                        color: Color.fromARGB(255, 242, 187, 29),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
