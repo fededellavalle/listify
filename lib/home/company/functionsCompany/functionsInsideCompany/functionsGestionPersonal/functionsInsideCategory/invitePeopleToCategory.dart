@@ -113,18 +113,17 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
 
                       User? user = FirebaseAuth.instance.currentUser;
                       if (user?.email != inviteEmail) {
-                        if (!widget.emails.contains(inviteEmail)) {
-                          // Obtener el documento de la categoría personal
-                          DocumentSnapshot categorySnapshot =
-                              await categoryRef.get();
+                        // Obtener el documento de la categoría personal
+                        DocumentSnapshot categorySnapshot =
+                            await categoryRef.get();
+                        Map<String, dynamic>? categoryData =
+                            categorySnapshot.data() as Map<String, dynamic>?;
 
+                        List<dynamic> members = categoryData?['members'] ?? [];
+
+                        if (members.contains(inviteEmail)) {
                           // Verificar si la categoría existe
                           if (categorySnapshot.exists) {
-                            // Obtener los datos del documento como un Map<String, dynamic>
-                            Map<String, dynamic>? categoryData =
-                                categorySnapshot.data()
-                                    as Map<String, dynamic>?;
-
                             // Verificar que los datos no sean nulos y obtener la lista de invitaciones
                             List<dynamic> invitations =
                                 categoryData?['invitations'] ?? [];

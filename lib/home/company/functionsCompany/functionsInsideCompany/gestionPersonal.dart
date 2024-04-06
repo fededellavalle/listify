@@ -155,20 +155,39 @@ class _GestionPersonalState extends State<GestionPersonal> {
                         dynamic>?; // Especificar el tipo de categoryData
 
                     if (categoryData != null) {
-                      int personCount = categoryData['persons']?.length ?? 0;
+                      int memberCount = categoryData['members']?.length ?? 0;
 
                       return ElevatedButton(
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) => InsideCategory(
+                            PageRouteBuilder(
+                              pageBuilder:
+                                  (context, animation, secondaryAnimation) =>
+                                      InsideCategory(
                                 categoryName: categoryName,
                                 companyData: widget.companyData,
-                                emails: categoryData['persons']
+                                emails: categoryData['members']
                                         ?.cast<String>() ??
                                     [], // Acceder a 'persons' como un Map<String, dynamic>
                               ),
+                              transitionsBuilder: (context, animation,
+                                  secondaryAnimation, child) {
+                                return SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(1, 0),
+                                    end: Offset.zero,
+                                  ).animate(
+                                    CurvedAnimation(
+                                      parent: animation,
+                                      curve: Curves.linearToEaseOut,
+                                      reverseCurve: Curves.easeIn,
+                                    ),
+                                  ),
+                                  child: child,
+                                );
+                              },
+                              transitionDuration: Duration(milliseconds: 500),
                             ),
                           );
                         },
@@ -185,7 +204,7 @@ class _GestionPersonalState extends State<GestionPersonal> {
                             ),
                             Spacer(),
                             Text(
-                              '$personCount',
+                              '$memberCount',
                               style: GoogleFonts.roboto(
                                 color: Colors.grey.shade600,
                                 fontSize: 18,

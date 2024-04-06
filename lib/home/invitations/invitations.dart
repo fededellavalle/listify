@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../styles/button.dart';
+//import '../../styles/button.dart';
 
 class InvitationsPage extends StatefulWidget {
   const InvitationsPage({Key? key}) : super(key: key);
@@ -20,7 +20,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
     currentUser = FirebaseAuth.instance.currentUser;
   }
 
-  Future<void> acceptInvitation(String companyId, String category) async {
+  Future<void> acceptInvitation(String companyUser, String category) async {
     try {
       // Agregar la relación de compañía al usuario actual
       await FirebaseFirestore.instance
@@ -28,7 +28,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
           .doc(currentUser!.uid) // UID del usuario
           .update({
         'companyRelationship': FieldValue.arrayUnion([
-          {'companyUid': companyId, 'category': category}
+          {'companyUsername': companyUser, 'category': category}
         ])
       });
 
@@ -46,15 +46,14 @@ class _InvitationsPageState extends State<InvitationsPage> {
             lastName.isNotEmpty ? '$userName $lastName' : userName;
         String userInstagram = userData['instagram'] ?? '-';
 
-        // Mover la invitación de la lista 'invitations' a la lista 'persons' en la compañía correspondiente
         await FirebaseFirestore.instance
             .collection('companies')
-            .doc(companyId)
+            .doc(companyUser)
             .collection('personalCategories')
             .doc(category)
             .update({
           'invitations': FieldValue.arrayRemove([currentUser!.email]),
-          'persons': FieldValue.arrayUnion([
+          'members': FieldValue.arrayUnion([
             {
               'completeName': completeName,
               'email': currentUser!.email,
@@ -67,7 +66,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
             .collection('invitations')
             .doc(currentUser!.email)
             .collection('receivedInvitations')
-            .where('company', isEqualTo: companyId)
+            .where('company', isEqualTo: companyUser)
             .get()
             .then((querySnapshot) {
           querySnapshot.docs.forEach((doc) {
@@ -232,8 +231,8 @@ class _InvitationsPageState extends State<InvitationsPage> {
                               as Map<String, dynamic>;
                           String senderName = userData['name'] ??
                               'Nombre no encontrado'; // Nombre del remitente
-                          String senderImage = userData['imageUrl'] ??
-                              'Imagen no encontrada'; // Imagen del remitente
+                          //String senderImage = userData['imageUrl'] ??
+                          'Imagen no encontrada'; // Imagen del remitente
 
                           // Construir el widget de la invitación con el nombre del remitente
                           return FutureBuilder(

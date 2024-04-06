@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
-import 'package:uuid/uuid.dart';
+//import 'package:uuid/uuid.dart';
 import '../../../styles/button.dart';
 
 class CreateCompany extends StatefulWidget {
@@ -99,9 +99,11 @@ class _CreateCompanyState extends State<CreateCompany> {
             SizedBox(height: 20),
             TextFormField(
               controller: nameController,
+              style: GoogleFonts.roboto(color: Colors.white),
               decoration: InputDecoration(
                 labelText: 'Nombre de la empresa',
-                labelStyle: GoogleFonts.roboto(color: Colors.white),
+                labelStyle: GoogleFonts.roboto(
+                    color: Colors.white), // Color del texto de la etiqueta
                 prefixIcon:
                     Icon(Icons.person, color: Colors.grey), // Color del icono
                 border: OutlineInputBorder(
@@ -110,19 +112,21 @@ class _CreateCompanyState extends State<CreateCompany> {
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(
-                      color: Color.fromARGB(
-                          255, 242, 187, 29)), // Borde resaltado al enfocar
+                    color: Color.fromARGB(
+                        255, 242, 187, 29), // Borde resaltado al enfocar
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(
-                      color:
-                          Color.fromARGB(255, 158, 128, 36)), // Borde regular
+                    color: Color.fromARGB(255, 158, 128, 36), // Borde regular
+                  ),
                 ),
               ),
             ),
             SizedBox(height: 20),
             TextFormField(
+              style: GoogleFonts.roboto(color: Colors.white),
               controller: userController,
               decoration: InputDecoration(
                 labelText: 'Username de la empresa',

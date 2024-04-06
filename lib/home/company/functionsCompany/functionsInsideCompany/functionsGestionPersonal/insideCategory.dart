@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../../styles/button.dart';
 import 'package:unicons/unicons.dart';
 import 'functionsInsideCategory/invitePeopleToCategory.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class InsideCategory extends StatefulWidget {
   final String categoryName;
@@ -22,10 +23,10 @@ class InsideCategory extends StatefulWidget {
 }
 
 class _InsideCategoryState extends State<InsideCategory> {
-  List<dynamic> persons = [];
+  List<dynamic> members = [];
   List<dynamic> invitations = [];
 
-  void loadPersons() async {
+  void loadMembers() async {
     DocumentReference categoryRef = FirebaseFirestore.instance
         .collection('companies')
         .doc(widget.companyData['companyId'])
@@ -38,19 +39,19 @@ class _InsideCategoryState extends State<InsideCategory> {
       Map<String, dynamic>? categoryData =
           categorySnapshot.data() as Map<String, dynamic>?;
 
-      if (categoryData != null && categoryData.containsKey('persons')) {
-        var personsData = categoryData['persons'];
+      if (categoryData != null && categoryData.containsKey('members')) {
+        var membersData = categoryData['members'];
 
-        if (personsData is List && personsData.isNotEmpty) {
+        if (membersData is List && membersData.isNotEmpty) {
           setState(() {
-            persons = List.from(personsData);
-            print(persons);
+            members = List.from(membersData);
+            print(members);
           });
         } else {
-          print('Error: personsData is not a non-empty list');
+          print('Error: membersData is not a non-empty list');
         }
       } else {
-        print('Error: categoryData does not contain key "persons"');
+        print('Error: categoryData does not contain key "members"');
       }
     } else {
       print('Error: categorySnapshot does not exist');
@@ -79,7 +80,7 @@ class _InsideCategoryState extends State<InsideCategory> {
   @override
   void initState() {
     super.initState();
-    loadPersons();
+    loadMembers();
     loadInvitations();
   }
 
@@ -166,22 +167,22 @@ class _InsideCategoryState extends State<InsideCategory> {
               DataColumn(label: Text('')),
             ],
             rows: [
-              ...persons.map((person) {
-                String personName = person['completeName'] ?? '';
-                String personEmail = person['email'] ?? '';
-                String personInstagram = person['instagram'] ?? '';
+              ...members.map((member) {
+                String memberName = member['completeName'] ?? '';
+                String memberEmail = member['email'] ?? '';
+                String memberInstagram = member['instagram'] ?? '';
 
                 return DataRow(cells: [
                   DataCell(Text(
-                    personName,
+                    memberName,
                     style: GoogleFonts.roboto(color: Colors.white),
                   )),
                   DataCell(Text(
-                    personEmail,
+                    memberEmail,
                     style: GoogleFonts.roboto(color: Colors.white),
                   )),
                   DataCell(Text(
-                    personInstagram,
+                    memberInstagram,
                     style: GoogleFonts.roboto(color: Colors.white),
                   )),
                   DataCell(
@@ -189,7 +190,7 @@ class _InsideCategoryState extends State<InsideCategory> {
                       icon: Icon(Icons.close),
                       color: Colors.red,
                       onPressed: () {
-                        deleteInvitation(personEmail);
+                        deleteMember(memberName, memberEmail, memberInstagram);
                       },
                     ),
                   ),
@@ -207,12 +208,12 @@ class _InsideCategoryState extends State<InsideCategory> {
               )),
             ],
             rows: [
-              ...invitations.map((personEmail) {
+              ...invitations.map((memberEmail) {
                 return DataRow(cells: [
                   DataCell(Row(
                     children: [
                       Text(
-                        personEmail,
+                        memberEmail,
                         style: GoogleFonts.roboto(color: Colors.white),
                       ),
                       Spacer(),
@@ -225,7 +226,7 @@ class _InsideCategoryState extends State<InsideCategory> {
                         ),
                         onPressed: () {
                           deleteInvitation(
-                              personEmail); // Llama al método para eliminar la invitación
+                              memberEmail); // Llama al método para eliminar la invitación
                         },
                       ),
                     ],
@@ -261,7 +262,6 @@ class _InsideCategoryState extends State<InsideCategory> {
                   invitations.remove(email);
                 });
 
-                // Eliminar la invitación de la base de datos
                 FirebaseFirestore.instance
                     .collection('companies')
                     .doc(widget.companyData['companyId'])
@@ -273,11 +273,104 @@ class _InsideCategoryState extends State<InsideCategory> {
                   print('Invitación eliminada de la base de datos');
                 }).catchError((error) {
                   print('Error al eliminar la invitación: $error');
-                  // Aquí puedes manejar cualquier error que ocurra al eliminar la invitación
-                  // Por ejemplo, puedes revertir el cambio en el estado si hay un error
                   setState(() {
-                    invitations
-                        .add(email); // Volver a agregar la invitación al estado
+                    invitations.add(email);
+                  });
+                });
+
+                FirebaseFirestore.instance
+                    .collection('companies')
+                    .doc(widget.companyData['companyId'])
+                    .collection('personalCategories')
+                    .doc(widget.categoryName)
+                    .update({
+                  'invitations': FieldValue.arrayRemove([email]),
+                }).then((value) {
+                  print('Invitación eliminada de la base de datos');
+                }).catchError((error) {
+                  print('Error al eliminar la invitación: $error');
+                  setState(() {
+                    invitations.add(email);
+                  });
+                });
+
+                Navigator.of(context)
+                    .pop(); // Cerrar el diálogo después de eliminar
+              },
+              child: Text('Aceptar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void deleteMember(String name, String email, String instagram) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmar eliminación'),
+          content: Text(
+              '¿Estás seguro de que quieres eliminar a $name de ${widget.categoryName}?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar el diálogo
+              },
+              child: Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  members.removeWhere((member) => member['email'] == email);
+                });
+
+                FirebaseFirestore.instance
+                    .collection('companies')
+                    .doc(widget.companyData['companyId'])
+                    .collection('personalCategories')
+                    .doc(widget.categoryName)
+                    .update({
+                  'members': FieldValue.arrayRemove([
+                    {
+                      'completeName': name,
+                      'email': email,
+                      'instagram': instagram,
+                    }
+                  ]),
+                }).then((value) {
+                  print('Invitación eliminada de la base de datos');
+                }).catchError((error) {
+                  print('Error al eliminar la invitación: $error');
+
+                  setState(() {
+                    members.add({
+                      'completeName': name,
+                      'email': email,
+                      'instagram': instagram,
+                    });
+                  });
+                });
+
+                User? user = FirebaseAuth.instance.currentUser;
+
+                FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(user!.uid)
+                    .update({
+                  'companyRelationship': FieldValue.arrayRemove([
+                    {
+                      'category': widget.categoryName,
+                      'companyUsername': widget.companyData['username'],
+                    }
+                  ]),
+                }).then((value) {
+                  print('Invitación eliminada de la base de datos');
+                }).catchError((error) {
+                  print('Error al eliminar la invitación: $error');
+                  setState(() {
+                    invitations.add(email);
                   });
                 });
 

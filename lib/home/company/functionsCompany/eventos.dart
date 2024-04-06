@@ -1,36 +1,31 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../../styles/button.dart';
 import 'package:unicons/unicons.dart';
-import '../../../styles/button.dart';
-import 'functionsInsideCompany/gestionPersonal.dart';
 
-class CompanyWidget extends StatelessWidget {
-  final Map<String, dynamic> companyData;
-
-  const CompanyWidget({
-    Key? key,
-    required this.companyData,
-  }) : super(key: key);
+class EventosPage extends StatefulWidget {
+  const EventosPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    String companyName = companyData['name'] ?? '';
-    String companyImageUrl = companyData['imageUrl'] ?? '';
+  State<EventosPage> createState() => _EventosPageState();
+}
 
+class _EventosPageState extends State<EventosPage> {
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
-          companyName,
+          'companyName',
           style: GoogleFonts.roboto(
             color: Colors.white,
           ),
         ),
         iconTheme: IconThemeData(
-          color: Colors.white, // Color blanco para los iconos
+          color: Colors.white,
         ),
       ),
       body: SingleChildScrollView(
@@ -38,27 +33,6 @@ class CompanyWidget extends StatelessWidget {
           child: Column(
             children: [
               SizedBox(height: 20),
-              if (companyImageUrl.isNotEmpty)
-                CircleAvatar(
-                  backgroundImage: NetworkImage(companyImageUrl),
-                  radius: 80,
-                ),
-              SizedBox(height: 20),
-              Text(
-                '$companyName',
-                style: TextStyle(
-                  fontSize: 25,
-                  color: Colors.white,
-                ),
-              ),
-              SizedBox(height: 10),
-              Text(
-                '@${companyData['username'] ?? ''}',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
               SizedBox(height: 20),
 
               // Botones de acciones dentro de la empresa
@@ -100,7 +74,7 @@ class CompanyWidget extends StatelessWidget {
                               width: 15,
                             ),
                             Text(
-                              'Eventos de ${companyData['name'] ?? ''}',
+                              'Eventos de ',
                               style: GoogleFonts.roboto(
                                 color: Colors.white,
                                 fontSize: 18,
@@ -118,30 +92,7 @@ class CompanyWidget extends StatelessWidget {
 
                       // Gestionar Personal
                       ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            PageRouteBuilder(
-                              pageBuilder:
-                                  (context, animation, secondaryAnimation) =>
-                                      GestionPersonal(
-                                companyData: companyData,
-                              ),
-                              transitionsBuilder: (context, animation,
-                                  secondaryAnimation, child) {
-                                return SlideTransition(
-                                  position: Tween<Offset>(
-                                    begin: const Offset(1,
-                                        0), // Posición inicial (fuera de la pantalla a la derecha)
-                                    end: Offset
-                                        .zero, // Posición final (centro de la pantalla)
-                                  ).animate(animation),
-                                  child: child,
-                                );
-                              },
-                            ),
-                          );
-                        },
+                        onPressed: () {},
                         style: buttonCompany,
                         child: Row(
                           mainAxisAlignment:

@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:uuid/uuid.dart';
 import 'functionsCompany/insideCompany.dart';
 import 'package:unicons/unicons.dart';
 import 'functionsCompany/createCompany.dart';
@@ -18,8 +15,6 @@ class CompanyPage extends StatefulWidget {
 }
 
 class _CompanyPageState extends State<CompanyPage> {
-  File? _image;
-
   @override
   void initState() {
     super.initState();
@@ -124,7 +119,28 @@ class _CompanyPageState extends State<CompanyPage> {
                     SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () {
-                        _showAddCompanyDialog(context);
+                        Navigator.push(
+                          context,
+                          PageRouteBuilder(
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    CreateCompany(
+                              uid: widget.uid,
+                            ),
+                            transitionsBuilder: (context, animation,
+                                secondaryAnimation, child) {
+                              return SlideTransition(
+                                position: Tween<Offset>(
+                                  begin: const Offset(1,
+                                      0), // Posición inicial (fuera de la pantalla a la derecha)
+                                  end: Offset
+                                      .zero, // Posición final (centro de la pantalla)
+                                ).animate(animation),
+                                child: child,
+                              );
+                            },
+                          ),
+                        );
                       },
                       child: Text('Agregar una empresa'),
                     ),
@@ -150,14 +166,19 @@ class _CompanyPageState extends State<CompanyPage> {
                               (context, animation, secondaryAnimation, child) {
                             return SlideTransition(
                               position: Tween<Offset>(
-                                begin: const Offset(1,
-                                    0), // Posición inicial (fuera de la pantalla a la derecha)
-                                end: Offset
-                                    .zero, // Posición final (centro de la pantalla)
-                              ).animate(animation),
+                                begin: const Offset(1, 0),
+                                end: Offset.zero,
+                              ).animate(
+                                CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.linearToEaseOut,
+                                  reverseCurve: Curves.easeIn,
+                                ),
+                              ),
                               child: child,
                             );
                           },
+                          transitionDuration: Duration(milliseconds: 500),
                         ),
                       );
                     },
@@ -203,11 +224,19 @@ class _CompanyPageState extends State<CompanyPage> {
                                   color: Colors.white,
                                 ),
                               ),
-                              SizedBox(height: 5),
+                              SizedBox(height: 2),
                               Text(
-                                'Siguiente evento: ${companyData['username'] ?? ''}',
+                                '@${companyData['username'] ?? ''}',
                                 style: GoogleFonts.roboto(
                                   fontSize: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Siguiente evento: @${companyData['username'] ?? ''}',
+                                style: GoogleFonts.roboto(
+                                  fontSize: 14,
                                   color: Colors.white,
                                 ),
                               ),
@@ -250,13 +279,19 @@ class _CompanyPageState extends State<CompanyPage> {
                   (context, animation, secondaryAnimation, child) {
                 return SlideTransition(
                   position: Tween<Offset>(
-                    begin: const Offset(1,
-                        0), // Posición inicial (fuera de la pantalla a la derecha)
-                    end: Offset.zero, // Posición final (centro de la pantalla)
-                  ).animate(animation),
+                    begin: const Offset(1, 0),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.linearToEaseOut,
+                      reverseCurve: Curves.easeIn,
+                    ),
+                  ),
                   child: child,
                 );
               },
+              transitionDuration: Duration(milliseconds: 500),
             ),
           );
         },
@@ -269,122 +304,6 @@ class _CompanyPageState extends State<CompanyPage> {
           'Agregar empresa',
         ),
       ),
-    );
-  }
-
-  // Función para mostrar un diálogo para agregar una nueva empresa
-  void _showAddCompanyDialog(BuildContext context) {
-    TextEditingController nameController = TextEditingController();
-    TextEditingController userController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Agregar una nueva empresa'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              InkWell(
-                onTap: () async {},
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.grey[
-                      300], // Color de fondo del avatar si la imagen no está presente
-                  foregroundColor: Colors.black, // Color del borde del avatar
-                  child: _image == null
-                      ? Icon(Icons.camera_alt,
-                          size:
-                              50) // Icono de la cámara si no se selecciona ninguna imagen
-                      : ClipOval(
-                          child: Image.file(
-                            _image!,
-                            width: 100, // Ancho de la imagen
-                            height: 100, // Alto de la imagen
-                            fit: BoxFit
-                                .cover, // Ajuste de la imagen para cubrir todo el espacio disponible
-                          ),
-                        ),
-                ),
-              ),
-              SizedBox(height: 8),
-              TextFormField(
-                controller: nameController,
-                decoration: InputDecoration(labelText: 'Nombre de la empresa'),
-              ),
-              SizedBox(height: 10),
-              TextFormField(
-                controller: userController,
-                decoration: InputDecoration(
-                    labelText:
-                        'Username de la empresa(Esto identifica a la empresa)'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                // Acción al presionar el botón de cancelar
-                Navigator.pop(context);
-              },
-              child: Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                // Acción al presionar el botón de agregar
-                String companyName = nameController.text.trim();
-                String companyUser = userController.text.trim();
-                String ownerUid = widget.uid ?? '';
-                String companyId =
-                    Uuid().v4(); // Generar un ID único para la compañía
-
-                if (companyName.isNotEmpty &&
-                    companyUser.isNotEmpty &&
-                    ownerUid.isNotEmpty) {
-                  try {
-                    String imageUrl = '';
-
-                    if (_image != null) {
-                      // Subir la imagen a Firebase Storage
-                      Reference ref = FirebaseStorage.instance
-                          .ref()
-                          .child('company_images/$companyId/company_image.jpg');
-                      UploadTask uploadTask = ref.putFile(_image!);
-                      TaskSnapshot taskSnapshot =
-                          await uploadTask.whenComplete(() => null);
-                      imageUrl = await taskSnapshot.ref.getDownloadURL();
-                    } else {
-                      imageUrl =
-                          'https://firebasestorage.googleapis.com/v0/b/app-listas-eccd1.appspot.com/o/users%2Fcompany-image-standard.png?alt=media&token=215f501d-c691-4804-93d3-97187cf5e677';
-                    }
-
-                    // Guardar la información de la empresa en Firestore junto con la URL de la imagen
-                    await FirebaseFirestore.instance
-                        .collection('companies')
-                        .doc(companyId)
-                        .set({
-                      'name': companyName,
-                      'username': companyUser,
-                      'ownerUid': ownerUid,
-                      'imageUrl': imageUrl,
-                    });
-
-                    Navigator.pop(
-                        context); // Cerrar el diálogo después de agregar la empresa
-                  } catch (e) {
-                    print('Error adding company: $e');
-                    // Manejar el error si ocurriera al agregar la empresa
-                  }
-                } else {
-                  // Mostrar un mensaje al usuario si algún valor está vacío
-                  print('Todos los campos son obligatorios');
-                }
-              },
-              child: Text('Agregar'),
-            ),
-          ],
-        );
-      },
     );
   }
 }

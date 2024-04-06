@@ -27,7 +27,7 @@ class _LoginFormState extends State<LoginForm> {
   final _formKey = GlobalKey<FormState>();
   late String _email;
   late String _password;
-  bool _keepSignedIn = false;
+  //bool _keepSignedIn = false;
   bool _obscureText = true;
 
   @override
