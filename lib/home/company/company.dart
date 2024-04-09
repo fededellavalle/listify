@@ -20,18 +20,61 @@ class _CompanyPageState extends State<CompanyPage> {
     super.initState();
   }
 
-  void _openCompanyDetails(Map<String, dynamic> companyData) {
-    print('Company Data: $companyData');
-    print("entre al boton");
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CompanyWidget(companyData: companyData),
-      ),
-    );
+  // Fetch company data for the current user
+  Stream<List<Map<String, dynamic>>> _fetchUserCompanyData(String? uid) {
+    if (uid != null) {
+      return FirebaseFirestore.instance
+          .collection('companies')
+          .where('ownerUid', isEqualTo: uid)
+          .snapshots()
+          .map((snapshot) => snapshot.docs.map((doc) {
+                String companyId = doc.id;
+                String companyName = doc['name'];
+                String companyUser = doc['username'];
+                String ownerUid = doc['ownerUid'];
+                String? imageUrl = doc['imageUrl'];
+
+                return {
+                  'companyId': companyId,
+                  'name': companyName,
+                  'username': companyUser,
+                  'ownerUid': ownerUid,
+                  'imageUrl': imageUrl,
+                };
+              }).toList());
+    } else {
+      return Stream.empty();
+    }
   }
 
-  Future<List<Map<String, dynamic>>> _fetchCompanyData(String? uid) async {
+  // Fetch company relationships for the current user
+  Stream<List<Map<String, dynamic>>> _fetchUserCompanyRelationships(
+      String? uid) {
+    if (uid != null) {
+      return FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .snapshots()
+          .map((snapshot) {
+        if (snapshot.exists) {
+          // Verifica si el documento existe antes de intentar acceder al campo
+          Map<String, dynamic> userData =
+              snapshot.data() as Map<String, dynamic>;
+          var companyRelationships = userData['companyRelationship'] ??
+              []; // Obtén el campo 'companyRelationships' o una lista vacía si no está presente
+          print(companyRelationships);
+
+          return companyRelationships;
+        } else {
+          return [];
+        }
+      });
+    } else {
+      return Stream.empty();
+    }
+  }
+
+  /*Future<List<Map<String, dynamic>>> _fetchCompanyData(String? uid) async {
     if (uid != null) {
       try {
         QuerySnapshot companySnapshot = await FirebaseFirestore.instance
@@ -45,12 +88,14 @@ class _CompanyPageState extends State<CompanyPage> {
           String companyId = doc.id;
           String companyName = (doc.data() as Map<String, dynamic>)['name'];
           String companyUser = (doc.data() as Map<String, dynamic>)['username'];
+          String ownerUid = (doc.data() as Map<String, dynamic>)['ownerUid'];
           String? imageUrl = (doc.data() as Map<String, dynamic>)['imageUrl'];
 
           Map<String, dynamic> companyData = {
             'companyId': companyId,
             'name': companyName,
             'username': companyUser,
+            'ownerUid': ownerUid,
             'imageUrl': imageUrl,
           };
 
@@ -66,205 +111,237 @@ class _CompanyPageState extends State<CompanyPage> {
     } else {
       return [];
     }
-  }
+  }*/
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // Color de fondo del Scaffold
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('companies')
-            .where('ownerUid', isEqualTo: widget.uid)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error fetching data'));
-          } else {
-            List<Map<String, dynamic>> companies = [];
-
-            snapshot.data?.docs.forEach((doc) {
-              String companyId = doc.id;
-              String companyName = doc['name'];
-              String companyUser = doc['username'];
-              String? imageUrl = doc['imageUrl'];
-
-              Map<String, dynamic> companyData = {
-                'companyId': companyId,
-                'name': companyName,
-                'username': companyUser,
-                'imageUrl': imageUrl,
-              };
-              companies.add(companyData);
-            });
-
-            if (companies.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Text(
-                        'Todavía no tienes empresa. ¿Quieres crear una ya?',
-                        style: GoogleFonts.openSans(
-                          fontSize: 18,
-                          color: Colors.white,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          PageRouteBuilder(
-                            pageBuilder:
-                                (context, animation, secondaryAnimation) =>
-                                    CreateCompany(
-                              uid: widget.uid,
-                            ),
-                            transitionsBuilder: (context, animation,
-                                secondaryAnimation, child) {
-                              return SlideTransition(
-                                position: Tween<Offset>(
-                                  begin: const Offset(1,
-                                      0), // Posición inicial (fuera de la pantalla a la derecha)
-                                  end: Offset
-                                      .zero, // Posición final (centro de la pantalla)
-                                ).animate(animation),
-                                child: child,
-                              );
-                            },
-                          ),
-                        );
-                      },
-                      child: Text('Agregar una empresa'),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return ListView(
-              children: [
-                for (var companyData in companies) ...[
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        PageRouteBuilder(
-                          pageBuilder:
-                              (context, animation, secondaryAnimation) =>
-                                  CompanyWidget(
-                            companyData: companyData,
-                          ),
-                          transitionsBuilder:
-                              (context, animation, secondaryAnimation, child) {
-                            return SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(1, 0),
-                                end: Offset.zero,
-                              ).animate(
-                                CurvedAnimation(
-                                  parent: animation,
-                                  curve: Curves.linearToEaseOut,
-                                  reverseCurve: Curves.easeIn,
+      backgroundColor: Colors.black,
+      body: Column(
+        children: [
+          Text(
+            'Mis Empresas',
+            style: GoogleFonts.roboto(color: Colors.white),
+          ),
+          Expanded(
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _fetchUserCompanyData(widget.uid),
+              builder: (context, companySnapshot) {
+                if (companySnapshot.connectionState ==
+                    ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (companySnapshot.hasError) {
+                  return Center(child: Text('Error fetching company data'));
+                } else {
+                  return ListView(
+                    children: [
+                      for (var companyData in companySnapshot.data!)
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CompanyWidget(
+                                  companyData: companyData,
                                 ),
                               ),
-                              child: child,
                             );
                           },
-                          transitionDuration: Duration(milliseconds: 500),
-                        ),
-                      );
-                    },
-                    style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all<Color>(
-                        Colors.black.withOpacity(0.0),
-                      ),
-                      padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                        EdgeInsets.all(20),
-                      ),
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                        RoundedRectangleBorder(),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        if (companyData['imageUrl'] != null)
-                          Container(
-                            width: 70,
-                            height: 70,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              image: DecorationImage(
-                                image: NetworkImage(companyData['imageUrl']),
-                                fit: BoxFit.cover,
-                              ),
+                          style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all<Color>(
+                              Colors.black.withOpacity(0.0),
                             ),
-                          )
-                        else
-                          IconButton(
-                            icon: Icon(Icons.question_mark),
-                            onPressed: () {},
+                            padding:
+                                MaterialStateProperty.all<EdgeInsetsGeometry>(
+                              EdgeInsets.all(20),
+                            ),
+                            shape: MaterialStateProperty.all<
+                                RoundedRectangleBorder>(
+                              RoundedRectangleBorder(),
+                            ),
                           ),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Row(
                             children: [
-                              Text(
-                                companyData['name'] ?? '',
-                                style: GoogleFonts.roboto(
-                                  fontSize: 20,
-                                  color: Colors.white,
+                              if (companyData['imageUrl'] != null)
+                                Container(
+                                  width: 70,
+                                  height: 70,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    image: DecorationImage(
+                                      image:
+                                          NetworkImage(companyData['imageUrl']),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                )
+                              else
+                                IconButton(
+                                  icon: Icon(Icons.question_mark),
+                                  onPressed: () {},
+                                ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      companyData['name'] ?? '',
+                                      style: GoogleFonts.roboto(
+                                        fontSize: 20,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      '@${companyData['username'] ?? ''}',
+                                      style: GoogleFonts.roboto(
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      'Siguiente evento: @${companyData['username'] ?? ''}',
+                                      style: GoogleFonts.roboto(
+                                        fontSize: 14,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              SizedBox(height: 2),
-                              Text(
-                                '@${companyData['username'] ?? ''}',
-                                style: GoogleFonts.roboto(
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              SizedBox(height: 2),
-                              Text(
-                                'Siguiente evento: @${companyData['username'] ?? ''}',
-                                style: GoogleFonts.roboto(
-                                  fontSize: 14,
-                                  color: Colors.white,
-                                ),
-                              ),
+                              Icon(
+                                UniconsLine.angle_right_b,
+                                size: 40,
+                                color: Colors.white,
+                              )
                             ],
                           ),
                         ),
-                        Icon(
-                          UniconsLine.angle_right_b,
-                          size: 40,
-                          color: Colors.white,
-                        )
-                      ],
-                    ),
-                  ),
-                  const Divider(
-                    // Divider para la línea
-                    height: 1, // Altura de la línea
-                    thickness: 1, // Grosor de la línea
-                    color: Colors.white, // Color de la línea
-                    indent: 8, // Espacio a la izquierda de la línea
-                    endIndent: 8, // Espacio a la derecha de la línea
-                  ),
-                ],
-                SizedBox(height: 20),
-              ],
-            );
-          }
-        },
+                      const Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Colors.white,
+                        indent: 8,
+                        endIndent: 8,
+                      ),
+                      SizedBox(height: 20),
+                    ],
+                  );
+                }
+              },
+            ),
+          ),
+          Text(
+            'Empresas con las que tengo relacion',
+            style: GoogleFonts.roboto(color: Colors.white),
+          ),
+          Expanded(
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _fetchUserCompanyRelationships(widget.uid),
+              builder: (context, relationshipSnapshot) {
+                if (relationshipSnapshot.connectionState ==
+                    ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (relationshipSnapshot.hasError) {
+                  return Center(
+                      child: Text('Error fetching company relationships'));
+                } else {
+                  return ListView(
+                    children: [
+                      for (var companyData in relationshipSnapshot.data!)
+                        ElevatedButton(
+                          onPressed: () {
+                            // Handle button press for company relationships
+                          },
+                          style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all<Color>(
+                              Colors.black.withOpacity(0.0),
+                            ),
+                            padding:
+                                MaterialStateProperty.all<EdgeInsetsGeometry>(
+                              EdgeInsets.all(20),
+                            ),
+                            shape: MaterialStateProperty.all<
+                                RoundedRectangleBorder>(
+                              RoundedRectangleBorder(),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              if (companyData['imageUrl'] != null)
+                                Container(
+                                  width: 70,
+                                  height: 70,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    image: DecorationImage(
+                                      image:
+                                          NetworkImage(companyData['imageUrl']),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                )
+                              else
+                                IconButton(
+                                  icon: Icon(Icons.question_mark),
+                                  onPressed: () {},
+                                ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      companyData['name'] ?? '',
+                                      style: GoogleFonts.roboto(
+                                        fontSize: 20,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      '@${companyData['username'] ?? ''}',
+                                      style: GoogleFonts.roboto(
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      'Siguiente evento: @${companyData['username'] ?? ''}',
+                                      style: GoogleFonts.roboto(
+                                        fontSize: 14,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                UniconsLine.angle_right_b,
+                                size: 40,
+                                color: Colors.white,
+                              )
+                            ],
+                          ),
+                        ),
+                      const Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Colors.white,
+                        indent: 8,
+                        endIndent: 8,
+                      ),
+                      SizedBox(height: 20),
+                    ],
+                  );
+                }
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {

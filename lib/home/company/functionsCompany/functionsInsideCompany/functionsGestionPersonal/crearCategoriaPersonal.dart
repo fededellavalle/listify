@@ -20,6 +20,8 @@ class _crearCategoriaPersonalState extends State<crearCategoriaPersonal> {
   TextEditingController nameController = TextEditingController();
   bool? isChecked = false;
   bool? isChecked2 = false;
+  bool? isChecked3 = false;
+  bool? isChecked4 = false;
   List<String> selectedPermises = [];
 
   @override
@@ -78,7 +80,7 @@ class _crearCategoriaPersonalState extends State<crearCategoriaPersonal> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Selecciona los permisos que la categoría va a obtener con las listas',
+                    'Selecciona los permisos que la categoría va a obtener en la empresa',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.white,
@@ -124,7 +126,24 @@ class _crearCategoriaPersonalState extends State<crearCategoriaPersonal> {
                       });
                     },
                   ),
-                  // Agrega más CheckboxListTile para otros permisos si es necesario
+                  CheckboxListTile(
+                    title: Text('Poder gestionar el personal',
+                        style: TextStyle(
+                          color: Colors.white,
+                        )),
+                    value: isChecked3,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        isChecked3 = value;
+                        if (isChecked3! &&
+                            !selectedPermises.contains('Gestionar')) {
+                          selectedPermises.add('Gestionar');
+                        } else {
+                          selectedPermises.remove('Gestionar');
+                        }
+                      });
+                    },
+                  ),
                 ],
               ),
               SizedBox(

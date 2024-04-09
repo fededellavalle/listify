@@ -51,7 +51,7 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
-          "Crear Categoria de Personal",
+          "Invitar personas a ${widget.categoryName}",
           style: GoogleFonts.roboto(
             color: Colors.white,
           ),
@@ -99,8 +99,17 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
                   onPressed: () async {
                     // Obtener el nombre de la categoría y el email del usuario a invitar
                     String categoryName = widget.categoryName;
-                    String inviteEmail =
-                        userController.text; // Reemplaza con el email a invitar
+                    String inviteEmail = userController.text;
+
+                    DocumentReference ownerRef = FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(widget.companyData['ownerUid']);
+                    DocumentSnapshot ownerSnapshot = await ownerRef.get();
+                    Map<String, dynamic>? ownerData =
+                        ownerSnapshot.data() as Map<String, dynamic>?;
+
+                    String ownerEmail =
+                        ownerData?['email'] ?? 'No se encontro email';
 
                     // Verificar que se haya ingresado un nombre de categoría válido y un email de invitación
                     if (categoryName.isNotEmpty && inviteEmail.isNotEmpty) {
@@ -120,24 +129,81 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
                             categorySnapshot.data() as Map<String, dynamic>?;
 
                         List<dynamic> members = categoryData?['members'] ?? [];
+                        if (ownerEmail != inviteEmail) {
+                          //Verifico que sea diferente del owner
+                          if (!members.contains(inviteEmail)) {
+                            // Verificar si la categoría existe
+                            if (categorySnapshot.exists) {
+                              // Verificar que los datos no sean nulos y obtener la lista de invitaciones
+                              List<dynamic> invitations =
+                                  categoryData?['invitations'] ?? [];
 
-                        if (members.contains(inviteEmail)) {
-                          // Verificar si la categoría existe
-                          if (categorySnapshot.exists) {
-                            // Verificar que los datos no sean nulos y obtener la lista de invitaciones
-                            List<dynamic> invitations =
-                                categoryData?['invitations'] ?? [];
+                              // Verificar si el email de invitación ya está en la lista
+                              if (invitations.contains(inviteEmail)) {
+                                // Mostrar mensaje de error si el email ya fue invitado anteriormente
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: Text('Error'),
+                                      content: Text(
+                                          'El email ya fue invitado anteriormente.'),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context)
+                                                .pop(); // Cerrar el AlertDialog
+                                          },
+                                          child: Text('Ok'),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              } else {
+                                await sendInvitation(inviteEmail, user);
 
-                            // Verificar si el email de invitación ya está en la lista
-                            if (invitations.contains(inviteEmail)) {
-                              // Mostrar mensaje de error si el email ya fue invitado anteriormente
+                                invitations.add(inviteEmail);
+
+                                // Actualizar el documento de la categoría con la nueva lista de invitaciones
+                                await categoryRef
+                                    .update({'invitations': invitations});
+
+                                userController.clear();
+
+                                // Mostrar mensaje de éxito al enviar la invitación
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: Text('Invitación Enviada'),
+                                      content: Text(
+                                          'La invitación fue enviada exitosamente.'),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context)
+                                                .pop(); // Cerrar el AlertDialog
+                                            Navigator.of(context)
+                                                .pop(); // Volver a la pantalla anterior
+                                            Navigator.of(context)
+                                                .pop(); // Volver a la pantalla anterior
+                                          },
+                                          child: Text('OK'),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              }
+                            } else {
+                              // Mostrar mensaje de error si la categoría no existe
                               showDialog(
                                 context: context,
                                 builder: (context) {
                                   return AlertDialog(
                                     title: Text('Error'),
-                                    content: Text(
-                                        'El email ya fue invitado anteriormente.'),
+                                    content: Text('La categoría no existe.'),
                                     actions: <Widget>[
                                       TextButton(
                                         onPressed: () {
@@ -150,50 +216,16 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
                                   );
                                 },
                               );
-                            } else {
-                              await sendInvitation(inviteEmail, user);
-
-                              invitations.add(inviteEmail);
-
-                              // Actualizar el documento de la categoría con la nueva lista de invitaciones
-                              await categoryRef
-                                  .update({'invitations': invitations});
-
-                              userController.clear();
-
-                              // Mostrar mensaje de éxito al enviar la invitación
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: Text('Invitación Enviada'),
-                                    content: Text(
-                                        'La invitación fue enviada exitosamente.'),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context)
-                                              .pop(); // Cerrar el AlertDialog
-                                          Navigator.of(context)
-                                              .pop(); // Volver a la pantalla anterior
-                                          Navigator.of(context)
-                                              .pop(); // Volver a la pantalla anterior
-                                        },
-                                        child: Text('OK'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
                             }
                           } else {
-                            // Mostrar mensaje de error si la categoría no existe
+                            // Mostrar mensaje de error si no se ingresó el nombre de la categoría o el email de invitación
                             showDialog(
                               context: context,
                               builder: (context) {
                                 return AlertDialog(
                                   title: Text('Error'),
-                                  content: Text('La categoría no existe.'),
+                                  content: Text(
+                                      'El usuario al que esta invitando ya pertenece a la categoria'),
                                   actions: <Widget>[
                                     TextButton(
                                       onPressed: () {
@@ -215,7 +247,8 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
                               return AlertDialog(
                                 title: Text('Error'),
                                 content: Text(
-                                    'El usuario al que esta invitando ya pertenece a la categoria'),
+                                  'No puedes invitarte a ti mismo',
+                                ),
                                 actions: <Widget>[
                                   TextButton(
                                     onPressed: () {
@@ -237,7 +270,7 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
                             return AlertDialog(
                               title: Text('Error'),
                               content: Text(
-                                'No puedes invitarte a ti mismo',
+                                'No puedes invitar al owner de la compania',
                               ),
                               actions: <Widget>[
                                 TextButton(

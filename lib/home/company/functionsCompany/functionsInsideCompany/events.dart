@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../../styles/button.dart';
+import '../../../../../../styles/button.dart';
 import 'package:unicons/unicons.dart';
 
 class EventosPage extends StatefulWidget {
-  const EventosPage({super.key});
+  final Map<String, dynamic> companyData;
+
+  const EventosPage({
+    super.key,
+    required this.companyData,
+  });
 
   @override
   State<EventosPage> createState() => _EventosPageState();
@@ -19,7 +24,7 @@ class _EventosPageState extends State<EventosPage> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
-          'companyName',
+          'Eventos de ${widget.companyData['name']}',
           style: GoogleFonts.roboto(
             color: Colors.white,
           ),
@@ -32,9 +37,6 @@ class _EventosPageState extends State<EventosPage> {
         child: Center(
           child: Column(
             children: [
-              SizedBox(height: 20),
-              SizedBox(height: 20),
-
               // Botones de acciones dentro de la empresa
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10.0),
@@ -64,7 +66,7 @@ class _EventosPageState extends State<EventosPage> {
                               child: const Padding(
                                 padding: EdgeInsets.all(8.0),
                                 child: Icon(
-                                  UniconsSolid.calender,
+                                  UniconsLine.calendar_alt,
                                   size: 20, // Tamaño grande
                                   color: Colors.white,
                                 ),
@@ -74,7 +76,7 @@ class _EventosPageState extends State<EventosPage> {
                               width: 15,
                             ),
                             Text(
-                              'Eventos de ',
+                              'Crear nuevo evento',
                               style: GoogleFonts.roboto(
                                 color: Colors.white,
                                 fontSize: 18,
@@ -82,7 +84,7 @@ class _EventosPageState extends State<EventosPage> {
                             ),
                             Spacer(),
                             Icon(
-                              UniconsLine.angle_right_b,
+                              Icons.add,
                               size: 20, // Tamaño grande
                               color: Colors.grey.shade600,
                             ),
@@ -108,7 +110,7 @@ class _EventosPageState extends State<EventosPage> {
                               child: const Padding(
                                 padding: EdgeInsets.all(8.0),
                                 child: Icon(
-                                  UniconsSolid.user_arrows,
+                                  Icons.event_repeat,
                                   size: 20, // Tamaño grande
                                   color: Colors.white,
                                 ),
@@ -118,7 +120,7 @@ class _EventosPageState extends State<EventosPage> {
                               width: 15,
                             ),
                             Text(
-                              'Gestionar Personal',
+                              'Gestionar Eventos creados',
                               style: GoogleFonts.roboto(
                                 color: Colors.white,
                                 fontSize: 18,
@@ -204,15 +206,15 @@ class _EventosPageState extends State<EventosPage> {
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color:
-                                    Colors.red, // Color de fondo del contenedor
+                                color: Colors
+                                    .blue, // Color de fondo del contenedor
                                 borderRadius: BorderRadius.circular(
                                     8), // Opcional: radio de borde para el contenedor
                               ),
                               child: const Padding(
                                 padding: EdgeInsets.all(8.0),
                                 child: Icon(
-                                  UniconsLine.trash,
+                                  Icons.event_note,
                                   size: 20, // Tamaño grande
                                   color: Colors.white,
                                 ),
@@ -222,7 +224,7 @@ class _EventosPageState extends State<EventosPage> {
                               width: 15,
                             ),
                             Text(
-                              'Eliminar Compañia',
+                              'Historial de Eventos',
                               style: GoogleFonts.roboto(
                                 color: Colors.white,
                                 fontSize: 18,

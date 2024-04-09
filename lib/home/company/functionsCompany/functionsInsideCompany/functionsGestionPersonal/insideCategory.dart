@@ -278,22 +278,6 @@ class _InsideCategoryState extends State<InsideCategory> {
                   });
                 });
 
-                FirebaseFirestore.instance
-                    .collection('companies')
-                    .doc(widget.companyData['companyId'])
-                    .collection('personalCategories')
-                    .doc(widget.categoryName)
-                    .update({
-                  'invitations': FieldValue.arrayRemove([email]),
-                }).then((value) {
-                  print('Invitación eliminada de la base de datos');
-                }).catchError((error) {
-                  print('Error al eliminar la invitación: $error');
-                  setState(() {
-                    invitations.add(email);
-                  });
-                });
-
                 Navigator.of(context)
                     .pop(); // Cerrar el diálogo después de eliminar
               },

@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:unicons/unicons.dart';
 import '../../../styles/button.dart';
 import 'functionsInsideCompany/gestionPersonal.dart';
+import 'functionsInsideCompany/events.dart';
 
 class CompanyWidget extends StatelessWidget {
   final Map<String, dynamic> companyData;
@@ -74,7 +75,30 @@ class CompanyWidget extends StatelessWidget {
                     children: [
                       //Eventos Boton
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder:
+                                  (context, animation, secondaryAnimation) =>
+                                      EventosPage(
+                                companyData: companyData,
+                              ),
+                              transitionsBuilder: (context, animation,
+                                  secondaryAnimation, child) {
+                                return SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(1,
+                                        0), // Posición inicial (fuera de la pantalla a la derecha)
+                                    end: Offset
+                                        .zero, // Posición final (centro de la pantalla)
+                                  ).animate(animation),
+                                  child: child,
+                                );
+                              },
+                            ),
+                          );
+                        },
                         style: buttonCompany,
                         child: Row(
                           mainAxisAlignment:
