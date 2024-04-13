@@ -203,8 +203,48 @@ class _LoginFormState extends State<LoginForm> {
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {
                             _formKey.currentState!.save();
-                            UserCredential? userCredential = await AuthService()
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  backgroundColor:
+                                      Colors.grey[800], // Fondo gris oscuro
+                                  title: Text(
+                                    'Iniciando sesión',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  content: SingleChildScrollView(
+                                    child: ListBody(
+                                      children: <Widget>[
+                                        Text(
+                                          'Por favor, espera un momento...',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                        SizedBox(height: 20),
+                                        Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth:
+                                                3, // Ajusta el grosor del círculo
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                              Color.fromARGB(255, 242, 187,
+                                                  29), // Color del círculo
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                            List<dynamic> result = await AuthService()
                                 .signIn(context, _email, _password);
+                            UserCredential? userCredential = result[0];
+                            String errorMessage = result[1];
+                            Navigator.pop(
+                                context); // Cerrar el diálogo de "Iniciando sesión"
                             if (userCredential != null) {
                               String uid = userCredential.user!.uid;
                               DocumentSnapshot userData =
@@ -212,9 +252,7 @@ class _LoginFormState extends State<LoginForm> {
                                       .collection('users')
                                       .doc(uid)
                                       .get();
-
                               String _userName = userData['name'];
-
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -227,15 +265,25 @@ class _LoginFormState extends State<LoginForm> {
                                 context: context,
                                 builder: (context) {
                                   return AlertDialog(
-                                    title: Text('Error'),
-                                    content:
-                                        Text('Email o Contraseña invalido'),
+                                    title: Text(
+                                      'Error',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                    backgroundColor:
+                                        Colors.grey[800], // Fondo gris oscuro
+                                    content: Text(
+                                      errorMessage,
+                                      style: TextStyle(color: Colors.white),
+                                    ),
                                     actions: <Widget>[
                                       TextButton(
                                         onPressed: () {
                                           Navigator.of(context).pop();
                                         },
-                                        child: Text('OK'),
+                                        child: Text(
+                                          'OK',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
                                       ),
                                     ],
                                   );
@@ -246,7 +294,7 @@ class _LoginFormState extends State<LoginForm> {
                         },
                         style: buttonPrimary,
                         child: Text(
-                          'Iniciar Sesion',
+                          'Iniciar Sesión',
                           style: GoogleFonts.roboto(
                             fontSize: 16,
                           ),
@@ -373,7 +421,26 @@ class _LoginFormState extends State<LoginForm> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => RegisterPage()),
+                        PageRouteBuilder(
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  RegisterPage(),
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                            var begin = Offset(0.0,
+                                1.0); // Define el punto de inicio de la animación (abajo)
+                            var end = Offset
+                                .zero; // Define el punto final de la animación (arriba)
+                            var curve = Curves.ease; // Curva de animación
+                            var tween = Tween(begin: begin, end: end)
+                                .chain(CurveTween(curve: curve));
+                            var offsetAnimation = animation.drive(tween);
+                            return SlideTransition(
+                              position: offsetAnimation,
+                              child: child,
+                            );
+                          },
+                        ),
                       );
                     },
                     child: Text(

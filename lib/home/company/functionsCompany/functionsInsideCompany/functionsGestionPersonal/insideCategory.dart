@@ -144,97 +144,108 @@ class _InsideCategoryState extends State<InsideCategory> {
         ],
       ),
       body: ListView(
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         children: [
-          DataTable(
-            columnSpacing:
-                30, // Ajusta el espacio entre las columnas según sea necesario
-            columns: [
-              DataColumn(
-                  label: Text(
-                'Nombre',
-                style: GoogleFonts.roboto(color: Colors.white),
-              )),
-              DataColumn(
-                  label: Text(
-                'Email',
-                style: GoogleFonts.roboto(color: Colors.white),
-              )),
-              DataColumn(
-                  label: Text(
-                'Instagram',
-                style: GoogleFonts.roboto(color: Colors.white),
-              )),
-              DataColumn(label: Text('')),
-            ],
-            rows: [
-              ...members.map((member) {
-                String memberName = member['completeName'] ?? '';
-                String memberEmail = member['email'] ?? '';
-                String memberInstagram = member['instagram'] ?? '';
+          Center(
+            child: Text(
+              'Miembros',
+              style: GoogleFonts.roboto(
+                color: Colors.white,
+                fontSize: 24,
+              ),
+            ),
+          ),
+          if (members.isEmpty)
+            Center(
+              child: Text(
+                'No hay miembros en la categoria',
+                style: GoogleFonts.roboto(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ...members.map((member) {
+            String memberName = member['completeName'] ?? '';
+            String memberEmail = member['email'] ?? '';
+            String memberInstagram = member['instagram'] ?? '';
 
-                return DataRow(cells: [
-                  DataCell(Text(
-                    memberName,
-                    style: GoogleFonts.roboto(color: Colors.white),
-                  )),
-                  DataCell(Text(
-                    memberEmail,
-                    style: GoogleFonts.roboto(color: Colors.white),
-                  )),
-                  DataCell(Text(
-                    memberInstagram,
-                    style: GoogleFonts.roboto(color: Colors.white),
-                  )),
-                  DataCell(
-                    IconButton(
-                      icon: Icon(Icons.close),
-                      color: Colors.red,
-                      onPressed: () {
-                        deleteMember(memberName, memberEmail, memberInstagram);
-                      },
+            return Card(
+              margin: EdgeInsets.symmetric(vertical: 5),
+              elevation: 3,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ListTile(
+                title: Text(
+                  memberName,
+                  style: GoogleFonts.roboto(color: Colors.black),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Email: $memberEmail',
+                      style: GoogleFonts.roboto(color: Colors.grey.shade700),
                     ),
-                  ),
-                ]);
-              }).toList(),
-            ],
+                    Text(
+                      'Instagram: $memberInstagram',
+                      style: GoogleFonts.roboto(color: Colors.grey.shade700),
+                    ),
+                  ],
+                ),
+                trailing: IconButton(
+                  icon: Icon(Icons.close),
+                  color: Colors.red,
+                  onPressed: () {
+                    deleteMember(memberName, memberEmail, memberInstagram);
+                  },
+                ),
+              ),
+            );
+          }).toList(),
+          SizedBox(height: 20),
+          Center(
+            child: Text(
+              'Invitaciones',
+              style: GoogleFonts.roboto(
+                color: Colors.white,
+                fontSize: 24,
+              ),
+            ),
           ),
-          SizedBox(height: 20), // Agrega un espacio entre las dos DataTables
-          DataTable(
-            columns: [
-              DataColumn(
-                  label: Text(
-                'Email de persona invitada',
-                style: GoogleFonts.roboto(color: Colors.white),
-              )),
-            ],
-            rows: [
-              ...invitations.map((memberEmail) {
-                return DataRow(cells: [
-                  DataCell(Row(
-                    children: [
-                      Text(
-                        memberEmail,
-                        style: GoogleFonts.roboto(color: Colors.white),
-                      ),
-                      Spacer(),
-                      IconButton(
-                        icon: Icon(Icons.close),
-                        style: ButtonStyle(
-                          foregroundColor: MaterialStateColor.resolveWith(
-                            (states) => Colors.red,
-                          ),
-                        ),
-                        onPressed: () {
-                          deleteInvitation(
-                              memberEmail); // Llama al método para eliminar la invitación
-                        },
-                      ),
-                    ],
-                  )),
-                ]);
-              }).toList(),
-            ],
-          ),
+          if (invitations.isEmpty)
+            Center(
+              child: Text(
+                'No hay invitaciones hechas',
+                style: GoogleFonts.roboto(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ...invitations.map((memberEmail) {
+            return Card(
+              margin: EdgeInsets.symmetric(vertical: 5),
+              elevation: 3,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ListTile(
+                title: Text(
+                  memberEmail,
+                  style: GoogleFonts.roboto(color: Colors.black),
+                ),
+                trailing: IconButton(
+                  icon: Icon(Icons.close),
+                  color: Colors.red,
+                  onPressed: () {
+                    deleteInvitation(memberEmail);
+                  },
+                ),
+              ),
+            );
+          }).toList(),
         ],
       ),
     );
@@ -337,25 +348,30 @@ class _InsideCategoryState extends State<InsideCategory> {
                   });
                 });
 
-                User? user = FirebaseAuth.instance.currentUser;
-
                 FirebaseFirestore.instance
                     .collection('users')
-                    .doc(user!.uid)
-                    .update({
-                  'companyRelationship': FieldValue.arrayRemove([
-                    {
-                      'category': widget.categoryName,
-                      'companyUsername': widget.companyData['username'],
-                    }
-                  ]),
-                }).then((value) {
-                  print('Invitación eliminada de la base de datos');
-                }).catchError((error) {
-                  print('Error al eliminar la invitación: $error');
-                  setState(() {
-                    invitations.add(email);
+                    .where('email', isEqualTo: email)
+                    .get()
+                    .then((querySnapshot) {
+                  querySnapshot.docs.forEach((doc) {
+                    doc.reference.update({
+                      'companyRelationship': FieldValue.arrayRemove([
+                        {
+                          'category': widget.categoryName,
+                          'companyUsername': widget.companyData['username'],
+                        }
+                      ]),
+                    }).then((value) {
+                      print('Invitación eliminada de la base de datos');
+                    }).catchError((error) {
+                      print('Error al eliminar la invitación: $error');
+                      setState(() {
+                        invitations.add(email);
+                      });
+                    });
                   });
+                }).catchError((error) {
+                  print('Error al obtener el usuario: $error');
                 });
 
                 Navigator.of(context)

@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -49,7 +51,8 @@ class _CompanyPageState extends State<CompanyPage> {
 
   // Fetch company relationships for the current user
   Stream<List<Map<String, dynamic>>> _fetchUserCompanyRelationships(
-      String? uid) {
+    String? uid,
+  ) {
     if (uid != null) {
       return FirebaseFirestore.instance
           .collection('users')
@@ -60,11 +63,11 @@ class _CompanyPageState extends State<CompanyPage> {
           // Verifica si el documento existe antes de intentar acceder al campo
           Map<String, dynamic> userData =
               snapshot.data() as Map<String, dynamic>;
-          var companyRelationships = userData['companyRelationship'] ??
-              []; // Obtén el campo 'companyRelationships' o una lista vacía si no está presente
+          var companyRelationships =
+              userData['companyRelationship'] as List<dynamic>? ?? [];
           print(companyRelationships);
 
-          return companyRelationships;
+          return companyRelationships.cast<Map<String, dynamic>>();
         } else {
           return [];
         }
@@ -121,7 +124,20 @@ class _CompanyPageState extends State<CompanyPage> {
         children: [
           Text(
             'Mis Empresas',
-            style: GoogleFonts.roboto(color: Colors.white),
+            style: GoogleFonts.roboto(
+              color: Colors.white,
+              fontSize: 19,
+            ),
+          ),
+          Container(
+            constraints: BoxConstraints(maxWidth: double.infinity),
+            child: Divider(
+              height: 1,
+              thickness: 1,
+              color: Colors.white,
+              indent: 8,
+              endIndent: 8,
+            ),
           ),
           Expanded(
             child: StreamBuilder<List<Map<String, dynamic>>>(
@@ -132,6 +148,37 @@ class _CompanyPageState extends State<CompanyPage> {
                   return Center(child: CircularProgressIndicator());
                 } else if (companySnapshot.hasError) {
                   return Center(child: Text('Error fetching company data'));
+                } else if (companySnapshot.data!.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.add_business,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                        const SizedBox(
+                          height: 5,
+                        ),
+                        Text(
+                          'No tienes ninguna compañía a tu nombre',
+                          style: GoogleFonts.roboto(
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(
+                          height: 5,
+                        ),
+                        Text(
+                          'Crea una ya',
+                          style: GoogleFonts.roboto(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
                 } else {
                   return ListView(
                     children: [
@@ -149,7 +196,7 @@ class _CompanyPageState extends State<CompanyPage> {
                           },
                           style: ButtonStyle(
                             backgroundColor: MaterialStateProperty.all<Color>(
-                              Colors.black.withOpacity(0.0),
+                              Colors.transparent,
                             ),
                             padding:
                                 MaterialStateProperty.all<EdgeInsetsGeometry>(
@@ -219,23 +266,41 @@ class _CompanyPageState extends State<CompanyPage> {
                             ],
                           ),
                         ),
-                      const Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: Colors.white,
-                        indent: 8,
-                        endIndent: 8,
-                      ),
-                      SizedBox(height: 20),
                     ],
                   );
                 }
               },
             ),
           ),
+          Container(
+            constraints: BoxConstraints(maxWidth: double.infinity),
+            child: Divider(
+              height: 1,
+              thickness: 1,
+              color: Colors.white,
+              indent: 8,
+              endIndent: 8,
+            ),
+          ),
           Text(
-            'Empresas con las que tengo relacion',
-            style: GoogleFonts.roboto(color: Colors.white),
+            'Empresas de las que formo parte',
+            style: GoogleFonts.roboto(
+              color: Colors.white,
+              fontSize: 19,
+            ),
+          ),
+          Container(
+            constraints: BoxConstraints(maxWidth: double.infinity),
+            child: Divider(
+              height: 1,
+              thickness: 1,
+              color: Colors.white,
+              indent: 8,
+              endIndent: 8,
+            ),
+          ),
+          const SizedBox(
+            height: 2,
           ),
           Expanded(
             child: StreamBuilder<List<Map<String, dynamic>>>(
@@ -247,94 +312,133 @@ class _CompanyPageState extends State<CompanyPage> {
                 } else if (relationshipSnapshot.hasError) {
                   return Center(
                       child: Text('Error fetching company relationships'));
+                } else if (relationshipSnapshot.data!.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          UniconsLine.envelope,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                        SizedBox(
+                          height: 5,
+                        ),
+                        Text(
+                          'No estas invitado ninguna compañía',
+                          style: GoogleFonts.roboto(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
                 } else {
                   return ListView(
                     children: [
                       for (var companyData in relationshipSnapshot.data!)
-                        ElevatedButton(
-                          onPressed: () {
-                            // Handle button press for company relationships
-                          },
-                          style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all<Color>(
-                              Colors.black.withOpacity(0.0),
-                            ),
-                            padding:
-                                MaterialStateProperty.all<EdgeInsetsGeometry>(
-                              EdgeInsets.all(20),
-                            ),
-                            shape: MaterialStateProperty.all<
-                                RoundedRectangleBorder>(
-                              RoundedRectangleBorder(),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              if (companyData['imageUrl'] != null)
-                                Container(
-                                  width: 70,
-                                  height: 70,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    image: DecorationImage(
-                                      image:
-                                          NetworkImage(companyData['imageUrl']),
-                                      fit: BoxFit.cover,
-                                    ),
+                        FutureBuilder<DocumentSnapshot>(
+                          future: FirebaseFirestore.instance
+                              .collection('companies')
+                              .where('username',
+                                  isEqualTo: companyData['companyUsername'])
+                              .limit(1)
+                              .get()
+                              .then((snapshot) => snapshot.docs.first),
+                          builder: (context, companySnapshot) {
+                            if (companySnapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return Center(child: CircularProgressIndicator());
+                            } else if (companySnapshot.hasError) {
+                              return Center(
+                                  child: Text('Error fetching company data'));
+                            } else {
+                              Map<String, dynamic> companyInfo =
+                                  companySnapshot.data!.data()
+                                      as Map<String, dynamic>;
+
+                              return ElevatedButton(
+                                onPressed: () {
+                                  // Handle button press for company relationships
+                                },
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                    Colors.transparent,
                                   ),
-                                )
-                              else
-                                IconButton(
-                                  icon: Icon(Icons.question_mark),
-                                  onPressed: () {},
+                                  padding: MaterialStateProperty.all<
+                                      EdgeInsetsGeometry>(
+                                    EdgeInsets.all(20),
+                                  ),
+                                  shape: MaterialStateProperty.all<
+                                      RoundedRectangleBorder>(
+                                    RoundedRectangleBorder(),
+                                  ),
                                 ),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                child: Row(
                                   children: [
-                                    Text(
-                                      companyData['name'] ?? '',
-                                      style: GoogleFonts.roboto(
-                                        fontSize: 20,
-                                        color: Colors.white,
+                                    if (companyInfo['imageUrl'] != null)
+                                      Container(
+                                        width: 70,
+                                        height: 70,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          image: DecorationImage(
+                                            image: NetworkImage(
+                                                companyInfo['imageUrl']),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      )
+                                    else
+                                      IconButton(
+                                        icon: Icon(Icons.question_mark),
+                                        onPressed: () {},
+                                      ),
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            companyInfo['name'] ?? '',
+                                            style: GoogleFonts.roboto(
+                                              fontSize: 20,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          SizedBox(height: 2),
+                                          Text(
+                                            '@${companyInfo['username'] ?? ''}',
+                                            style: GoogleFonts.roboto(
+                                              fontSize: 16,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          SizedBox(height: 2),
+                                          Text(
+                                            'Eres parte de ${companyData['category']}',
+                                            style: GoogleFonts.roboto(
+                                              fontSize: 14,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    SizedBox(height: 2),
-                                    Text(
-                                      '@${companyData['username'] ?? ''}',
-                                      style: GoogleFonts.roboto(
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    SizedBox(height: 2),
-                                    Text(
-                                      'Siguiente evento: @${companyData['username'] ?? ''}',
-                                      style: GoogleFonts.roboto(
-                                        fontSize: 14,
-                                        color: Colors.white,
-                                      ),
-                                    ),
+                                    Icon(
+                                      UniconsLine.angle_right_b,
+                                      size: 40,
+                                      color: Colors.white,
+                                    )
                                   ],
                                 ),
-                              ),
-                              Icon(
-                                UniconsLine.angle_right_b,
-                                size: 40,
-                                color: Colors.white,
-                              )
-                            ],
-                          ),
+                              );
+                            }
+                          },
                         ),
-                      const Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: Colors.white,
-                        indent: 8,
-                        endIndent: 8,
-                      ),
-                      SizedBox(height: 20),
                     ],
                   );
                 }
@@ -374,11 +478,13 @@ class _CompanyPageState extends State<CompanyPage> {
         },
         backgroundColor: Color.fromARGB(255, 242, 187, 29),
         icon: Icon(
-          UniconsLine.plus_circle,
+          Icons.add_business,
           size: 24,
+          color: Colors.black,
         ), // Icono animado de Unicons
-        label: const Text(
+        label: Text(
           'Agregar empresa',
+          style: TextStyle(color: Colors.black),
         ),
       ),
     );

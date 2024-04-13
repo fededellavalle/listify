@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'services/firebase_exceptions.dart';
 
 class RegisterPage extends StatelessWidget {
   @override
@@ -19,11 +20,13 @@ class RegisterPage extends StatelessWidget {
               color: Color.fromARGB(
                   255, 242, 187, 29)), // Color deseado para el texto del AppBar
         ),
-        backgroundColor: Colors.black
-            .withOpacity(0.9), // Color deseado para el fondo del AppBar
-        iconTheme: const IconThemeData(
-            color: Colors
-                .white), // Color deseado para el icono de la flecha de retorno
+        backgroundColor: Colors.black.withOpacity(0.9),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_downward, color: Colors.white),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
       body: RegisterForm(),
     );
@@ -38,11 +41,63 @@ class RegisterForm extends StatefulWidget {
 class _RegisterFormState extends State<RegisterForm> {
   final _formKey = GlobalKey<FormState>();
   late String _email;
-  late String _password;
+  late String _password = '';
   late String _nombre;
   late String _apellido;
   late DateTime _fechaNacimiento = DateTime.now();
   File? _image;
+  String _instagramUsername = 'Undefined';
+
+  bool _showPassword = false;
+  bool _showConfirmPassword = false;
+  bool _passwordsMatch = false;
+
+  final _nameValidator = RegExp(r'^[a-zA-Z ]+$');
+  final _surnameValidator = RegExp(r'^[a-zA-Z ]+$');
+  final _emailValidator = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+  final _passwordValidator =
+      RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$&*]).{8,}$');
+  final _usernameValidator = RegExp(r'^[a-zA-Z0-9_.-]+$');
+
+  bool _hasUpperCase = false;
+  bool _hasLowerCase = false;
+  bool _hasNumber = false;
+  bool _hasSpecialChar = false;
+  bool _hasMinLength = false;
+
+  void _validateForm() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+    }
+  }
+
+  String _buildPasswordStrengthMessage() {
+    List<String> requirements = [];
+    if (!_hasUpperCase) requirements.add('Mayúscula');
+    if (!_hasLowerCase) requirements.add('Minúscula');
+    if (!_hasNumber) requirements.add('Número');
+    if (!_hasSpecialChar) requirements.add('Carácter especial');
+    if (!_hasMinLength) requirements.add('Al menos 8 caracteres');
+
+    String message = 'La contraseña debe contener:';
+    if (requirements.isEmpty) {
+      return 'Todos los requisitos están cumplidos';
+    } else {
+      print(requirements);
+      return message +
+          '\n- ' +
+          requirements.join('\n- ') +
+          '\n(Faltan estos requisitos por cumplir)';
+    }
+  }
+
+  bool _areRequirementsMet() {
+    return _hasUpperCase &&
+        _hasLowerCase &&
+        _hasNumber &&
+        _hasSpecialChar &&
+        _hasMinLength;
+  }
 
   Future<void> _getImage() async {
     final picker = ImagePicker();
@@ -106,7 +161,7 @@ class _RegisterFormState extends State<RegisterForm> {
               SizedBox(height: 8), // Espacio entre el círculo y el texto
               const Center(
                 child: Text(
-                  'Seleccione su foto de perfil',
+                  'Seleccione su foto de perfil(opcional)',
                   style: TextStyle(
                     color: Colors.white,
                   ), // Color del texto
@@ -115,34 +170,113 @@ class _RegisterFormState extends State<RegisterForm> {
                 ),
               ),
               SizedBox(height: 20),
+
               TextFormField(
                 decoration: InputDecoration(
-                  labelText: 'Email',
-                  labelStyle:
-                      TextStyle(color: Color.fromARGB(255, 242, 187, 29)),
-                  prefixIcon:
-                      Icon(Icons.email, color: Colors.grey), // Color del icono
+                  labelText: 'Nombre',
+                  labelStyle: TextStyle(
+                    color: Color.fromARGB(255, 242, 187, 29),
+                  ),
+                  prefixIcon: Icon(Icons.person, color: Colors.grey),
                   border: OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius.circular(10), // Bordes redondeados
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
-                        color: Color.fromARGB(
-                            255, 242, 187, 29)), // Borde resaltado al enfocar
+                      color: Color.fromARGB(255, 242, 187, 29),
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
-                        color:
-                            Color.fromARGB(255, 158, 128, 36)), // Borde regular
+                      color: Color.fromARGB(255, 158, 128, 36),
+                    ),
+                  ),
+                ),
+                style: TextStyle(color: Colors.white),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor, ingrese su Nombre';
+                  } else if (!_nameValidator.hasMatch(value)) {
+                    return 'Ingrese solo letras y espacios';
+                  }
+                  return null;
+                },
+                onSaved: (value) {
+                  _nombre = value!;
+                },
+              ),
+              const SizedBox(height: 20),
+
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: 'Apellido',
+                  labelStyle: TextStyle(
+                    color: Color.fromARGB(255, 242, 187, 29),
+                  ),
+                  prefixIcon: Icon(Icons.person, color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: Color.fromARGB(255, 242, 187, 29),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: Color.fromARGB(255, 158, 128, 36),
+                    ),
+                  ),
+                ),
+                style: TextStyle(color: Colors.white),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor, ingrese su Apellido';
+                  } else if (!_surnameValidator.hasMatch(value)) {
+                    return 'Ingrese solo letras y espacios';
+                  }
+                  return null;
+                },
+                onSaved: (value) {
+                  _apellido = value!;
+                },
+              ),
+              SizedBox(
+                height: 20.0,
+              ),
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  labelStyle: TextStyle(
+                    color: Color.fromARGB(255, 242, 187, 29),
+                  ),
+                  prefixIcon: Icon(Icons.email, color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: Color.fromARGB(255, 242, 187, 29),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: Color.fromARGB(255, 158, 128, 36),
+                    ),
                   ),
                 ),
                 style: TextStyle(color: Colors.white),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Por favor, ingrese su email';
+                  } else if (!_emailValidator.hasMatch(value)) {
+                    return 'Ingrese un email válido';
                   }
                   return null;
                 },
@@ -152,112 +286,190 @@ class _RegisterFormState extends State<RegisterForm> {
               ),
               const SizedBox(height: 20),
               TextFormField(
+                key: Key('password'),
                 decoration: InputDecoration(
                   labelText: 'Contraseña',
-                  labelStyle:
-                      TextStyle(color: Color.fromARGB(255, 242, 187, 29)),
-                  prefixIcon: Icon(Icons.password,
-                      color: Colors.grey), // Color del icono
+                  labelStyle: TextStyle(
+                    color: Color.fromARGB(255, 242, 187, 29),
+                  ),
+                  prefixIcon: Icon(Icons.lock_outline, color: Colors.grey),
                   border: OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius.circular(10), // Bordes redondeados
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
-                        color: Color.fromARGB(
-                            255, 242, 187, 29)), // Borde resaltado al enfocar
+                      color: Color.fromARGB(255, 242, 187, 29),
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
-                        color:
-                            Color.fromARGB(255, 158, 128, 36)), // Borde regular
+                      color: Color.fromARGB(255, 158, 128, 36),
+                    ),
+                  ),
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _showPassword = !_showPassword;
+                      });
+                    },
+                    icon: Icon(
+                      _showPassword ? Icons.visibility : Icons.visibility_off,
+                      color: Colors.grey, // Color del icono del ojo
+                    ),
                   ),
                 ),
                 style: TextStyle(color: Colors.white),
-                obscureText: true,
+                obscureText:
+                    !_showPassword, // Mostrar u ocultar la contraseña según el estado de _showPassword
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Por favor, ingrese su contraseña';
+                  } else if (!_passwordValidator.hasMatch(value)) {
+                    setState(() {
+                      _hasUpperCase = value.contains(RegExp(r'[A-Z]'));
+                      _hasLowerCase = value.contains(RegExp(r'[a-z]'));
+                      _hasNumber = value.contains(RegExp(r'[0-9]'));
+                      _hasSpecialChar = value.contains(RegExp(r'[!@#$&*]'));
+                      _hasMinLength = value.length >= 8;
+                    });
+                    return null; // No return an error message here
+                  } else if (_passwordValidator.hasMatch(value)) {
+                    setState(() {
+                      _hasUpperCase = value.contains(RegExp(r'[A-Z]'));
+                      _hasLowerCase = value.contains(RegExp(r'[a-z]'));
+                      _hasNumber = value.contains(RegExp(r'[0-9]'));
+                      _hasSpecialChar = value.contains(RegExp(r'[!@#$&*]'));
+                      _hasMinLength = value.length >= 8;
+                      _password = value;
+                    });
+                    return null; // No return an error message here
                   }
-                  return null;
                 },
                 onSaved: (value) {
                   _password = value!;
                 },
+                onChanged: (_) => _validateForm(),
               ),
-              const SizedBox(height: 20),
+
+              SizedBox(
+                height: 10.0,
+              ),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      _buildPasswordStrengthMessage(),
+                      style: TextStyle(
+                        color:
+                            _areRequirementsMet() ? Colors.green : Colors.red,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: 20.0,
+              ),
               TextFormField(
+                key: Key('confirmPassword'),
                 decoration: InputDecoration(
-                  labelText: 'Nombre',
-                  labelStyle:
-                      TextStyle(color: Color.fromARGB(255, 242, 187, 29)),
-                  prefixIcon:
-                      Icon(Icons.person, color: Colors.grey), // Color del icono
+                  labelText: 'Confirmar Contraseña',
+                  labelStyle: TextStyle(
+                    color: Color.fromARGB(255, 242, 187, 29),
+                  ),
+                  prefixIcon: Icon(Icons.lock, color: Colors.grey),
                   border: OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius.circular(10), // Bordes redondeados
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
-                        color: Color.fromARGB(
-                            255, 242, 187, 29)), // Borde resaltado al enfocar
+                      color: Color.fromARGB(255, 242, 187, 29),
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
-                        color:
-                            Color.fromARGB(255, 158, 128, 36)), // Borde regular
+                      color: Color.fromARGB(255, 158, 128, 36),
+                    ),
+                  ),
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _showConfirmPassword = !_showConfirmPassword;
+                      });
+                    },
+                    icon: Icon(
+                      _showConfirmPassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: Colors.grey, // Color del icono del ojo
+                    ),
                   ),
                 ),
                 style: TextStyle(color: Colors.white),
+                obscureText: !_showConfirmPassword,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Por favor, ingrese su Nombre';
+                    return 'Por favor, confirme su contraseña';
+                  } else if (value != _password) {
+                    _passwordsMatch = false;
+                    return 'Las contraseñas no coinciden';
                   }
+                  _passwordsMatch =
+                      true; // Actualizamos la variable cuando las contraseñas coinciden
                   return null;
                 },
-                onSaved: (value) {
-                  _nombre = value!;
-                },
+                onChanged: (_) => _validateForm(),
               ),
-              const SizedBox(height: 20),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_passwordsMatch) SizedBox(height: 10),
+                  Text(
+                    _passwordsMatch ? 'Las contraseñas coinciden' : '',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontSize: 14,
+                    ),
+                  ),
+                  if (_passwordsMatch) SizedBox(height: 10),
+                ],
+              ),
               TextFormField(
                 decoration: InputDecoration(
-                  labelText: 'Apellido',
-                  labelStyle:
-                      TextStyle(color: Color.fromARGB(255, 242, 187, 29)),
-                  prefixIcon: Icon(Icons.person_2_outlined,
-                      color: Colors.grey), // Color del icono
+                  labelText: 'Usuario de Instagram (opcional)',
+                  labelStyle: TextStyle(
+                    color: Color.fromARGB(255, 242, 187, 29),
+                  ),
+                  prefixIcon: Icon(Icons.person, color: Colors.grey),
                   border: OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius.circular(10), // Bordes redondeados
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
-                        color: Color.fromARGB(
-                            255, 242, 187, 29)), // Borde resaltado al enfocar
+                      color: Color.fromARGB(255, 242, 187, 29),
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
-                        color:
-                            Color.fromARGB(255, 158, 128, 36)), // Borde regular
+                      color: Color.fromARGB(255, 158, 128, 36),
+                    ),
                   ),
                 ),
                 style: TextStyle(color: Colors.white),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingrese su Apellido';
-                  }
                   return null;
                 },
                 onSaved: (value) {
-                  _apellido = value!;
+                  _instagramUsername = value ?? 'Undefined';
                 },
+                onChanged: (_) => _validateForm(),
               ),
               const SizedBox(height: 20),
               InkWell(
@@ -266,7 +478,7 @@ class _RegisterFormState extends State<RegisterForm> {
                 },
                 child: InputDecorator(
                   decoration: InputDecoration(
-                    labelText: 'Fecha de Nacimiento',
+                    labelText: 'Fecha de Nacimiento (Mayor a 14 años)',
                     labelStyle:
                         TextStyle(color: Color.fromARGB(255, 242, 187, 29)),
                     prefixIcon: Icon(Icons.calendar_today,
@@ -305,39 +517,65 @@ class _RegisterFormState extends State<RegisterForm> {
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     _formKey.currentState!.save();
-
-                    // Verificar si la edad es mayor a 14 años
-                    if (!validateDateOfBirth(_fechaNacimiento)) {
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          backgroundColor: Colors.grey[800],
+                          title: Text(
+                            'Registrando',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          content: SingleChildScrollView(
+                            child: ListBody(
+                              children: <Widget>[
+                                Text(
+                                  'Por favor, espere...',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                SizedBox(height: 20),
+                                Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth:
+                                        3, // Ajusta el grosor del círculo
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Color.fromARGB(255, 242, 187,
+                                          29), // Color del círculo
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                    List<dynamic> result = await register(
+                        _email,
+                        _password,
+                        _nombre,
+                        _apellido,
+                        _fechaNacimiento,
+                        _image,
+                        _instagramUsername);
+                    Navigator.pop(context);
+                    bool success = result[0];
+                    String errorMessage = result[1];
+                    if (success) {
                       showDialog(
                         context: context,
                         builder: (context) {
                           return AlertDialog(
-                            title: Text('Error'),
+                            backgroundColor: Colors.grey[800],
+                            title: Text(
+                              'Registro Exitoso',
+                              style: TextStyle(color: Colors.white),
+                            ),
                             content: Text(
-                                'Debe ser mayor de 14 años para registrarse'),
-                            actions: <Widget>[
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                child: Text('Ok'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                      return;
-                    }
-
-                    bool registered = await register(_email, _password, _nombre,
-                        _apellido, _fechaNacimiento, _image);
-                    if (registered) {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: Text('Registro Exitoso'),
-                            content: Text('Su usuario fue creado exitosamente'),
+                              'Su usuario $_nombre($_email) fue creado exitosamente',
+                              style: TextStyle(color: Colors.white),
+                            ),
                             actions: <Widget>[
                               TextButton(
                                 onPressed: () {
@@ -346,7 +584,11 @@ class _RegisterFormState extends State<RegisterForm> {
                                   Navigator.of(context)
                                       .pop(); // Volver a la pantalla anterior (login)
                                 },
-                                child: Text('OK'),
+                                child: Text(
+                                  'OK',
+                                  style: TextStyle(
+                                      color: Color.fromARGB(255, 242, 187, 29)),
+                                ),
                               ),
                             ],
                           );
@@ -358,8 +600,7 @@ class _RegisterFormState extends State<RegisterForm> {
                         builder: (context) {
                           return AlertDialog(
                             title: Text('Error'),
-                            content: Text(
-                                'Error al crear el Usuario, intentelo nuevamente'),
+                            content: Text(errorMessage),
                             actions: <Widget>[
                               TextButton(
                                 onPressed: () {
@@ -381,7 +622,8 @@ class _RegisterFormState extends State<RegisterForm> {
                   foregroundColor:
                       MaterialStateProperty.all<Color>(Colors.black),
                   backgroundColor: MaterialStateProperty.all<Color>(
-                      Color.fromARGB(255, 242, 187, 29)),
+                    Color.fromARGB(255, 242, 187, 29),
+                  ),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
@@ -418,58 +660,75 @@ class _RegisterFormState extends State<RegisterForm> {
         currentDate.subtract(Duration(days: 365 * 14)); // 14 años atrás
     return fechaNacimiento.isBefore(minimumDate);
   }
-}
 
-Future<bool> register(String email, String password, String nombre,
-    String apellido, DateTime fechaNacimiento, File? image) async {
-  try {
-    UserCredential userCredential =
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+  Future<List<dynamic>> register(
+      String email,
+      String password,
+      String nombre,
+      String apellido,
+      DateTime fechaNacimiento,
+      File? image,
+      String instagram) async {
+    try {
+      UserCredential userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-    // Subir la imagen a Firebase Storage
-    if (image != null) {
-      Reference ref = FirebaseStorage.instance
-          .ref()
-          .child('users/${userCredential.user!.uid}/profile_image.jpg');
-      UploadTask uploadTask = ref.putFile(image);
-      TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
-      String imageUrl = await taskSnapshot.ref.getDownloadURL();
+      String errorMessage = '';
 
-      // Guardar información adicional en Firestore
-      Timestamp fechaNacimientoTimestamp = Timestamp.fromDate(fechaNacimiento);
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set({
-        'name': nombre,
-        'lastname': apellido,
-        'email': email,
-        'birthDate': fechaNacimientoTimestamp,
-        'imageUrl': imageUrl, // URL de descarga de la imagen
-      });
-    } else {
-      String imageUrl =
-          "https://firebasestorage.googleapis.com/v0/b/app-listas-eccd1.appspot.com/o/users%2Fprofile-image-standard.png?alt=media&token=f3a904df-f908-4743-8b16-1f3939986569";
-      // No se proporcionó una imagen, guardar la información sin la URL de la imagen
-      Timestamp fechaNacimientoTimestamp = Timestamp.fromDate(fechaNacimiento);
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set({
-        'name': nombre,
-        'lastname': apellido,
-        'birthDate': fechaNacimientoTimestamp,
-        'email': email,
-        'imageUrl': imageUrl,
-      });
+      if (image != null) {
+        Reference ref = FirebaseStorage.instance
+            .ref()
+            .child('users/${userCredential.user!.uid}/profile_image.jpg');
+        UploadTask uploadTask = ref.putFile(image);
+        TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
+        String imageUrl = await taskSnapshot.ref.getDownloadURL();
+
+        // Guardar información adicional en Firestore
+        Timestamp fechaNacimientoTimestamp =
+            Timestamp.fromDate(fechaNacimiento);
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set({
+          'name': nombre,
+          'lastname': apellido,
+          'email': email,
+          'birthDate': fechaNacimientoTimestamp,
+          'imageUrl': imageUrl,
+          'instagram': instagram,
+        });
+      } else {
+        String imageUrl =
+            "https://firebasestorage.googleapis.com/v0/b/app-listas-eccd1.appspot.com/o/users%2Fprofile-image-standard.png?alt=media&token=f3a904df-f908-4743-8b16-1f3939986569";
+        // No se proporcionó una imagen, guardar la información sin la URL de la imagen
+        Timestamp fechaNacimientoTimestamp =
+            Timestamp.fromDate(fechaNacimiento);
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set({
+          'name': nombre,
+          'lastname': apellido,
+          'birthDate': fechaNacimientoTimestamp,
+          'email': email,
+          'imageUrl': imageUrl,
+          'instagram': instagram,
+        });
+      }
+
+      return [true, errorMessage]; // Registro exitoso
+    } catch (e) {
+      String errorMessage = '';
+      if (e is FirebaseAuthException) {
+        errorMessage = FirebaseAuthExceptions.getErrorMessage(e.code);
+        print('Error registering user: $errorMessage');
+      } else {
+        print('Error registering user: $e');
+      }
+      return [false, errorMessage]; // Error al registrar usuario
     }
-
-    return true; // Registro exitoso
-  } catch (e) {
-    print('Error registering user: $e');
-    return false; // Error al registrar usuario
   }
 }

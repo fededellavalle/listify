@@ -1,26 +1,31 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/material.dart';
-import '../../home/navigation_page.dart'; // Importar la página de navegación (NavigationPage)
+import '../../home/navigation_page.dart';
 
 class AuthService {
   // Método para iniciar sesión con email y contraseña
-  Future<UserCredential?> signIn(BuildContext context, String email, String password) async {
+  Future<List<dynamic>> signIn(
+      BuildContext context, String email, String password) async {
+    String errorMessage = '';
     try {
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      
-      return userCredential; // Devolver el UserCredential si la autenticación es exitosa
+
+      return [
+        userCredential,
+        errorMessage
+      ]; // Devolver el UserCredential si la autenticación es exitosa
     } on FirebaseAuthException catch (e) {
-      String errorMessage = getFirebaseAuthErrorMessage(e); // Obtener mensaje de error
-      showErrorDialog(context, errorMessage); // Mostrar dialogo de error al usuario
+      errorMessage = getFirebaseAuthErrorMessage(e); // Obtener mensaje de error
       print('Error signing in: $errorMessage');
-      return null; // Devolver null en caso de error
+      return [null, errorMessage]; // Devolver null en caso de error
     } catch (e) {
       print('Error signing in: $e');
-      return null; // Devolver null en caso de error
+      return [null, errorMessage]; // Devolver null en caso de error
     }
   }
 
@@ -40,27 +45,6 @@ class AuthService {
     }
   }
 
-  // Método para mostrar un diálogo de error al usuario
-  void showErrorDialog(BuildContext context, String errorMessage) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Error de Autenticación'),
-          content: Text(errorMessage),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cerrar el diálogo
-              },
-              child: Text('Cerrar'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-  
   Future<void> signInWithGoogle(BuildContext context) async {
     try {
       // Iniciar sesión con Google
@@ -74,7 +58,8 @@ class AuthService {
       );
 
       // Iniciar sesión con la credencial en FirebaseAuth
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithCredential(credential);
 
       // Imprimir información del usuario
       print(userCredential.user?.displayName);
@@ -86,10 +71,11 @@ class AuthService {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => NavigationPage(uid: userCredential.user?.uid, userName: userCredential.user?.displayName),
+          builder: (context) => NavigationPage(
+              uid: userCredential.user?.uid,
+              userName: userCredential.user?.displayName),
         ),
       );
-
     } catch (e) {
       // Manejar errores si ocurren
       print('Error signing in with Google: $e');
@@ -101,7 +87,7 @@ class AuthService {
     try {
       // Obtener instancia de GoogleSignIn
       GoogleSignIn googleSignIn = GoogleSignIn();
-      
+
       // Desconectar la sesión de Google
       await googleSignIn.disconnect();
 

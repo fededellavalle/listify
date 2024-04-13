@@ -1,55 +1,36 @@
-import 'package:firebase_auth/firebase_auth.dart';
+class FirebaseAuthExceptions {
+  static const String userNotFound = 'user-not-found';
+  static const String wrongPassword = 'wrong-password';
+  static const String weakPassword = 'weak-password';
+  static const String emailAlreadyInUse = 'email-already-in-use';
+  static const String invalidEmail = 'invalid-email';
+  static const String operationNotAllowed = 'operation-not-allowed';
+  static const String userDisabled = 'user-disabled';
+  static const String tooManyRequests = 'too-many-requests';
+  static const String networkRequestFailed = 'network-request-failed';
 
-enum AuthStatus {
-  successful,
-  wrongPassword,
-  emailAlreadyExists,
-  invalidEmail,
-  weakPassword,
-  unknown,
-}
-
-class AuthExceptionHandler {
-  static handleAuthException(FirebaseAuthException e) {
-    AuthStatus status;
-    switch (e.code) {
-      case "invalid-email":
-        status = AuthStatus.invalidEmail;
-        break;
-      case "wrong-password":
-        status = AuthStatus.wrongPassword;
-        break;
-      case "weak-password":
-        status = AuthStatus.weakPassword;
-        break;
-      case "email-already-in-use":
-        status = AuthStatus.emailAlreadyExists;
-        break;
+  static String getErrorMessage(String code) {
+    switch (code) {
+      case userNotFound:
+        return 'Usuario no encontrado.';
+      case wrongPassword:
+        return 'Contraseña incorrecta.';
+      case weakPassword:
+        return 'La contraseña es débil. Debe tener al menos 6 caracteres.';
+      case emailAlreadyInUse:
+        return 'El correo electrónico ya está en uso.';
+      case invalidEmail:
+        return 'El correo electrónico es inválido.';
+      case operationNotAllowed:
+        return 'Operación no permitida.';
+      case userDisabled:
+        return 'El usuario ha sido deshabilitado.';
+      case tooManyRequests:
+        return 'Demasiados intentos. Intente más tarde.';
+      case networkRequestFailed:
+        return 'Error de red. Por favor, revise su conexión a internet.';
       default:
-        status = AuthStatus.unknown;
+        return 'Error desconocido al autenticar.';
     }
-    return status;
-  }
-
-  static String generateErrorMessage(error) {
-    String errorMessage;
-    switch (error) {
-      case AuthStatus.invalidEmail:
-        errorMessage = "Your email address appears to be malformed.";
-        break;
-      case AuthStatus.weakPassword:
-        errorMessage = "Your password should be at least 6 characters.";
-        break;
-      case AuthStatus.wrongPassword:
-        errorMessage = "Your email or password is wrong.";
-        break;
-      case AuthStatus.emailAlreadyExists:
-        errorMessage =
-            "The email address is already in use by another account.";
-        break;
-      default:
-        errorMessage = "An error occured. Please try again later.";
-    }
-    return errorMessage;
   }
 }
