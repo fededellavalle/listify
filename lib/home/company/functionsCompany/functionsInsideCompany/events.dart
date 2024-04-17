@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../../styles/button.dart';
 import 'package:unicons/unicons.dart';
+import 'functionsEvents/step1AddEvent.dart';
 
 class EventosPage extends StatefulWidget {
   final Map<String, dynamic> companyData;
@@ -50,7 +51,35 @@ class _EventosPageState extends State<EventosPage> {
                     children: [
                       //Eventos Boton
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder:
+                                  (context, animation, secondaryAnimation) =>
+                                      Step1AddEvent(
+                                companyData: widget.companyData,
+                              ),
+                              transitionsBuilder: (context, animation,
+                                  secondaryAnimation, child) {
+                                return SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(1, 0),
+                                    end: Offset.zero,
+                                  ).animate(
+                                    CurvedAnimation(
+                                      parent: animation,
+                                      curve: Curves.linearToEaseOut,
+                                      reverseCurve: Curves.easeIn,
+                                    ),
+                                  ),
+                                  child: child,
+                                );
+                              },
+                              transitionDuration: Duration(milliseconds: 500),
+                            ),
+                          );
+                        },
                         style: buttonCompany,
                         child: Row(
                           mainAxisAlignment:

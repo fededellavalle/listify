@@ -260,7 +260,7 @@ class _NavigationPageState extends State<NavigationPage> {
       ),
       appBar: AppBar(
         title: Text(
-          'Home Page',
+          'App Listas',
           style: TextStyle(
             color: Colors.white,
           ),
