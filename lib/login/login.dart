@@ -29,6 +29,7 @@ class _LoginFormState extends State<LoginForm> {
   late String _password;
   //bool _keepSignedIn = false;
   bool _obscureText = true;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -200,104 +201,115 @@ class _LoginFormState extends State<LoginForm> {
                           )),
                       SizedBox(height: 20.0),
                       ElevatedButton(
-                        onPressed: () async {
-                          if (_formKey.currentState!.validate()) {
-                            _formKey.currentState!.save();
-                            showDialog(
-                              context: context,
-                              barrierDismissible: false,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  backgroundColor:
-                                      Colors.grey[800], // Fondo gris oscuro
-                                  title: Text(
-                                    'Iniciando sesión',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                  content: SingleChildScrollView(
-                                    child: ListBody(
-                                      children: <Widget>[
-                                        Text(
-                                          'Por favor, espera un momento...',
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                        SizedBox(height: 20),
-                                        Center(
-                                          child: CircularProgressIndicator(
-                                            strokeWidth:
-                                                3, // Ajusta el grosor del círculo
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                              Color.fromARGB(255, 242, 187,
-                                                  29), // Color del círculo
+                        onPressed: _isLoading // Verifica si isLoading es true
+                            ? null // Si es true, deshabilita el botón
+                            : () async {
+                                if (_formKey.currentState!.validate()) {
+                                  _formKey.currentState!.save();
+                                  setState(() {
+                                    _isLoading =
+                                        true; // Activar el estado de carga
+                                  });
+                                  List<dynamic> result = await AuthService()
+                                      .signIn(context, _email, _password);
+                                  UserCredential? userCredential = result[0];
+                                  String errorMessage = result[1];
+
+                                  if (userCredential != null) {
+                                    String uid = userCredential.user!.uid;
+                                    DocumentSnapshot userData =
+                                        await FirebaseFirestore.instance
+                                            .collection('users')
+                                            .doc(uid)
+                                            .get();
+                                    String _userName = userData['name'];
+                                    setState(() {
+                                      _isLoading =
+                                          false; // Desactivar el estado de carga
+                                    });
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => NavigationPage(
+                                            uid: uid, userName: _userName),
+                                      ),
+                                    );
+                                  } else {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return AlertDialog(
+                                          title: Text(
+                                            'Error',
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
+                                          backgroundColor: Colors
+                                              .grey[800], // Fondo gris oscuro
+                                          content: Text(
+                                            errorMessage,
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
+                                          actions: <Widget>[
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: Text(
+                                                'OK',
+                                                style: TextStyle(
+                                                    color: Colors.white),
+                                              ),
                                             ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  }
+                                } else {
+                                  setState(() {
+                                    _isLoading = false;
+                                  });
+                                }
+                              },
+                        style: buttonPrimary,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _isLoading
+                                ? Row(
+                                    children: [
+                                      const SizedBox(
+                                        width: 23,
+                                        height: 23,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth:
+                                              2, // Grosor del círculo de carga
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            Colors.black,
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                            List<dynamic> result = await AuthService()
-                                .signIn(context, _email, _password);
-                            UserCredential? userCredential = result[0];
-                            String errorMessage = result[1];
-                            Navigator.pop(
-                                context); // Cerrar el diálogo de "Iniciando sesión"
-                            if (userCredential != null) {
-                              String uid = userCredential.user!.uid;
-                              DocumentSnapshot userData =
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                      .doc(uid)
-                                      .get();
-                              String _userName = userData['name'];
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => NavigationPage(
-                                      uid: uid, userName: _userName),
-                                ),
-                              );
-                            } else {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: Text(
-                                      'Error',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                    backgroundColor:
-                                        Colors.grey[800], // Fondo gris oscuro
-                                    content: Text(
-                                      errorMessage,
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: Text(
-                                          'OK',
-                                          style: TextStyle(color: Colors.white),
+                                      ),
+                                      const SizedBox(
+                                          width:
+                                              10), // Espacio entre el círculo y el texto
+                                      Text(
+                                        'Iniciando Sesión',
+                                        style: GoogleFonts.roboto(
+                                          fontSize: 16,
                                         ),
                                       ),
                                     ],
-                                  );
-                                },
-                              );
-                            }
-                          }
-                        },
-                        style: buttonPrimary,
-                        child: Text(
-                          'Iniciar Sesión',
-                          style: GoogleFonts.roboto(
-                            fontSize: 16,
-                          ),
+                                  )
+                                : Text(
+                                    'Iniciar Sesión',
+                                    style: GoogleFonts.roboto(
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                          ],
                         ),
                       ),
                     ],

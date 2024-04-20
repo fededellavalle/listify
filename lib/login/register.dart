@@ -51,6 +51,7 @@ class _RegisterFormState extends State<RegisterForm> {
   bool _showPassword = false;
   bool _showConfirmPassword = false;
   bool _passwordsMatch = false;
+  bool _isLoading = false;
 
   final _nameValidator = RegExp(r'^[a-zA-Z ]+$');
   final _surnameValidator = RegExp(r'^[a-zA-Z ]+$');
@@ -116,10 +117,12 @@ class _RegisterFormState extends State<RegisterForm> {
     final imageCropper = ImageCropper(); // Crear una instancia de ImageCropper
     CroppedFile? croppedFile = await imageCropper.cropImage(
       sourcePath: imageFile.path,
-      aspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
+      aspectRatio:
+          CropAspectRatio(ratioX: 1, ratioY: 1), // Ratio 1:1 para un círculo
       compressQuality: 100,
       maxWidth: 512,
       maxHeight: 512,
+      cropStyle: CropStyle.circle, // Estilo de recorte circular
     );
     return croppedFile;
   }
@@ -514,107 +517,83 @@ class _RegisterFormState extends State<RegisterForm> {
 
               SizedBox(height: 20.0),
               ElevatedButton(
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    _formKey.currentState!.save();
-                    showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          backgroundColor: Colors.grey[800],
-                          title: Text(
-                            'Registrando',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          content: SingleChildScrollView(
-                            child: ListBody(
-                              children: <Widget>[
-                                Text(
-                                  'Por favor, espere...',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                SizedBox(height: 20),
-                                Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth:
-                                        3, // Ajusta el grosor del círculo
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Color.fromARGB(255, 242, 187,
-                                          29), // Color del círculo
-                                    ),
+                onPressed: _isLoading // Verifica si isLoading es true
+                    ? null // Si es true, deshabilita el botón
+                    : () async {
+                        if (_formKey.currentState!.validate()) {
+                          _formKey.currentState!.save();
+                          setState(() {
+                            _isLoading = true; // Activar el estado de carga
+                          });
+                          List<dynamic> result = await register(
+                              _email,
+                              _password,
+                              _nombre,
+                              _apellido,
+                              _fechaNacimiento,
+                              _image,
+                              _instagramUsername);
+                          Navigator.pop(context);
+                          bool success = result[0];
+                          String errorMessage = result[1];
+                          setState(() {
+                            _isLoading = false; // Desactivar el estado de carga
+                          });
+                          if (success) {
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  backgroundColor: Colors.grey[800],
+                                  title: Text(
+                                    'Registro Exitoso',
+                                    style: TextStyle(color: Colors.white),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
+                                  content: Text(
+                                    'Su usuario $_nombre($_email) fue creado exitosamente',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: Text(
+                                        'OK',
+                                        style: TextStyle(
+                                            color: Color.fromARGB(
+                                                255, 242, 187, 29)),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          } else {
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: Text('Error'),
+                                  content: Text(errorMessage),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: Text('Ok'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          }
+                        } else {
+                          setState(() {
+                            _isLoading = false;
+                          });
+                        }
                       },
-                    );
-                    List<dynamic> result = await register(
-                        _email,
-                        _password,
-                        _nombre,
-                        _apellido,
-                        _fechaNacimiento,
-                        _image,
-                        _instagramUsername);
-                    Navigator.pop(context);
-                    bool success = result[0];
-                    String errorMessage = result[1];
-                    if (success) {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            backgroundColor: Colors.grey[800],
-                            title: Text(
-                              'Registro Exitoso',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            content: Text(
-                              'Su usuario $_nombre($_email) fue creado exitosamente',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            actions: <Widget>[
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context)
-                                      .pop(); // Cerrar el AlertDialog
-                                  Navigator.of(context)
-                                      .pop(); // Volver a la pantalla anterior (login)
-                                },
-                                child: Text(
-                                  'OK',
-                                  style: TextStyle(
-                                      color: Color.fromARGB(255, 242, 187, 29)),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    } else {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: Text('Error'),
-                            content: Text(errorMessage),
-                            actions: <Widget>[
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                child: Text('Ok'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    }
-                  }
-                },
                 style: ButtonStyle(
                   padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
                     EdgeInsets.all(20),
@@ -630,7 +609,41 @@ class _RegisterFormState extends State<RegisterForm> {
                     ),
                   ),
                 ),
-                child: Text('Registrarse'),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _isLoading
+                        ? const Row(
+                            children: [
+                              const SizedBox(
+                                width: 23,
+                                height: 23,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2, // Grosor del círculo de carga
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.black,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(
+                                  width:
+                                      10), // Espacio entre el círculo y el texto
+                              Text(
+                                'Registrando',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Text(
+                            'Registrarse',
+                            style: TextStyle(
+                              fontSize: 16,
+                            ),
+                          ),
+                  ],
+                ),
               ),
             ],
           ),

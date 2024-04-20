@@ -42,10 +42,12 @@ class _CreateCompanyState extends State<CreateCompany> {
     final imageCropper = ImageCropper(); // Crear una instancia de ImageCropper
     CroppedFile? croppedFile = await imageCropper.cropImage(
       sourcePath: imageFile.path,
-      aspectRatio: CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
+      aspectRatio:
+          CropAspectRatio(ratioX: 1, ratioY: 1), // Ratio 1:1 para un círculo
       compressQuality: 100,
       maxWidth: 512,
       maxHeight: 512,
+      cropStyle: CropStyle.circle, // Estilo de recorte circular
     );
     return croppedFile;
   }

@@ -1,4 +1,6 @@
+import 'package:app_listas/styles/button.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class ListItem {
   String name;
@@ -14,14 +16,14 @@ class ListItem {
 
 class Step2AddEvent extends StatefulWidget {
   final String name;
-  final String description;
+  final double ticketValue;
   final DateTime? startDateTime;
   final DateTime? endDateTime;
 
   const Step2AddEvent({
     Key? key,
     required this.name,
-    required this.description,
+    required this.ticketValue,
     required this.startDateTime,
     required this.endDateTime,
   }) : super(key: key);
@@ -36,16 +38,15 @@ class _Step2AddEventState extends State<Step2AddEvent> {
   List<DateTime> _availableDates = [];
   DateTime? _selectedDate;
   final _formKey = GlobalKey<FormState>();
-  String _selectedListType = 'Lista de Asistencia no Paga';
+  String _selectedListType = 'Lista de Asistencia';
   List<String> _listTypes = [
-    'Lista de Asistencia no Paga',
-    'Lista de Asistencia Paga',
+    'Lista de Asistencia',
     'Lista de Anotación',
   ];
   List<ListItem> _lists = [
     ListItem(
       name: 'Invitados',
-      type: 'Lista de Asistencia no Paga',
+      type: 'Lista de Asistencia',
       selectedTime: TimeOfDay.now(),
     ),
   ]; // Lista por default
@@ -92,49 +93,83 @@ class _Step2AddEventState extends State<Step2AddEvent> {
     print(
         'Fin del evento: $endYear-$endMonth-$endDay $endHour:$endMinute:$endSecond');
 
-    _availableDates = _generateAvailableDates();
+    _availableDates = _generateAvailableTimeSlots();
     _selectedDate = _availableDates.isNotEmpty ? _availableDates.first : null;
   }
 
-  List<DateTime> _generateAvailableDates() {
-    List<DateTime> dates = [];
+  List<DateTime> _generateAvailableTimeSlots() {
+    List<DateTime> timeSlots = [];
+    int bandera = 0;
 
-    // Separar fecha y hora del inicio del evento
-    int startYear = _eventStartDate.year;
-    int startMonth = _eventStartDate.month;
-    int startDay = _eventStartDate.day;
+    // Obtener la hora de inicio y la hora de finalización del evento
+    int startHour = _eventStartDate.hour;
+    int startMinute = _eventStartDate.minute;
+    int endHour = _eventEndDate.hour;
+    int endMinute = _eventEndDate.minute;
+    int endHour2 = _eventEndDate.hour;
+    int endMinute2 = _eventEndDate.minute;
 
-    // Separar fecha y hora del final del evento
-    int endYear = _eventEndDate.year;
-    int endMonth = _eventEndDate.month;
-    int endDay = _eventEndDate.day;
-
-    // Generar fechas dentro del rango
-    for (int year = startYear; year <= endYear; year++) {
-      for (int month = (year == startYear ? startMonth : 1);
-          month <= (year == endYear ? endMonth : 12);
-          month++) {
-        int daysInMonth = DateTime(year, month + 1, 0).day;
-        int start = (year == startYear && month == startMonth) ? startDay : 1;
-        int end = (year == endYear && month == endMonth) ? endDay : daysInMonth;
-
-        // Añadir la fecha de inicio si es el mismo día que la fecha de finalización
-        if (year == endYear && month == endMonth && start == end) {
-          dates.add(DateTime(year, month, start));
-        }
-
-        for (int day = start; day <= end; day++) {
-          DateTime date = DateTime(year, month, day);
-          if (date.isAfter(_eventStartDate) &&
-                  date.isBefore(_eventEndDate.add(Duration(days: 1))) ||
-              (year == startYear && month == startMonth && day == startDay)) {
-            dates.add(date);
-          }
-        }
-      }
+    if (startHour > endHour) {
+      endHour += 24;
     }
 
-    return dates;
+    timeSlots.add(DateTime(_eventStartDate.year, _eventStartDate.month,
+        _eventStartDate.day, startHour, startMinute));
+
+    if (startMinute >= 0 && startMinute <= 15) {
+      startMinute = 0;
+    } else if (startMinute > 15 && startMinute <= 30) {
+      startMinute = 15;
+    } else if (startMinute > 30 && startMinute <= 45) {
+      startMinute = 30;
+    } else if (startMinute > 45 && startMinute <= 59) {
+      startMinute = 45;
+    }
+
+    if (endMinute >= 0 && endMinute <= 15) {
+      endMinute = 0;
+    } else if (endMinute > 15 && endMinute <= 30) {
+      endMinute = 15;
+    } else if (endMinute > 30 && endMinute <= 45) {
+      endMinute = 30;
+    } else if (endMinute > 45 && endMinute <= 59) {
+      endMinute = 45;
+    }
+    // Calcular el número de intervalos de 15 minutos entre la hora de inicio y la hora de finalización
+    int totalMinutes =
+        (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+    int numSlots = (totalMinutes / 15).ceil();
+
+    startMinute += 15;
+
+    // Generar los intervalos de tiempo de 15 minutos
+    for (int i = 0; i < numSlots; i++) {
+      int minutesToAdd = i * 15;
+      int slotHour = startHour + (startMinute + minutesToAdd) ~/ 60;
+      int slotMinute = (startMinute + minutesToAdd) % 60;
+
+      if (_eventStartDate.day != _eventEndDate.day) {
+        if (slotHour == 00) {
+          bandera = 1;
+        }
+        if (bandera == 1) {
+          timeSlots.add(DateTime(_eventEndDate.year, _eventEndDate.month,
+              _eventEndDate.day, slotHour, slotMinute));
+        } else {
+          timeSlots.add(DateTime(_eventStartDate.year, _eventStartDate.month,
+              _eventStartDate.day, slotHour, slotMinute));
+        }
+      } else {
+        timeSlots.add(DateTime(_eventStartDate.year, _eventStartDate.month,
+            _eventStartDate.day, slotHour, slotMinute));
+      }
+    }
+    timeSlots.add(DateTime(_eventEndDate.year, _eventEndDate.month,
+        _eventEndDate.day, endHour2, endMinute2));
+
+    print(timeSlots);
+
+    return timeSlots;
   }
 
   @override
@@ -231,27 +266,53 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                 ),
               ),
               SizedBox(height: 8),
-              Text(
-                _listTypeSummary,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                ),
+              Row(
+                children: [
+                  Icon(
+                    Icons.info_outline, // El icono que deseas usar
+                    color: Colors.grey,
+                    size: 20,
+                  ),
+                  SizedBox(width: 5), // Espacio entre el icono y el texto
+                  Text(
+                    _listTypeSummary,
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: 8),
               ElevatedButton(
                 onPressed: () {
                   _createList(_selectedListType, _listNameController.text);
                 },
-                child: Text('Guardar'),
+                style: buttonPrimary,
+                child: Text(
+                  'Crear Lista',
+                  style: TextStyle(
+                    fontSize: 16,
+                  ),
+                ),
               ),
               SizedBox(height: 16),
-              Text(
-                'Listas Creadas:',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
+              Row(
+                children: [
+                  Icon(
+                    Icons.list_alt_outlined,
+                    color: Colors.grey,
+                    size: 20,
+                  ),
+                  SizedBox(width: 5),
+                  Text(
+                    'Listas Creadas:',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: 8),
               ListView.builder(
@@ -308,10 +369,8 @@ class _Step2AddEventState extends State<Step2AddEvent> {
 
   String _getListTypeSummary(String type) {
     switch (type) {
-      case 'Lista de Asistencia no Paga':
+      case 'Lista de Asistencia':
         return 'Para anotar nombres, dar asistencia al evento.';
-      case 'Lista de Asistencia Paga':
-        return 'Para anotar nombres y gestionar pagos de asistencia.';
       case 'Lista de Anotación':
         return 'Para tomar notas o registrar información adicional.';
       default:
@@ -348,8 +407,7 @@ class _Step2AddEventState extends State<Step2AddEvent> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        String newName =
-            _lists[index].name; // Acceder al campo 'name' del objeto
+        String newName = _lists[index].name;
         return AlertDialog(
           title: Text('Editar Lista'),
           content: TextFormField(
@@ -412,7 +470,8 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                       return DropdownMenuItem<DateTime>(
                         value: date,
                         child: Text(
-                          '${date.day}/${date.month}/${date.year}',
+                          DateFormat('HH:mm')
+                              .format(date), // Formato de hora y minutos
                           style: TextStyle(
                             color: Colors.white,
                           ),
