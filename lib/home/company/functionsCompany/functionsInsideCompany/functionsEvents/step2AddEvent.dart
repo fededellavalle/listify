@@ -6,11 +6,13 @@ class ListItem {
   String name;
   String type;
   TimeOfDay selectedTime;
+  bool addExtraTime;
 
   ListItem({
     required this.name,
     required this.type,
     required this.selectedTime,
+    required this.addExtraTime,
   });
 }
 
@@ -37,6 +39,8 @@ class _Step2AddEventState extends State<Step2AddEvent> {
   DateTime _eventEndDate = DateTime.now();
   List<DateTime> _availableDates = [];
   DateTime? _selectedDate;
+  DateTime? _selectedStartDate;
+  DateTime? _selectedEndDate;
   final _formKey = GlobalKey<FormState>();
   String _selectedListType = 'Lista de Asistencia';
   List<String> _listTypes = [
@@ -48,8 +52,11 @@ class _Step2AddEventState extends State<Step2AddEvent> {
       name: 'Invitados',
       type: 'Lista de Asistencia',
       selectedTime: TimeOfDay.now(),
+      addExtraTime: false,
     ),
-  ]; // Lista por default
+  ];
+
+  bool _addExtraTime = false;
 
   late TextEditingController _listNameController;
   String _listTypeSummary = ''; // Resumen del tipo de lista seleccionado
@@ -381,7 +388,10 @@ class _Step2AddEventState extends State<Step2AddEvent> {
   void _createList(String listType, String listName) {
     setState(() {
       _lists.add(ListItem(
-          name: listName, type: listType, selectedTime: TimeOfDay.now()));
+          name: listName,
+          type: listType,
+          selectedTime: TimeOfDay.now(),
+          addExtraTime: false));
       _listNameController.clear();
     });
     showDialog(
@@ -435,6 +445,7 @@ class _Step2AddEventState extends State<Step2AddEvent> {
 
   void _configureList(int index) {
     showModalBottomSheet(
+      backgroundColor: Colors.grey.shade900,
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
@@ -458,77 +469,148 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                     style: TextStyle(fontSize: 16),
                   ),
                   SizedBox(height: 16),
-                  Text(
-                    'Hora seleccionada: ${_lists[index].selectedTime.format(context)}',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  SizedBox(height: 16),
-                  DropdownButtonFormField<DateTime>(
-                    value: _selectedDate,
-                    items:
-                        _availableDates.toSet().toList().map((DateTime date) {
-                      return DropdownMenuItem<DateTime>(
-                        value: date,
-                        child: Text(
-                          DateFormat('HH:mm')
-                              .format(date), // Formato de hora y minutos
-                          style: TextStyle(
-                            color: Colors.white,
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 1,
+                        child: Text('Desde'),
+                      ),
+                      SizedBox(width: 10), // Espacio entre los elementos
+                      Expanded(
+                        flex: 2,
+                        child: DropdownButtonFormField<DateTime>(
+                          value: _selectedStartDate,
+                          items: _availableDates.map((DateTime date) {
+                            return DropdownMenuItem<DateTime>(
+                              value: date,
+                              child: Text(
+                                DateFormat('HH:mm')
+                                    .format(date), // Formato de hora y minutos
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (DateTime? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                _selectedStartDate = newValue;
+                              });
+                            }
+                          },
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(),
                           ),
                         ),
-                      );
-                    }).toList(),
-                    onChanged: (DateTime? newValue) {
-                      if (newValue != null) {
-                        setState(() {
-                          _selectedDate = newValue;
-                        });
-                      }
-                    },
-                    dropdownColor: Colors.grey.shade800,
-                    decoration: InputDecoration(
-                      labelText: 'Seleccionar Fecha',
-                      labelStyle: TextStyle(
-                        color: Color.fromARGB(255, 242, 187, 29),
                       ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                      SizedBox(width: 20), // Espacio entre los elementos
+                      Expanded(
+                        flex: 1,
+                        child: Text('Hasta'),
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: Color.fromARGB(255, 242, 187, 29),
+                      SizedBox(width: 10), // Espacio entre los elementos
+                      Expanded(
+                        flex: 2,
+                        child: DropdownButtonFormField<DateTime>(
+                          value: _selectedEndDate,
+                          items: _availableDates.map((DateTime date) {
+                            return DropdownMenuItem<DateTime>(
+                              value: date,
+                              child: Text(
+                                DateFormat('HH:mm')
+                                    .format(date), // Formato de hora y minutos
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (DateTime? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                _selectedEndDate = newValue;
+                              });
+                            }
+                          },
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                          ),
                         ),
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: Color.fromARGB(255, 158, 128, 36),
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
                   SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () async {
-                      TimeOfDay? selectedTime = await showTimePicker(
-                        context: context,
-                        initialTime: _lists[index].selectedTime,
-                      );
-                      if (selectedTime != null) {
-                        setState(() {
-                          _lists[index].selectedTime = selectedTime;
-                        });
-                      }
-                    },
-                    child: Text('Seleccionar Hora'),
-                  ),
-                  SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: Text('Aceptar'),
+                  Container(
+                    child: _lists[index].addExtraTime != true
+                        ? ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _lists[index].addExtraTime = true;
+                              });
+                            },
+                            child: Text('Agregar nuevo rango horario'))
+                        : Row(
+                            children: [
+                              Expanded(
+                                flex: 1,
+                                child: Text('Desde'),
+                              ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                flex: 2,
+                                child: DropdownButtonFormField<DateTime>(
+                                  value: _selectedStartDate,
+                                  items: _availableDates.map((DateTime date) {
+                                    return DropdownMenuItem<DateTime>(
+                                      value: date,
+                                      child: Text(
+                                        DateFormat('HH:mm').format(
+                                            date), // Formato de hora y minutos
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (DateTime? newValue) {
+                                    if (newValue != null) {
+                                      setState(() {
+                                        _selectedStartDate = newValue;
+                                      });
+                                    }
+                                  },
+                                  decoration: InputDecoration(
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                  width: 20), // Espacio entre los elementos
+                              Expanded(
+                                flex: 1,
+                                child: Text('Hasta'),
+                              ),
+                              SizedBox(
+                                  width: 10), // Espacio entre los elementos
+                              Expanded(
+                                flex: 2,
+                                child: DropdownButtonFormField<DateTime>(
+                                  value: _selectedEndDate,
+                                  items: _availableDates.map((DateTime date) {
+                                    return DropdownMenuItem<DateTime>(
+                                      value: date,
+                                      child: Text(
+                                        DateFormat('HH:mm').format(
+                                            date), // Formato de hora y minutos
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (DateTime? newValue) {
+                                    if (newValue != null) {
+                                      setState(() {
+                                        _selectedEndDate = newValue;
+                                      });
+                                    }
+                                  },
+                                  decoration: InputDecoration(
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                 ],
               ),

@@ -235,6 +235,9 @@ class _LoginFormState extends State<LoginForm> {
                                       ),
                                     );
                                   } else {
+                                    setState(() {
+                                      _isLoading = false;
+                                    });
                                     showDialog(
                                       context: context,
                                       builder: (context) {
@@ -461,6 +464,30 @@ class _LoginFormState extends State<LoginForm> {
                         color: Color.fromARGB(255, 242, 187, 29),
                         fontWeight: FontWeight.bold,
                       ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Powered by',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12, // Tamaño del texto ajustable
+                    ),
+                  ),
+                  SizedBox(width: 5), // Espacio entre el texto y la imagen
+                  GestureDetector(
+                    onTap: () {
+                      print('Entrando a ig');
+                    },
+                    child: Image.asset(
+                      'lib/assets/images/logo-exodo.png',
+                      height: 45,
+                      width: 60,
                     ),
                   ),
                 ],
