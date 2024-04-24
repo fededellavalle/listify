@@ -295,7 +295,7 @@ class _LoginFormState extends State<LoginForm> {
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(
+                                      /*const SizedBox(
                                           width:
                                               10), // Espacio entre el círculo y el texto
                                       Text(
@@ -303,7 +303,7 @@ class _LoginFormState extends State<LoginForm> {
                                         style: GoogleFonts.roboto(
                                           fontSize: 16,
                                         ),
-                                      ),
+                                      ),*/
                                     ],
                                   )
                                 : Text(

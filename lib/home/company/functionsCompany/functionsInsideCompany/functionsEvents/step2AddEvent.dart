@@ -1,18 +1,32 @@
 import 'package:app_listas/styles/button.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
+import '../../../../../styles/button.dart';
 
 class ListItem {
   String name;
   String type;
   TimeOfDay selectedTime;
   bool addExtraTime;
+  DateTime? selectedStartDate;
+  DateTime? selectedEndDate;
+  double ticketPrice;
+  DateTime? selectedStartExtraDate;
+  DateTime? selectedEndExtraDate;
+  double ticketExtraPrice;
 
   ListItem({
     required this.name,
     required this.type,
     required this.selectedTime,
     required this.addExtraTime,
+    required this.selectedStartDate,
+    required this.selectedEndDate,
+    required this.selectedStartExtraDate,
+    required this.selectedEndExtraDate,
+    required this.ticketPrice,
+    required this.ticketExtraPrice,
   });
 }
 
@@ -38,40 +52,47 @@ class _Step2AddEventState extends State<Step2AddEvent> {
   DateTime _eventStartDate = DateTime.now();
   DateTime _eventEndDate = DateTime.now();
   List<DateTime> _availableDates = [];
-  DateTime? _selectedDate;
-  DateTime? _selectedStartDate;
-  DateTime? _selectedEndDate;
   final _formKey = GlobalKey<FormState>();
   String _selectedListType = 'Lista de Asistencia';
   List<String> _listTypes = [
     'Lista de Asistencia',
     'Lista de Anotación',
   ];
-  List<ListItem> _lists = [
-    ListItem(
-      name: 'Invitados',
-      type: 'Lista de Asistencia',
-      selectedTime: TimeOfDay.now(),
-      addExtraTime: false,
-    ),
-  ];
-
-  bool _addExtraTime = false;
+  late List<ListItem> _lists;
 
   late TextEditingController _listNameController;
-  String _listTypeSummary = ''; // Resumen del tipo de lista seleccionado
+  late TextEditingController _ticketPriceController;
+  late TextEditingController _ticketExtraPriceController;
+  String _listTypeSummary = 'Para anotar nombres, dar asistencia al evento.';
 
   @override
   void initState() {
     super.initState();
     _listNameController = TextEditingController();
+    _ticketPriceController = TextEditingController();
+    _ticketExtraPriceController = TextEditingController();
     _initializeDates();
+    _lists = [
+      ListItem(
+        name: 'Invitados',
+        type: 'Lista de Asistencia',
+        selectedTime: TimeOfDay.now(),
+        addExtraTime: false,
+        selectedStartDate: _availableDates.first,
+        selectedEndDate: _availableDates.last,
+        ticketPrice: widget.ticketValue,
+        selectedStartExtraDate: null,
+        selectedEndExtraDate: null,
+        ticketExtraPrice: widget.ticketValue,
+      ),
+    ];
   }
 
   @override
   void dispose() {
-    _listNameController
-        .dispose(); // Liberar recursos del controlador al finalizar
+    _listNameController.dispose();
+    _ticketPriceController.dispose();
+    _ticketExtraPriceController.dispose();
     super.dispose();
   }
 
@@ -101,7 +122,6 @@ class _Step2AddEventState extends State<Step2AddEvent> {
         'Fin del evento: $endYear-$endMonth-$endDay $endHour:$endMinute:$endSecond');
 
     _availableDates = _generateAvailableTimeSlots();
-    _selectedDate = _availableDates.isNotEmpty ? _availableDates.first : null;
   }
 
   List<DateTime> _generateAvailableTimeSlots() {
@@ -388,10 +408,17 @@ class _Step2AddEventState extends State<Step2AddEvent> {
   void _createList(String listType, String listName) {
     setState(() {
       _lists.add(ListItem(
-          name: listName,
-          type: listType,
-          selectedTime: TimeOfDay.now(),
-          addExtraTime: false));
+        name: listName,
+        type: listType,
+        selectedTime: TimeOfDay.now(),
+        addExtraTime: false,
+        selectedStartDate: _availableDates.first,
+        selectedEndDate: _availableDates.last,
+        ticketPrice: widget.ticketValue,
+        selectedStartExtraDate: null,
+        selectedEndExtraDate: null,
+        ticketExtraPrice: widget.ticketValue,
+      ));
       _listNameController.clear();
     });
     showDialog(
@@ -444,6 +471,8 @@ class _Step2AddEventState extends State<Step2AddEvent> {
   }
 
   void _configureList(int index) {
+    _ticketPriceController.text = _lists[index].ticketPrice.toString();
+    _ticketExtraPriceController.text = _lists[index].ticketPrice.toString();
     showModalBottomSheet(
       backgroundColor: Colors.grey.shade900,
       context: context,
@@ -457,160 +486,404 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Configurar Lista',
-                    style: TextStyle(
-                      fontSize: 20,
+                    'Configuración de la lista ${_lists[index].name}',
+                    style: const TextStyle(
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Asigne los horarios donde va funcionar la lista',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Container(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 1,
+                              child: Text(
+                                'Desde',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Expanded(
+                              flex: 2,
+                              child: DropdownButtonFormField<DateTime>(
+                                value: _lists[index].selectedStartDate,
+                                items: _availableDates.map((DateTime date) {
+                                  return DropdownMenuItem<DateTime>(
+                                    value: date,
+                                    child: Text(
+                                      DateFormat('HH:mm').format(date),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (DateTime? newValue) {
+                                  if (newValue != null) {
+                                    setState(() {
+                                      _lists[index].selectedStartDate =
+                                          newValue;
+                                    });
+                                  }
+                                },
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 20),
+                            Expanded(
+                              flex: 1,
+                              child: Text(
+                                'Hasta',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Expanded(
+                              flex: 2,
+                              child: DropdownButtonFormField<DateTime>(
+                                value: _lists[index].selectedEndDate,
+                                items: _availableDates.map((DateTime date) {
+                                  return DropdownMenuItem<DateTime>(
+                                    value: date,
+                                    child: Text(
+                                      DateFormat('HH:mm').format(date),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (DateTime? newValue) {
+                                  if (newValue != null) {
+                                    setState(() {
+                                      _lists[index].selectedEndDate = newValue;
+                                    });
+                                  }
+                                },
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 5),
+                        Row(
+                          children: [
+                            Text(
+                              'con el valor de la entrada:',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: TextField(
+                                controller: _ticketPriceController,
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  hintText: 'Ingrese el valor aquí',
+                                ),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                ),
+                                keyboardType: TextInputType.numberWithOptions(
+                                    decimal: true),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                    RegExp(r'^\d{0,8}([.,]\d{0,2})?$'),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  double? parsedValue = double.tryParse(value);
+                                  if (parsedValue != null) {
+                                    _lists[index].ticketPrice = parsedValue;
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                   SizedBox(height: 16),
-                  Text(
-                    'Configuración de la lista ${_lists[index].name}',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: Text('Desde'),
-                      ),
-                      SizedBox(width: 10), // Espacio entre los elementos
-                      Expanded(
-                        flex: 2,
-                        child: DropdownButtonFormField<DateTime>(
-                          value: _selectedStartDate,
-                          items: _availableDates.map((DateTime date) {
-                            return DropdownMenuItem<DateTime>(
-                              value: date,
-                              child: Text(
-                                DateFormat('HH:mm')
-                                    .format(date), // Formato de hora y minutos
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (DateTime? newValue) {
-                            if (newValue != null) {
-                              setState(() {
-                                _selectedStartDate = newValue;
-                              });
-                            }
-                          },
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 20), // Espacio entre los elementos
-                      Expanded(
-                        flex: 1,
-                        child: Text('Hasta'),
-                      ),
-                      SizedBox(width: 10), // Espacio entre los elementos
-                      Expanded(
-                        flex: 2,
-                        child: DropdownButtonFormField<DateTime>(
-                          value: _selectedEndDate,
-                          items: _availableDates.map((DateTime date) {
-                            return DropdownMenuItem<DateTime>(
-                              value: date,
-                              child: Text(
-                                DateFormat('HH:mm')
-                                    .format(date), // Formato de hora y minutos
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (DateTime? newValue) {
-                            if (newValue != null) {
-                              setState(() {
-                                _selectedEndDate = newValue;
-                              });
-                            }
-                          },
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16),
                   Container(
-                    child: _lists[index].addExtraTime != true
-                        ? ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                _lists[index].addExtraTime = true;
-                              });
-                            },
-                            child: Text('Agregar nuevo rango horario'))
-                        : Row(
-                            children: [
-                              Expanded(
-                                flex: 1,
-                                child: Text('Desde'),
-                              ),
-                              SizedBox(width: 10),
-                              Expanded(
-                                flex: 2,
-                                child: DropdownButtonFormField<DateTime>(
-                                  value: _selectedStartDate,
-                                  items: _availableDates.map((DateTime date) {
-                                    return DropdownMenuItem<DateTime>(
-                                      value: date,
-                                      child: Text(
-                                        DateFormat('HH:mm').format(
-                                            date), // Formato de hora y minutos
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (DateTime? newValue) {
-                                    if (newValue != null) {
-                                      setState(() {
-                                        _selectedStartDate = newValue;
-                                      });
-                                    }
-                                  },
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _lists[index].addExtraTime != true
+                            ? ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _lists[index].addExtraTime = true;
+                                    _lists[index].selectedStartExtraDate =
+                                        _lists[index].selectedEndDate;
+                                    _lists[index].selectedEndExtraDate =
+                                        _availableDates.last;
+                                  });
+                                },
+                                style: ButtonStyle(
+                                  padding: MaterialStateProperty.all<
+                                      EdgeInsetsGeometry>(
+                                    EdgeInsets.all(
+                                        10), // Ajusta el padding del botón según sea necesario
+                                  ),
+                                  foregroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                          Colors.green.shade300),
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(Colors
+                                          .grey
+                                          .shade900), // Cambia el color de fondo del botón
+                                  shape: MaterialStateProperty.all<
+                                      RoundedRectangleBorder>(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                    ),
                                   ),
                                 ),
-                              ),
-                              SizedBox(
-                                  width: 20), // Espacio entre los elementos
-                              Expanded(
-                                flex: 1,
-                                child: Text('Hasta'),
-                              ),
-                              SizedBox(
-                                  width: 10), // Espacio entre los elementos
-                              Expanded(
-                                flex: 2,
-                                child: DropdownButtonFormField<DateTime>(
-                                  value: _selectedEndDate,
-                                  items: _availableDates.map((DateTime date) {
-                                    return DropdownMenuItem<DateTime>(
-                                      value: date,
-                                      child: Text(
-                                        DateFormat('HH:mm').format(
-                                            date), // Formato de hora y minutos
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (DateTime? newValue) {
-                                    if (newValue != null) {
-                                      setState(() {
-                                        _selectedEndDate = newValue;
-                                      });
-                                    }
-                                  },
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(),
-                                  ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.add), // Icono de suma
+                                    SizedBox(
+                                        width:
+                                            5), // Espacio entre el icono y el texto
+                                    Text('Agregar nuevo rango horario'),
+                                  ],
                                 ),
+                              )
+                            : Column(
+                                children: [
+                                  Divider(
+                                    color: Colors
+                                        .white, // Puedes ajustar el color según tu diseño
+                                    thickness:
+                                        1.0, // Puedes ajustar el grosor según tu diseño
+                                  ),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 1,
+                                        child: Text(
+                                          'Desde',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                      ),
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        flex: 2,
+                                        child:
+                                            DropdownButtonFormField<DateTime>(
+                                          value: _lists[index]
+                                              .selectedStartExtraDate,
+                                          items: _availableDates
+                                              .map((DateTime date) {
+                                            return DropdownMenuItem<DateTime>(
+                                              value: date,
+                                              child: Text(
+                                                DateFormat('HH:mm')
+                                                    .format(date),
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (DateTime? newValue) {
+                                            if (newValue != null) {
+                                              setState(() {
+                                                _lists[index]
+                                                        .selectedStartExtraDate =
+                                                    newValue;
+                                              });
+                                            }
+                                          },
+                                          decoration: InputDecoration(
+                                            border: OutlineInputBorder(),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 20),
+                                      Expanded(
+                                        flex: 1,
+                                        child: Text(
+                                          'Hasta',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                      ),
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        flex: 2,
+                                        child:
+                                            DropdownButtonFormField<DateTime>(
+                                          value: _lists[index]
+                                              .selectedEndExtraDate,
+                                          items: _availableDates
+                                              .map((DateTime date) {
+                                            return DropdownMenuItem<DateTime>(
+                                              value: date,
+                                              child: Text(
+                                                DateFormat('HH:mm')
+                                                    .format(date),
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (DateTime? newValue) {
+                                            if (newValue != null) {
+                                              setState(() {
+                                                _lists[index]
+                                                        .selectedEndExtraDate =
+                                                    newValue;
+                                              });
+                                            }
+                                          },
+                                          decoration: InputDecoration(
+                                            border: OutlineInputBorder(),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 5),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'con el valor de la entrada:',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        child: TextField(
+                                          controller:
+                                              _ticketExtraPriceController,
+                                          decoration: InputDecoration(
+                                            border: OutlineInputBorder(),
+                                            hintText: 'Ingrese el valor aquí',
+                                          ),
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                          keyboardType:
+                                              TextInputType.numberWithOptions(
+                                                  decimal: true),
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter.allow(
+                                              RegExp(
+                                                  r'^\d{0,8}([.,]\d{0,2})?$'),
+                                            ),
+                                          ],
+                                          onChanged: (value) {
+                                            double? parsedValue =
+                                                double.tryParse(value);
+                                            if (parsedValue != null) {
+                                              _lists[index].ticketPrice =
+                                                  parsedValue;
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            _lists[index].addExtraTime = false;
+                                            _lists[index]
+                                                .selectedStartExtraDate = null;
+                                            _lists[index].selectedEndExtraDate =
+                                                null;
+                                          });
+                                        },
+                                        style: ButtonStyle(
+                                          padding: MaterialStateProperty.all<
+                                              EdgeInsetsGeometry>(
+                                            EdgeInsets.all(
+                                                10), // Ajusta el padding del botón según sea necesario
+                                          ),
+                                          foregroundColor:
+                                              MaterialStateProperty.all<Color>(
+                                                  Colors.red.shade300),
+                                          backgroundColor: MaterialStateProperty
+                                              .all<Color>(Colors.grey
+                                                  .shade900), // Cambia el color de fondo del botón
+                                          shape: MaterialStateProperty.all<
+                                              RoundedRectangleBorder>(
+                                            RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10.0),
+                                            ),
+                                          ),
+                                        ),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons
+                                                .highlight_off), // Icono de suma
+                                            SizedBox(
+                                                width:
+                                                    5), // Espacio entre el icono y el texto
+                                            Text(
+                                                'Cancelar rango horario extra'),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                      ],
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        Navigator.pop(context);
+                      });
+                    },
+                    style: ButtonStyle(
+                      padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                        EdgeInsets.all(
+                            10), // Ajusta el padding del botón según sea necesario
+                      ),
+                      foregroundColor:
+                          MaterialStateProperty.all<Color>(Colors.black),
+                      backgroundColor: MaterialStateProperty.all<Color>(
+                          Color.fromARGB(255, 242, 187,
+                              29)), // Cambia el color de fondo del botón
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      'Confirmar Configuracion',
+                      style: TextStyle(fontSize: 14),
+                    ),
                   ),
                 ],
               ),
