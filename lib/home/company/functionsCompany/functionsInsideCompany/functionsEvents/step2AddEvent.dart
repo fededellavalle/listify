@@ -191,8 +191,14 @@ class _Step2AddEventState extends State<Step2AddEvent> {
             _eventStartDate.day, slotHour, slotMinute));
       }
     }
-    timeSlots.add(DateTime(_eventEndDate.year, _eventEndDate.month,
-        _eventEndDate.day, endHour2, endMinute2));
+    if (!timeSlots.contains(DateTime(_eventEndDate.year, _eventEndDate.month,
+        _eventEndDate.day, endHour2, endMinute2))) {
+      timeSlots.add(DateTime(_eventEndDate.year, _eventEndDate.month,
+          _eventEndDate.day, endHour2, endMinute2));
+      print('No contiene');
+    } else {
+      print('si Contiene');
+    }
 
     print(timeSlots);
 
@@ -323,8 +329,28 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              SizedBox(height: 8),
               Row(
+                children: [
+                  Icon(
+                    Icons.info, // El icono que deseas usar
+                    color: Colors.grey,
+                    size: 20,
+                  ),
+                  SizedBox(width: 5), // Espacio entre el icono y el texto
+                  Expanded(
+                    child: Text(
+                      'El evento al crearse va a estar deshabilitado, al momento de habilitarlo se van a poder empezar a escribir en las listas.',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              const Row(
                 children: [
                   Icon(
                     Icons.list_alt_outlined,
@@ -341,7 +367,15 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                   ),
                 ],
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 3),
+              const Text(
+                'Puedes crear hasta 8 listas',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 8),
               ListView.builder(
                 shrinkWrap: true,
                 itemCount: _lists.length,
@@ -405,39 +439,61 @@ class _Step2AddEventState extends State<Step2AddEvent> {
     }
   }
 
+  int _maxLists = 8;
+
   void _createList(String listType, String listName) {
-    setState(() {
-      _lists.add(ListItem(
-        name: listName,
-        type: listType,
-        selectedTime: TimeOfDay.now(),
-        addExtraTime: false,
-        selectedStartDate: _availableDates.first,
-        selectedEndDate: _availableDates.last,
-        ticketPrice: widget.ticketValue,
-        selectedStartExtraDate: null,
-        selectedEndExtraDate: null,
-        ticketExtraPrice: widget.ticketValue,
-      ));
-      _listNameController.clear();
-    });
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Lista Creada'),
-          content: Text('Se ha creado la lista: $listName'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('Aceptar'),
-            ),
-          ],
-        );
-      },
-    );
+    if (_lists.length >= _maxLists) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Error al Crear Lista'),
+            content: Text('Se ha alcanzado el máximo de listas permitidas.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text('Aceptar'),
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      setState(() {
+        _lists.add(ListItem(
+          name: listName,
+          type: listType,
+          selectedTime: TimeOfDay.now(),
+          addExtraTime: false,
+          selectedStartDate: _availableDates.first,
+          selectedEndDate: _availableDates.last,
+          ticketPrice: widget.ticketValue,
+          selectedStartExtraDate: null,
+          selectedEndExtraDate: null,
+          ticketExtraPrice: widget.ticketValue,
+        ));
+        _listNameController.clear();
+      });
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Lista Creada'),
+            content: Text('Se ha creado la lista: $listName'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text('Aceptar'),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   void _editList(int index) {

@@ -255,6 +255,41 @@ class _NavigationPageState extends State<NavigationPage> {
                 );
               },
             ),
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.grey, // Color de la línea superior
+                    width: 1, // Grosor de la línea superior
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Powered by',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+                  SizedBox(width: 5),
+                  GestureDetector(
+                    onTap: () {
+                      // Acción al hacer clic en la imagen
+                      print('Entrando a ig');
+                    },
+                    child: Image.asset(
+                      'lib/assets/images/logo-exodo.png',
+                      height: 45,
+                      width: 60,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

@@ -199,7 +199,7 @@ class _Step1AddEventState extends State<Step1AddEvent> {
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  labelText: 'Nombre',
+                  labelText: 'Nombre del Evento',
                   labelStyle: TextStyle(
                     color: Color.fromARGB(255, 242, 187, 29),
                   ),

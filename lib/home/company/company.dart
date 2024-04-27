@@ -154,7 +154,7 @@ class _CompanyPageState extends State<CompanyPage>
                         },
                         style: ButtonStyle(
                           backgroundColor: MaterialStateProperty.all<Color>(
-                            Colors.transparent,
+                            Colors.black,
                           ),
                           padding:
                               MaterialStateProperty.all<EdgeInsetsGeometry>(
