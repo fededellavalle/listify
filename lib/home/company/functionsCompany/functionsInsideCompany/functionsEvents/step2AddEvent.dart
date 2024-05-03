@@ -3,32 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import '../../../../../styles/button.dart';
-
-class ListItem {
-  String name;
-  String type;
-  TimeOfDay selectedTime;
-  bool addExtraTime;
-  DateTime? selectedStartDate;
-  DateTime? selectedEndDate;
-  double ticketPrice;
-  DateTime? selectedStartExtraDate;
-  DateTime? selectedEndExtraDate;
-  double ticketExtraPrice;
-
-  ListItem({
-    required this.name,
-    required this.type,
-    required this.selectedTime,
-    required this.addExtraTime,
-    required this.selectedStartDate,
-    required this.selectedEndDate,
-    required this.selectedStartExtraDate,
-    required this.selectedEndExtraDate,
-    required this.ticketPrice,
-    required this.ticketExtraPrice,
-  });
-}
+import 'step3AddEvent.dart';
+import 'list_item.dart';
 
 class Step2AddEvent extends StatefulWidget {
   final String name;
@@ -180,15 +156,41 @@ class _Step2AddEventState extends State<Step2AddEvent> {
           bandera = 1;
         }
         if (bandera == 1) {
-          timeSlots.add(DateTime(_eventEndDate.year, _eventEndDate.month,
-              _eventEndDate.day, slotHour, slotMinute));
+          if (!timeSlots.contains(DateTime(_eventEndDate.year,
+              _eventEndDate.month, _eventEndDate.day, slotHour, slotMinute))) {
+            timeSlots.add(DateTime(_eventEndDate.year, _eventEndDate.month,
+                _eventEndDate.day, slotHour, slotMinute));
+            print('No contiene');
+          } else {
+            print('si Contiene');
+          }
         } else {
-          timeSlots.add(DateTime(_eventStartDate.year, _eventStartDate.month,
-              _eventStartDate.day, slotHour, slotMinute));
+          if (!timeSlots.contains(DateTime(
+              _eventStartDate.year,
+              _eventStartDate.month,
+              _eventStartDate.day,
+              slotHour,
+              slotMinute))) {
+            timeSlots.add(DateTime(_eventStartDate.year, _eventStartDate.month,
+                _eventStartDate.day, slotHour, slotMinute));
+            print('No contiene');
+          } else {
+            print('si Contiene');
+          }
         }
       } else {
-        timeSlots.add(DateTime(_eventStartDate.year, _eventStartDate.month,
-            _eventStartDate.day, slotHour, slotMinute));
+        if (!timeSlots.contains(DateTime(
+            _eventStartDate.year,
+            _eventStartDate.month,
+            _eventStartDate.day,
+            slotHour,
+            slotMinute))) {
+          timeSlots.add(DateTime(_eventStartDate.year, _eventStartDate.month,
+              _eventStartDate.day, slotHour, slotMinute));
+          print('No contiene');
+        } else {
+          print('si Contiene');
+        }
       }
     }
     if (!timeSlots.contains(DateTime(_eventEndDate.year, _eventEndDate.month,
@@ -324,6 +326,19 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                 style: buttonPrimary,
                 child: Text(
                   'Crear Lista',
+                  style: TextStyle(
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: () {
+                  _goToStep3(context);
+                },
+                style: buttonPrimary,
+                child: Text(
+                  'Siguiente paso',
                   style: TextStyle(
                     fontSize: 16,
                   ),
@@ -535,11 +550,10 @@ class _Step2AddEventState extends State<Step2AddEvent> {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
-            return Container(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+            return SingleChildScrollView(
+              child: ListView(
+                shrinkWrap: true,
+                padding: EdgeInsets.all(16),
                 children: [
                   Text(
                     'Configuración de la lista ${_lists[index].name}',
@@ -725,191 +739,202 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                   ],
                                 ),
                               )
-                            : Column(
-                                children: [
-                                  Divider(
-                                    color: Colors
-                                        .white, // Puedes ajustar el color según tu diseño
-                                    thickness:
-                                        1.0, // Puedes ajustar el grosor según tu diseño
-                                  ),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        flex: 1,
-                                        child: Text(
-                                          'Desde',
-                                          style: TextStyle(color: Colors.white),
+                            : AnimatedContainer(
+                                duration: Duration(milliseconds: 500),
+                                curve: Curves.easeInOut,
+                                height: _lists[index].addExtraTime
+                                    ? 200
+                                    : 0, // Altura de la sección adicional
+                                child: Column(
+                                  children: [
+                                    Divider(
+                                      color: Colors
+                                          .white, // Puedes ajustar el color según tu diseño
+                                      thickness:
+                                          1.0, // Puedes ajustar el grosor según tu diseño
+                                    ),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          flex: 1,
+                                          child: Text(
+                                            'Desde',
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
                                         ),
-                                      ),
-                                      SizedBox(width: 10),
-                                      Expanded(
-                                        flex: 2,
-                                        child:
-                                            DropdownButtonFormField<DateTime>(
-                                          value: _lists[index]
-                                              .selectedStartExtraDate,
-                                          items: _availableDates
-                                              .map((DateTime date) {
-                                            return DropdownMenuItem<DateTime>(
-                                              value: date,
-                                              child: Text(
-                                                DateFormat('HH:mm')
-                                                    .format(date),
-                                                style: TextStyle(
-                                                  color: Colors.white,
+                                        SizedBox(width: 10),
+                                        Expanded(
+                                          flex: 2,
+                                          child:
+                                              DropdownButtonFormField<DateTime>(
+                                            value: _lists[index]
+                                                .selectedStartExtraDate,
+                                            items: _availableDates
+                                                .map((DateTime date) {
+                                              return DropdownMenuItem<DateTime>(
+                                                value: date,
+                                                child: Text(
+                                                  DateFormat('HH:mm')
+                                                      .format(date),
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                  ),
                                                 ),
-                                              ),
-                                            );
-                                          }).toList(),
-                                          onChanged: (DateTime? newValue) {
-                                            if (newValue != null) {
-                                              setState(() {
-                                                _lists[index]
-                                                        .selectedStartExtraDate =
-                                                    newValue;
-                                              });
-                                            }
-                                          },
-                                          decoration: InputDecoration(
-                                            border: OutlineInputBorder(),
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(width: 20),
-                                      Expanded(
-                                        flex: 1,
-                                        child: Text(
-                                          'Hasta',
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                      ),
-                                      SizedBox(width: 10),
-                                      Expanded(
-                                        flex: 2,
-                                        child:
-                                            DropdownButtonFormField<DateTime>(
-                                          value: _lists[index]
-                                              .selectedEndExtraDate,
-                                          items: _availableDates
-                                              .map((DateTime date) {
-                                            return DropdownMenuItem<DateTime>(
-                                              value: date,
-                                              child: Text(
-                                                DateFormat('HH:mm')
-                                                    .format(date),
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            );
-                                          }).toList(),
-                                          onChanged: (DateTime? newValue) {
-                                            if (newValue != null) {
-                                              setState(() {
-                                                _lists[index]
-                                                        .selectedEndExtraDate =
-                                                    newValue;
-                                              });
-                                            }
-                                          },
-                                          decoration: InputDecoration(
-                                            border: OutlineInputBorder(),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 5),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        'con el valor de la entrada:',
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                      SizedBox(width: 10),
-                                      Expanded(
-                                        child: TextField(
-                                          controller:
-                                              _ticketExtraPriceController,
-                                          decoration: InputDecoration(
-                                            border: OutlineInputBorder(),
-                                            hintText: 'Ingrese el valor aquí',
-                                          ),
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                          ),
-                                          keyboardType:
-                                              TextInputType.numberWithOptions(
-                                                  decimal: true),
-                                          inputFormatters: [
-                                            FilteringTextInputFormatter.allow(
-                                              RegExp(
-                                                  r'^\d{0,8}([.,]\d{0,2})?$'),
-                                            ),
-                                          ],
-                                          onChanged: (value) {
-                                            double? parsedValue =
-                                                double.tryParse(value);
-                                            if (parsedValue != null) {
-                                              _lists[index].ticketPrice =
-                                                  parsedValue;
-                                            }
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      ElevatedButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            _lists[index].addExtraTime = false;
-                                            _lists[index]
-                                                .selectedStartExtraDate = null;
-                                            _lists[index].selectedEndExtraDate =
-                                                null;
-                                          });
-                                        },
-                                        style: ButtonStyle(
-                                          padding: MaterialStateProperty.all<
-                                              EdgeInsetsGeometry>(
-                                            EdgeInsets.all(
-                                                10), // Ajusta el padding del botón según sea necesario
-                                          ),
-                                          foregroundColor:
-                                              MaterialStateProperty.all<Color>(
-                                                  Colors.red.shade300),
-                                          backgroundColor: MaterialStateProperty
-                                              .all<Color>(Colors.grey
-                                                  .shade900), // Cambia el color de fondo del botón
-                                          shape: MaterialStateProperty.all<
-                                              RoundedRectangleBorder>(
-                                            RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10.0),
+                                              );
+                                            }).toList(),
+                                            onChanged: (DateTime? newValue) {
+                                              if (newValue != null) {
+                                                setState(() {
+                                                  _lists[index]
+                                                          .selectedStartExtraDate =
+                                                      newValue;
+                                                });
+                                              }
+                                            },
+                                            decoration: InputDecoration(
+                                              border: OutlineInputBorder(),
                                             ),
                                           ),
                                         ),
-                                        child: const Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(Icons
-                                                .highlight_off), // Icono de suma
-                                            SizedBox(
-                                                width:
-                                                    5), // Espacio entre el icono y el texto
-                                            Text(
-                                                'Cancelar rango horario extra'),
-                                          ],
+                                        SizedBox(width: 20),
+                                        Expanded(
+                                          flex: 1,
+                                          child: Text(
+                                            'Hasta',
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                        SizedBox(width: 10),
+                                        Expanded(
+                                          flex: 2,
+                                          child:
+                                              DropdownButtonFormField<DateTime>(
+                                            value: _lists[index]
+                                                .selectedEndExtraDate,
+                                            items: _availableDates
+                                                .map((DateTime date) {
+                                              return DropdownMenuItem<DateTime>(
+                                                value: date,
+                                                child: Text(
+                                                  DateFormat('HH:mm')
+                                                      .format(date),
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList(),
+                                            onChanged: (DateTime? newValue) {
+                                              if (newValue != null) {
+                                                setState(() {
+                                                  _lists[index]
+                                                          .selectedEndExtraDate =
+                                                      newValue;
+                                                });
+                                              }
+                                            },
+                                            decoration: InputDecoration(
+                                              border: OutlineInputBorder(),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 5),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          'con el valor de la entrada:',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                        SizedBox(width: 10),
+                                        Expanded(
+                                          child: TextField(
+                                            controller:
+                                                _ticketExtraPriceController,
+                                            decoration: InputDecoration(
+                                              border: OutlineInputBorder(),
+                                              hintText: 'Ingrese el valor aquí',
+                                            ),
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                            ),
+                                            keyboardType:
+                                                TextInputType.numberWithOptions(
+                                                    decimal: true),
+                                            inputFormatters: [
+                                              FilteringTextInputFormatter.allow(
+                                                RegExp(
+                                                    r'^\d{0,8}([.,]\d{0,2})?$'),
+                                              ),
+                                            ],
+                                            onChanged: (value) {
+                                              double? parsedValue =
+                                                  double.tryParse(value);
+                                              if (parsedValue != null) {
+                                                _lists[index].ticketPrice =
+                                                    parsedValue;
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              _lists[index].addExtraTime =
+                                                  false;
+                                              _lists[index]
+                                                      .selectedStartExtraDate =
+                                                  null;
+                                              _lists[index]
+                                                  .selectedEndExtraDate = null;
+                                            });
+                                          },
+                                          style: ButtonStyle(
+                                            padding: MaterialStateProperty.all<
+                                                EdgeInsetsGeometry>(
+                                              EdgeInsets.all(
+                                                  10), // Ajusta el padding del botón según sea necesario
+                                            ),
+                                            foregroundColor:
+                                                MaterialStateProperty.all<
+                                                    Color>(Colors.red.shade300),
+                                            backgroundColor: MaterialStateProperty
+                                                .all<Color>(Colors.grey
+                                                    .shade900), // Cambia el color de fondo del botón
+                                            shape: MaterialStateProperty.all<
+                                                RoundedRectangleBorder>(
+                                              RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10.0),
+                                              ),
+                                            ),
+                                          ),
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons
+                                                  .highlight_off), // Icono de suma
+                                              SizedBox(
+                                                  width:
+                                                      5), // Espacio entre el icono y el texto
+                                              Text(
+                                                  'Cancelar rango horario extra'),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                       ],
                     ),
@@ -954,5 +979,30 @@ class _Step2AddEventState extends State<Step2AddEvent> {
     setState(() {
       _lists.removeAt(index);
     });
+  }
+
+  void _goToStep3(BuildContext context) {
+    if (_lists != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Step3AddEvent(
+            name: widget.name,
+            ticketValue: widget.ticketValue,
+            startDateTime: widget.startDateTime,
+            endDateTime: widget.endDateTime,
+            lists: _lists,
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Por favor, complete todos los campos y seleccione una imagen.',
+          ),
+        ),
+      );
+    }
   }
 }

@@ -1,236 +1,68 @@
 import 'package:flutter/material.dart';
+import 'list_item.dart';
 
-class AddEvent extends StatefulWidget {
-  final Map<String, dynamic> companyData;
+class Step3AddEvent extends StatefulWidget {
+  final String name;
+  final double ticketValue;
+  final DateTime? startDateTime;
+  final DateTime? endDateTime;
+  final List<ListItem> lists;
 
-  const AddEvent({
+  const Step3AddEvent({
     Key? key,
-    required this.companyData,
+    required this.name,
+    required this.ticketValue,
+    required this.startDateTime,
+    required this.endDateTime,
+    required this.lists,
   }) : super(key: key);
 
   @override
-  State<AddEvent> createState() => _AddEventState();
+  State<Step3AddEvent> createState() => _Step3AddEventState();
 }
 
-class _AddEventState extends State<AddEvent> {
-  final _formKey = GlobalKey<FormState>();
-  late TextEditingController _nameController;
-  late TextEditingController _descriptionController;
-  DateTime? _startDateTime;
-  DateTime? _endDateTime;
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController = TextEditingController();
-    _descriptionController = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _selectDateTime(
-      BuildContext context, bool isStartDateTime) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2101),
-    );
-    if (picked != null) {
-      final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.now(),
-      );
-      if (pickedTime != null) {
-        setState(() {
-          if (isStartDateTime) {
-            _startDateTime = DateTime(
-              picked.year,
-              picked.month,
-              picked.day,
-              pickedTime.hour,
-              pickedTime.minute,
-            );
-          } else {
-            _endDateTime = DateTime(
-              picked.year,
-              picked.month,
-              picked.day,
-              pickedTime.hour,
-              pickedTime.minute,
-            );
-          }
-        });
-      }
-    }
-  }
-
+class _Step3AddEventState extends State<Step3AddEvent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: Text(
-          "Paso 1: Datos principales del evento",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-          ),
-        ),
-        iconTheme: IconThemeData(
-          color: Colors.white, // Color blanco para los iconos
-        ),
+        title: Text('Detalles del Evento'),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: 'Nombre',
-                  labelStyle: TextStyle(
-                    color: Color.fromARGB(255, 242, 187, 29),
-                  ),
-                  prefixIcon: Icon(Icons.person, color: Colors.grey),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Color.fromARGB(255, 242, 187, 29),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Color.fromARGB(255, 158, 128, 36),
-                    ),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingrese el nombre del evento';
-                  }
-                  return null;
+              Text(
+                'Nombre del Evento: ${widget.name}',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 10),
+              Text(
+                  'Valor de la Entrada: \$${widget.ticketValue.toStringAsFixed(2)}'),
+              SizedBox(height: 10),
+              Text(
+                  'Fecha de Inicio: ${widget.startDateTime?.toString() ?? 'No especificada'}'),
+              SizedBox(height: 10),
+              Text(
+                  'Fecha de Fin: ${widget.endDateTime?.toString() ?? 'No especificada'}'),
+              SizedBox(height: 20),
+              Text(
+                'Listas Disponibles:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 10),
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: widget.lists.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text('Nombre: ${widget.lists[index].name}'),
+                    subtitle: Text('Descripción: ${widget.lists[index].type}'),
+                    // Agrega más información de la lista si es necesario
+                  );
                 },
-              ),
-              SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: InputDecoration(
-                  labelText: 'Descripción',
-                  labelStyle: TextStyle(
-                    color: Color.fromARGB(255, 242, 187, 29),
-                  ),
-                  prefixIcon: Icon(Icons.description, color: Colors.grey),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Color.fromARGB(255, 242, 187, 29),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Color.fromARGB(255, 158, 128, 36),
-                    ),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingrese la descripción del evento';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-              InkWell(
-                onTap: () => _selectDateTime(context, true),
-                child: InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Fecha y Hora de Inicio',
-                    labelStyle: TextStyle(
-                      color: Color.fromARGB(255, 242, 187, 29),
-                    ),
-                    prefixIcon: Icon(Icons.event, color: Colors.grey),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                        color: Color.fromARGB(255, 242, 187, 29),
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                        color: Color.fromARGB(255, 158, 128, 36),
-                      ),
-                    ),
-                  ),
-                  child: Text(
-                    _startDateTime != null
-                        ? '${_startDateTime!.day}/${_startDateTime!.month}/${_startDateTime!.year} ${_startDateTime!.hour}:${_startDateTime!.minute.toString().padLeft(2, '0')}'
-                        : 'Seleccione la fecha y hora de inicio',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
-              SizedBox(height: 16),
-              InkWell(
-                onTap: () => _selectDateTime(context, false),
-                child: InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Fecha y Hora de Finalización',
-                    labelStyle: TextStyle(
-                      color: Color.fromARGB(255, 242, 187, 29),
-                    ),
-                    prefixIcon: Icon(Icons.event, color: Colors.grey),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                        color: Color.fromARGB(255, 242, 187, 29),
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                        color: Color.fromARGB(255, 158, 128, 36),
-                      ),
-                    ),
-                  ),
-                  child: Text(
-                    _endDateTime != null
-                        ? '${_endDateTime!.day}/${_endDateTime!.month}/${_endDateTime!.year} ${_endDateTime!.hour}:${_endDateTime!.minute.toString().padLeft(2, '0')}'
-                        : 'Seleccione la fecha y hora de finalización',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
-              SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  // Handle save button press
-                },
-                child: Text('Guardar'),
               ),
             ],
           ),
