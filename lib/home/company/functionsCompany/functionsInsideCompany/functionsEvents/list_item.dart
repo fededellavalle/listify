@@ -10,7 +10,8 @@ class ListItem {
   double ticketPrice;
   DateTime? selectedStartExtraDate;
   DateTime? selectedEndExtraDate;
-  double ticketExtraPrice;
+  double? ticketExtraPrice;
+  bool allowSublists;
 
   ListItem({
     required this.name,
@@ -23,5 +24,6 @@ class ListItem {
     required this.selectedEndExtraDate,
     required this.ticketPrice,
     required this.ticketExtraPrice,
+    required this.allowSublists,
   });
 }

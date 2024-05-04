@@ -391,9 +391,10 @@ class _Step1AddEventState extends State<Step1AddEvent> {
         MaterialPageRoute(
           builder: (context) => Step2AddEvent(
             name: _nameController.text,
-            ticketValue: ticketValue, // Utiliza el valor convertido a double
+            ticketValue: ticketValue,
             startDateTime: _startDateTime,
             endDateTime: _endDateTime,
+            image: _image,
           ),
         ),
       );
