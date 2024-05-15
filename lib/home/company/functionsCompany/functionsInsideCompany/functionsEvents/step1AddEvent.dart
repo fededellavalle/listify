@@ -395,6 +395,7 @@ class _Step1AddEventState extends State<Step1AddEvent> {
             startDateTime: _startDateTime,
             endDateTime: _endDateTime,
             image: _image,
+            companyData: widget.companyData,
           ),
         ),
       );

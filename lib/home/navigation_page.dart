@@ -2,7 +2,7 @@ import 'package:app_listas/home/invitations/invitations.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'company/company.dart';
-import 'events.dart';
+import 'events/events.dart';
 import 'home.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../login/services/auth_google.dart';
@@ -29,7 +29,9 @@ class _NavigationPageState extends State<NavigationPage> {
     super.initState();
     _widgetOptions = <Widget>[
       HomePage(userName: widget.userName),
-      EventsPage(),
+      EventsPage(
+        uid: widget.uid,
+      ),
       CompanyPage(uid: widget.uid),
     ];
     // Obtener la URL de la foto de perfil del usuario

@@ -173,7 +173,7 @@ class _crearCategoriaPersonalState extends State<crearCategoriaPersonal> {
                         await categoryCollection.doc(categoryName).set({
                           'nombre': categoryName,
                           'tipos': selectedTypes,
-                          'persons': [],
+                          'members': [],
                           'invitations': [],
                         });
 

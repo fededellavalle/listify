@@ -13,6 +13,7 @@ class Step2AddEvent extends StatefulWidget {
   final DateTime? startDateTime;
   final DateTime? endDateTime;
   File? image;
+  final Map<String, dynamic> companyData;
 
   Step2AddEvent({
     Key? key,
@@ -21,6 +22,7 @@ class Step2AddEvent extends StatefulWidget {
     required this.startDateTime,
     required this.endDateTime,
     required this.image,
+    required this.companyData,
   }) : super(key: key);
 
   @override
@@ -44,8 +46,6 @@ class _Step2AddEventState extends State<Step2AddEvent> {
   late TextEditingController _ticketExtraPriceController;
   String _listTypeSummary = 'Para anotar nombres, dar asistencia al evento.';
 
-  bool _isStarShining = false;
-
   @override
   void initState() {
     super.initState();
@@ -57,7 +57,6 @@ class _Step2AddEventState extends State<Step2AddEvent> {
       ListItem(
         name: 'Invitados',
         type: 'Lista de Asistencia',
-        selectedTime: TimeOfDay.now(),
         addExtraTime: false,
         selectedStartDate: _availableDates.first,
         selectedEndDate: _availableDates.last,
@@ -489,7 +488,6 @@ class _Step2AddEventState extends State<Step2AddEvent> {
           _lists.add(ListItem(
             name: listName,
             type: listType,
-            selectedTime: TimeOfDay.now(),
             addExtraTime: false,
             selectedStartDate: _availableDates.first,
             selectedEndDate: _availableDates.last,
@@ -1116,6 +1114,7 @@ class _Step2AddEventState extends State<Step2AddEvent> {
             endDateTime: widget.endDateTime,
             lists: _lists,
             image: widget.image,
+            companyData: widget.companyData,
           ),
         ),
       );
