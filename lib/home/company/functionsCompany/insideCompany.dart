@@ -26,7 +26,7 @@ class CompanyWidget extends StatelessWidget {
         backgroundColor: Colors.black,
         title: Text(
           companyName,
-          style: GoogleFonts.roboto(
+          style: TextStyle(
             color: Colors.white,
           ),
         ),

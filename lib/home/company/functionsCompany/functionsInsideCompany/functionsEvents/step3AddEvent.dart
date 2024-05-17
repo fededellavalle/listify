@@ -40,7 +40,14 @@ class _Step3AddEventState extends State<Step3AddEvent> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('Paso 3: Confirmar Evento'),
+        backgroundColor: Colors.black,
+        title: Text(
+          'Paso 3: Confirmar Evento',
+          style: TextStyle(color: Colors.white),
+        ),
+        iconTheme: IconThemeData(
+          color: Colors.white, // Color blanco para los iconos
+        ),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -64,7 +71,7 @@ class _Step3AddEventState extends State<Step3AddEvent> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Nombre del Evento: ${widget.name}',
+                        widget.name,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -186,53 +193,50 @@ class _Step3AddEventState extends State<Step3AddEvent> {
   Future<void> createEvent(BuildContext context) async {
     String uuid = Uuid().v4();
 
-    List<Map<String, dynamic>> listasEvent = [];
-
-    for (var listItem in widget.lists) {
-      Map<String, dynamic> listaData = {
-        'listName': listItem.name,
-        'listType': listItem.type,
-        'listStartTime': listItem.selectedStartDate,
-        'listEndTime': listItem.selectedEndDate,
-        'ticketPrice': listItem.ticketPrice,
-      };
-
-      if (listItem.addExtraTime) {
-        listaData.addAll({
-          'listStartExtraTime': listItem.selectedStartExtraDate,
-          'listEndExtraTime': listItem.selectedEndExtraDate,
-          'ticketExtraPrice': listItem.ticketExtraPrice,
-        });
-      }
-
-      if (listItem.allowSublists) {
-        listaData['allowSublists'] = listItem.allowSublists;
-      }
-      listasEvent.add(listaData);
-    }
-
-    CollectionReference categoryCollection = FirebaseFirestore.instance
-        .collection('companies')
-        .doc(widget.companyData['companyId'])
-        .collection('myEvents');
-
+    // Subir la imagen y obtener su URL
     Reference ref = FirebaseStorage.instance.ref().child(
         'company_images/${widget.companyData['companyId']}/myEvents/$uuid.jpg');
     UploadTask uploadTask = ref.putFile(widget.image!);
     TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
     String imageUrl = await taskSnapshot.ref.getDownloadURL();
 
-    // Crear un documento nuevo con el nombre de la categoría como ID
-    await categoryCollection.doc(uuid).set({
+    // Crear un documento para el evento
+    await FirebaseFirestore.instance
+        .collection('companies')
+        .doc(widget.companyData['companyId'])
+        .collection('myEvents')
+        .doc(uuid)
+        .set({
       'eventName': widget.name,
       'eventTicketValue': widget.ticketValue,
       'eventStartTime': widget.startDateTime,
       'eventEndTime': widget.endDateTime,
-      'eventLists': FieldValue.arrayUnion(listasEvent),
       'eventImage': imageUrl,
-      'eventState': 'Desactivado',
+      'eventState': 'Desactive',
     });
 
+    // Colección de listas de eventos
+    CollectionReference eventListsCollection = FirebaseFirestore.instance
+        .collection('companies')
+        .doc(widget.companyData['companyId'])
+        .collection('myEvents')
+        .doc(uuid)
+        .collection('eventLists');
+
+    // Agregar cada lista como un documento en la colección de listas de eventos
+    for (var listItem in widget.lists) {
+      await eventListsCollection.doc(listItem.name).set({
+        'listName': listItem.name,
+        'listType': listItem.type,
+        'listStartTime': listItem.selectedStartDate,
+        'listEndTime': listItem.selectedEndDate,
+        'ticketPrice': listItem.ticketPrice,
+        'membersList': [],
+        'allowSublists': listItem.allowSublists ?? false,
+      });
+    }
+
+    // Mostrar el AlertDialog
     showDialog(
       context: context,
       builder: (BuildContext context) {

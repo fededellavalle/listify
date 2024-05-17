@@ -146,6 +146,24 @@ class _crearCategoriaPersonalState extends State<crearCategoriaPersonal> {
                   ),
                 ],
               ),
+              SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    Icons.info_outline, // El icono que deseas usar
+                    color: Colors.blue,
+                    size: 20,
+                  ),
+                  SizedBox(width: 5), // Espacio entre el icono y el texto
+                  Text(
+                    'Una vez creada la categoria, no se puede cambiarle el nombre',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
               SizedBox(
                   height:
                       20), // Espacio entre los CheckboxListTiles y los botones
@@ -156,10 +174,11 @@ class _crearCategoriaPersonalState extends State<crearCategoriaPersonal> {
                     onPressed: () async {
                       // Obtener el nombre de la categoría y los tipos seleccionados
                       String categoryName = nameController.text;
-                      List<String> selectedTypes = this.selectedPermises;
+                      List<String> selectedPermissions = this.selectedPermises;
 
                       // Verificar que se haya ingresado un nombre de categoría válido
-                      if (categoryName.isNotEmpty && selectedTypes.isNotEmpty) {
+                      if (categoryName.isNotEmpty &&
+                          selectedPermissions.isNotEmpty) {
                         // Obtener la referencia a la colección de categorías personales dentro de la empresa
                         CollectionReference categoryCollection = FirebaseFirestore
                             .instance
@@ -172,7 +191,7 @@ class _crearCategoriaPersonalState extends State<crearCategoriaPersonal> {
                         // Crear un documento nuevo con el nombre de la categoría como ID
                         await categoryCollection.doc(categoryName).set({
                           'nombre': categoryName,
-                          'tipos': selectedTypes,
+                          'permissions': selectedPermissions,
                           'members': [],
                           'invitations': [],
                         });
@@ -229,7 +248,7 @@ class _crearCategoriaPersonalState extends State<crearCategoriaPersonal> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Agregar'),
+                        Text('Crear categoria'),
                       ],
                     ),
                   ),

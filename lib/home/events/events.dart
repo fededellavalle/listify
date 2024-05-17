@@ -295,9 +295,6 @@ class _EventsPageState extends State<EventsPage> {
                                             SizedBox(height: 2),
                                             Text(
                                                 'Inicio: $formattedStartTime - Fin: $formattedEndTime'),
-                                            SizedBox(height: 2),
-                                            Text(
-                                                'Puede crear listas porque sos $companyCategory'),
                                           ],
                                         ),
                                       ),
