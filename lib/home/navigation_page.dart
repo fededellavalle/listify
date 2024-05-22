@@ -10,10 +10,9 @@ import '../login/login.dart';
 import 'package:unicons/unicons.dart';
 
 class NavigationPage extends StatefulWidget {
-  final String? uid;
-  final String? userName;
-
-  NavigationPage({this.uid, this.userName});
+  NavigationPage({
+    super.key,
+  });
 
   @override
   _NavigationPageState createState() => _NavigationPageState();
@@ -23,19 +22,33 @@ class _NavigationPageState extends State<NavigationPage> {
   int _selectedIndex = 0;
   late List<Widget> _widgetOptions;
   String? _profileImageUrl;
+  String _firstName = '';
+  late String uid;
+
+  Future<void> _getCurrentUserId() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      setState(() {
+        uid = user.uid;
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    _widgetOptions = <Widget>[
-      HomePage(userName: widget.userName),
-      EventsPage(
-        uid: widget.uid,
-      ),
-      CompanyPage(uid: widget.uid),
-    ];
-    // Obtener la URL de la foto de perfil del usuario
+    _getCurrentUserId();
     _getProfileImageUrl();
+    _getFirstName(uid);
+    _widgetOptions = <Widget>[
+      HomePage(
+        uid: uid,
+      ),
+      EventsPage(
+        uid: uid,
+      ),
+      CompanyPage(uid: uid),
+    ];
   }
 
   Future<void> _getProfileImageUrl() async {
@@ -43,7 +56,7 @@ class _NavigationPageState extends State<NavigationPage> {
       // Obtener la URL de la imagen desde la base de datos
       String? imageUrl = await FirebaseFirestore.instance
           .collection('users')
-          .doc(widget.uid)
+          .doc(uid)
           .get()
           .then((doc) => doc.data()?['imageUrl']);
 
@@ -54,6 +67,21 @@ class _NavigationPageState extends State<NavigationPage> {
       }
     } catch (error) {
       print('Error obteniendo la URL de la foto de perfil: $error');
+    }
+  }
+
+  Future<void> _getFirstName(String? uid) async {
+    try {
+      DocumentSnapshot userSnapshot =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      if (userSnapshot.exists) {
+        String firstname = userSnapshot.get('name');
+        setState(() {
+          _firstName = firstname;
+        });
+      }
+    } catch (error) {
+      print('Error obteniendo el nombre del usuario: $error');
     }
   }
 
@@ -71,7 +99,6 @@ class _NavigationPageState extends State<NavigationPage> {
     return lastName;
   }
 
-  // Método para obtener el correo electrónico del usuario desde la autenticación
   Future<String> _getEmail() async {
     String email = '';
     try {
@@ -102,8 +129,7 @@ class _NavigationPageState extends State<NavigationPage> {
           children: [
             UserAccountsDrawerHeader(
               accountName: FutureBuilder<String>(
-                future: _getLastName(
-                    widget.uid), // Llama al método para obtener el apellido
+                future: _getLastName(uid),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Text('Cargando...');
@@ -112,12 +138,12 @@ class _NavigationPageState extends State<NavigationPage> {
                     return Text('Error: ${snapshot.error}');
                   }
                   String lastName = snapshot.data ?? '';
-                  return Text('${widget.userName} ${lastName}');
+                  return Text(
+                      lastName.isEmpty ? _firstName : '$_firstName $lastName');
                 },
               ),
               accountEmail: FutureBuilder<String>(
-                future:
-                    _getEmail(), // Llama al método para obtener el correo electrónico
+                future: _getEmail(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Text('Cargando...');
@@ -130,13 +156,20 @@ class _NavigationPageState extends State<NavigationPage> {
                 },
               ),
               currentAccountPicture: _profileImageUrl != null
-                  ? CircleAvatar(
-                      backgroundImage: NetworkImage(_profileImageUrl!),
+                  ? GestureDetector(
+                      onTap: () {
+                        print('Entrando a perfil');
+                      },
+                      child: CircleAvatar(
+                        backgroundImage: NetworkImage(_profileImageUrl!),
+                      ),
                     )
                   : CircleAvatar(
                       child: IconButton(
                         icon: Icon(Icons.question_mark),
-                        onPressed: () {},
+                        onPressed: () {
+                          print('Entrando a perfil');
+                        },
                       ),
                     ),
               decoration: BoxDecoration(
@@ -150,8 +183,7 @@ class _NavigationPageState extends State<NavigationPage> {
               ),
               leading: const Icon(
                 Icons.home,
-                color: Color.fromARGB(
-                    255, 242, 187, 29), // Cambia el color del icono a negro
+                color: Color.fromARGB(255, 242, 187, 29),
               ),
               onTap: () {
                 setState(() {
@@ -167,8 +199,7 @@ class _NavigationPageState extends State<NavigationPage> {
               ),
               leading: const Icon(
                 Icons.event,
-                color: Color.fromARGB(
-                    255, 242, 187, 29), // Cambia el color del icono a negro
+                color: Color.fromARGB(255, 242, 187, 29),
               ),
               onTap: () {
                 setState(() {
@@ -184,8 +215,7 @@ class _NavigationPageState extends State<NavigationPage> {
               ),
               leading: Icon(
                 Icons.business,
-                color: Color.fromARGB(
-                    255, 242, 187, 29), // Cambia el color del icono a negro
+                color: Color.fromARGB(255, 242, 187, 29),
               ),
               onTap: () {
                 setState(() {
@@ -200,9 +230,8 @@ class _NavigationPageState extends State<NavigationPage> {
                 style: TextStyle(color: Colors.white),
               ),
               leading: const Icon(
-                UniconsLine.envelope_alt, // Icono de carta de Unicons
-                color: Color.fromARGB(
-                    255, 242, 187, 29), // Cambia el color del icono a negro
+                UniconsLine.envelope_alt,
+                color: Color.fromARGB(255, 242, 187, 29),
               ),
               onTap: () {
                 Navigator.push(
@@ -220,40 +249,36 @@ class _NavigationPageState extends State<NavigationPage> {
               ),
               leading: const Icon(
                 Icons.logout,
-                color: Color.fromARGB(
-                    255, 242, 187, 29), // Cambia el color del icono a negro
+                color: Color.fromARGB(255, 242, 187, 29),
               ),
               onTap: () async {
                 showDialog(
                   context: context,
-                  barrierDismissible:
-                      false, // Evita que se cierre la alerta al tocar fuera de ella
+                  barrierDismissible: false,
                   builder: (BuildContext context) {
                     return AlertDialog(
                       title: Text('Cerrando sesión'),
                       content: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          CircularProgressIndicator(), // Indicador de carga
-                          SizedBox(height: 16), // Espacio adicional
-                          Text('Por favor, espere...'), // Mensaje de espera
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('Por favor, espere...'),
                         ],
                       ),
                     );
                   },
                 );
 
-                // Realizar el cierre de sesión en Firebase y Google
                 await FirebaseAuth.instance.signOut();
                 await AuthService().signOutGoogle();
 
-                // Cerrar la alerta y navegar a la pantalla de inicio de sesión
-                Navigator.of(context).pop(); // Cerrar la alerta
+                Navigator.of(context).pop();
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                      builder: (context) =>
-                          LoginPage()), // Reemplaza LoginPage con el nombre correcto de tu widget de inicio de sesión
+                    builder: (context) => LoginPage(),
+                  ),
                 );
               },
             ),
@@ -262,8 +287,8 @@ class _NavigationPageState extends State<NavigationPage> {
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: Colors.grey, // Color de la línea superior
-                    width: 1, // Grosor de la línea superior
+                    color: Colors.grey,
+                    width: 1,
                   ),
                 ),
               ),
@@ -280,7 +305,6 @@ class _NavigationPageState extends State<NavigationPage> {
                   SizedBox(width: 5),
                   GestureDetector(
                     onTap: () {
-                      // Acción al hacer clic en la imagen
                       print('Entrando a ig');
                     },
                     child: Image.asset(
@@ -297,7 +321,7 @@ class _NavigationPageState extends State<NavigationPage> {
       ),
       appBar: AppBar(
         title: Text(
-          'App Listas',
+          'Listify',
           style: TextStyle(
             color: Colors.white,
           ),
@@ -332,13 +356,20 @@ class _NavigationPageState extends State<NavigationPage> {
                 kToolbarHeight), // Ajusta la posición vertical del menú emergente
           ),
           if (_profileImageUrl != null)
-            CircleAvatar(
-              backgroundImage: NetworkImage(_profileImageUrl!),
+            GestureDetector(
+              onTap: () {
+                print('Entrando a perfil');
+              },
+              child: CircleAvatar(
+                backgroundImage: NetworkImage(_profileImageUrl!),
+              ),
             )
           else
             IconButton(
               icon: Icon(Icons.question_mark),
-              onPressed: () {},
+              onPressed: () {
+                print('Entrando a perfil');
+              },
             ),
           SizedBox(width: 8),
         ],

@@ -3,11 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'login/login.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 //import 'package:device_preview/device_preview.dart';
+import 'package:app_listas/home/navigation_page.dart';
+import 'package:app_listas/login/services/waiting_for_email_confirmation.dart';
 
 Future<void> initializeFirebase() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  await FirebaseAppCheck.instance
+      // Your personal reCaptcha public key goes here:
+      .activate(
+    androidProvider: AndroidProvider.playIntegrity,
   );
 }
 
@@ -21,15 +30,20 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'App Listas',
+      title: 'Listify',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.yellow,
       ),
-      home: LoginPage(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => LoginPage(),
+        '/waitingForEmailConfirmation': (context) =>
+            WaitingForEmailConfirmationPage(),
+        '/navigationPage': (context) => NavigationPage(),
+      },
     );
   }
 }
-
 
 /* Device Preview
 void main() async {

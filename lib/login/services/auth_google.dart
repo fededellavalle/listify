@@ -1,7 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/material.dart';
 import '../../home/navigation_page.dart';
+import 'firebase_exceptions.dart';
+import '../endRegisterGoogle.dart';
 
 class AuthService {
   // Método para iniciar sesión con email y contraseña
@@ -15,33 +18,32 @@ class AuthService {
         password: password,
       );
 
-      return [
-        userCredential,
-        errorMessage
-      ]; // Devolver el UserCredential si la autenticación es exitosa
+      if (userCredential.user != null && userCredential.user!.emailVerified) {
+        return [
+          userCredential,
+          errorMessage
+        ]; // Devolver el UserCredential si la autenticación es exitosa
+      } else if (userCredential.user != null) {
+        errorMessage =
+            FirebaseAuthExceptions.getErrorMessage('email-not-verified');
+        ;
+        return [null, errorMessage];
+      } else {
+        errorMessage = FirebaseAuthExceptions.getErrorMessage(
+            FirebaseAuthExceptions
+                .userNotFound); // Mensaje de usuario no encontrado
+        print(errorMessage);
+        return [null, errorMessage];
+      }
     } on FirebaseAuthException catch (e) {
-      errorMessage = getFirebaseAuthErrorMessage(e); // Obtener mensaje de error
+      print(e.code);
+      errorMessage = FirebaseAuthExceptions.getErrorMessage(
+          e.code); // Obtener mensaje de error
       print('Error signing in: $errorMessage');
       return [null, errorMessage]; // Devolver null en caso de error
     } catch (e) {
       print('Error signing in: $e');
       return [null, errorMessage]; // Devolver null en caso de error
-    }
-  }
-
-  // Método para obtener el mensaje de error de FirebaseAuthException
-  String getFirebaseAuthErrorMessage(FirebaseAuthException e) {
-    switch (e.code) {
-      case 'user-not-found':
-        return 'Usuario no encontrado. Por favor, regístrate primero.';
-      case 'wrong-password':
-        return 'Contraseña incorrecta. Por favor, inténtalo de nuevo.';
-      case 'invalid-email':
-        return 'Email inválido. Por favor, verifica tu email.';
-      case 'user-disabled':
-        return 'Usuario deshabilitado. Por favor, contacta al soporte.';
-      default:
-        return 'Error al iniciar sesión. Por favor, intenta de nuevo más tarde.';
     }
   }
 
@@ -61,21 +63,44 @@ class AuthService {
       UserCredential userCredential =
           await FirebaseAuth.instance.signInWithCredential(credential);
 
-      // Imprimir información del usuario
-      print(userCredential.user?.displayName);
-      print(userCredential.user?.email);
-      print(userCredential.user?.photoURL);
-      print(userCredential.user?.phoneNumber);
+      // Verificar si el usuario ya está registrado en la base de datos
+      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
 
-      // Navegar a la página de navegación pasando el UID y el nombre de usuario
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => NavigationPage(
-              uid: userCredential.user?.uid,
-              userName: userCredential.user?.displayName),
-        ),
-      );
+      Map<String, dynamic>? userSnapshotData =
+          userSnapshot.data() as Map<String, dynamic>?;
+
+      if (!userSnapshot.exists || userSnapshotData?['birthDate'] == null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set({
+          'name': userCredential.user?.displayName,
+          'email': userCredential.user?.email,
+          'imageUrl': userCredential.user?.photoURL,
+        });
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EndRegisterGoogle(
+                uid: userCredential.user?.uid,
+                displayName: userCredential.user?.displayName,
+                email: userCredential.user?.email,
+                imageUrl: userCredential.user?.photoURL),
+          ),
+        );
+      } else {
+        // Si el usuario ya está registrado, navegar a la página de navegación
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => NavigationPage(),
+          ),
+        );
+      }
     } catch (e) {
       // Manejar errores si ocurren
       print('Error signing in with Google: $e');

@@ -1,3 +1,4 @@
+import 'package:app_listas/styles/button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -9,7 +10,15 @@ class ForgotPasswordPage extends StatefulWidget {
 }
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
-  TextEditingController _emailController = TextEditingController();
+  late TextEditingController _emailController;
+
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController();
+  }
 
   @override
   void dispose() {
@@ -22,6 +31,30 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     String email = _emailController.text;
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Error', style: TextStyle(color: Colors.white)),
+            backgroundColor: Colors.grey[800],
+            content: Text(
+                'Se le ha enviado un email para recuperar su contraseña a $email',
+                style: TextStyle(color: Colors.white)),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  setState(() {
+                    _isLoading = false;
+                  });
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          );
+        },
+      );
     } on FirebaseAuthException catch (e) {
       print(e);
       showDialog(
@@ -38,44 +71,111 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
+        iconTheme: IconThemeData(
+          color: Colors.white,
+        ),
       ),
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 25.0),
-            child: Text(
-              'Ingresa tu email y te enviaremos un link para que puedas cambiar tu contraseña',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 20),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 25),
-            child: TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                labelStyle: TextStyle(color: Color.fromARGB(255, 242, 187, 29)),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey),
+            child: Column(
+              children: [
+                const Row(
+                  children: [
+                    Text(
+                      'Recuperar tu contraseña',
+                      style: TextStyle(
+                          fontSize: 25,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
+                    ),
+                  ],
                 ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
+                SizedBox(
+                  height: 10,
                 ),
-              ),
-              style: TextStyle(color: Colors.black),
+                Text(
+                  'Ingresa tu email y te enviaremos un link para que puedas cambiar tu contraseña',
+                  textAlign: TextAlign.left,
+                  style: TextStyle(fontSize: 15, color: Colors.grey.shade400),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    hintText: 'Email',
+                    hintStyle: TextStyle(color: Colors.white),
+                    prefixIcon: Icon(Icons.email,
+                        color: Colors.grey), // Color del icono
+                    border: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(10), // Bordes redondeados
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                          color: Color.fromARGB(
+                              255, 242, 187, 29)), // Borde resaltado al enfocar
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                          color: Color.fromARGB(
+                              255, 158, 128, 36)), // Borde regular
+                    ),
+                  ),
+                  style: TextStyle(color: Colors.white),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () async {
+                            FocusScope.of(context).unfocus();
+                            setState(() {
+                              _isLoading = true;
+                            });
+                            passwordReset();
+                          },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _isLoading
+                            ? Row(
+                                children: [
+                                  const SizedBox(
+                                    width: 23,
+                                    height: 23,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Text(
+                                'Resetear Contraseña',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
+                              ),
+                      ],
+                    ),
+                    style: buttonPrimary,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 10),
-          MaterialButton(
-            onPressed: passwordReset,
-            child: Text('Resetear Contraseña'),
-            color: Color.fromARGB(255, 242, 187, 29),
           ),
         ],
       ),

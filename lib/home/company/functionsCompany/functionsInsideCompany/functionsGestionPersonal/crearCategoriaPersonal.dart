@@ -41,245 +41,241 @@ class _crearCategoriaPersonalState extends State<crearCategoriaPersonal> {
         ),
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                height: 20,
-              ),
-              TextFormField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  hintText: 'Nombre de la categoría',
-                  hintStyle: TextStyle(
-                      color: Colors
-                          .grey), // Color del hint text (texto de sugerencia)
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color: Colors
-                            .white), // Color del borde cuando está habilitado
-                    borderRadius:
-                        BorderRadius.circular(10.0), // Radio del borde
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color: Colors
-                            .white), // Color del borde cuando está enfocado
-                    borderRadius:
-                        BorderRadius.circular(10.0), // Radio del borde
-                  ),
-                ),
-                style: TextStyle(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 20,
+            ),
+            TextFormField(
+              controller: nameController,
+              decoration: InputDecoration(
+                hintText: 'Nombre de la categoría',
+                hintStyle: TextStyle(
                     color: Colors
-                        .white), // Color del texto ingresado por el usuario
+                        .grey), // Color del hint text (texto de sugerencia)
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: Colors
+                          .white), // Color del borde cuando está habilitado
+                  borderRadius: BorderRadius.circular(10.0), // Radio del borde
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color:
+                          Colors.white), // Color del borde cuando está enfocado
+                  borderRadius: BorderRadius.circular(10.0), // Radio del borde
+                ),
               ),
-              SizedBox(height: 20),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Selecciona los permisos que la categoría va a obtener en la empresa',
+              style: TextStyle(
+                  color:
+                      Colors.white), // Color del texto ingresado por el usuario
+            ),
+            SizedBox(height: 20),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Selecciona los permisos que la categoría va a obtener en la empresa',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                  textAlign:
+                      TextAlign.center, // Centra el texto horizontalmente
+                ),
+                SizedBox(height: 10),
+                CheckboxListTile(
+                  title: Text(
+                    'Leer Listas',
                     style: TextStyle(
-                      fontSize: 16,
                       color: Colors.white,
                     ),
-                    textAlign:
-                        TextAlign.center, // Centra el texto horizontalmente
                   ),
-                  SizedBox(height: 10),
-                  CheckboxListTile(
-                    title: Text(
-                      'Leer Listas',
+                  value: isChecked,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      isChecked = value;
+                      if (isChecked! && !selectedPermises.contains('Leer')) {
+                        selectedPermises.add('Leer');
+                      } else {
+                        selectedPermises.remove('Leer');
+                      }
+                    });
+                  },
+                ),
+                CheckboxListTile(
+                  title: Text('Escribir o Hacer Listas',
                       style: TextStyle(
                         color: Colors.white,
-                      ),
-                    ),
-                    value: isChecked,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        isChecked = value;
-                        if (isChecked! && !selectedPermises.contains('Leer')) {
-                          selectedPermises.add('Leer');
-                        } else {
-                          selectedPermises.remove('Leer');
-                        }
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: Text('Escribir o Hacer Listas',
-                        style: TextStyle(
-                          color: Colors.white,
-                        )),
-                    value: isChecked2,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        isChecked2 = value;
-                        if (isChecked2! &&
-                            !selectedPermises.contains('Escribir')) {
-                          selectedPermises.add('Escribir');
-                        } else {
-                          selectedPermises.remove('Escribir');
-                        }
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: Text('Poder gestionar el personal',
-                        style: TextStyle(
-                          color: Colors.white,
-                        )),
-                    value: isChecked3,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        isChecked3 = value;
-                        if (isChecked3! &&
-                            !selectedPermises.contains('Gestionar')) {
-                          selectedPermises.add('Gestionar');
-                        } else {
-                          selectedPermises.remove('Gestionar');
-                        }
-                      });
-                    },
-                  ),
-                ],
-              ),
-              SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(
-                    Icons.info_outline, // El icono que deseas usar
-                    color: Colors.blue,
-                    size: 20,
-                  ),
-                  SizedBox(width: 5), // Espacio entre el icono y el texto
-                  Text(
-                    'Una vez creada la categoria, no se puede cambiarle el nombre',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(
-                  height:
-                      20), // Espacio entre los CheckboxListTiles y los botones
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: () async {
-                      // Obtener el nombre de la categoría y los tipos seleccionados
-                      String categoryName = nameController.text;
-                      List<String> selectedPermissions = this.selectedPermises;
-
-                      // Verificar que se haya ingresado un nombre de categoría válido
-                      if (categoryName.isNotEmpty &&
-                          selectedPermissions.isNotEmpty) {
-                        // Obtener la referencia a la colección de categorías personales dentro de la empresa
-                        CollectionReference categoryCollection = FirebaseFirestore
-                            .instance
-                            .collection(
-                                'companies') // Cambia 'empresas' por el nombre de tu colección de empresas
-                            .doc(widget.companyData[
-                                'companyId']) // 'id' es el campo que contiene el ID de la empresa
-                            .collection('personalCategories');
-
-                        // Crear un documento nuevo con el nombre de la categoría como ID
-                        await categoryCollection.doc(categoryName).set({
-                          'nombre': categoryName,
-                          'permissions': selectedPermissions,
-                          'members': [],
-                          'invitations': [],
-                        });
-
-                        nameController.clear();
-                        setState(() {
-                          this.selectedPermises.clear();
-                        });
-
-                        // Cerrar el diálogo actual
-                        Navigator.pop(context);
-
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: Text('Categoria Creada'),
-                              content:
-                                  Text('Su categoria fue creada exitosamente'),
-                              actions: <Widget>[
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context)
-                                        .pop(); // Cerrar el AlertDialog
-                                  },
-                                  child: Text('OK'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
+                      )),
+                  value: isChecked2,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      isChecked2 = value;
+                      if (isChecked2! &&
+                          !selectedPermises.contains('Escribir')) {
+                        selectedPermises.add('Escribir');
                       } else {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: Text('Error'),
-                              content: Text(
-                                  'Error al crear la categoria, debes ponerle nombre o tienes que seleccionar alguna opcion'),
-                              actions: <Widget>[
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: Text('Ok'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
+                        selectedPermises.remove('Escribir');
                       }
-                    },
-                    style: buttonPrimary,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('Crear categoria'),
-                      ],
-                    ),
+                    });
+                  },
+                ),
+                CheckboxListTile(
+                  title: Text('Poder gestionar el personal',
+                      style: TextStyle(
+                        color: Colors.white,
+                      )),
+                  value: isChecked3,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      isChecked3 = value;
+                      if (isChecked3! &&
+                          !selectedPermises.contains('Gestionar')) {
+                        selectedPermises.add('Gestionar');
+                      } else {
+                        selectedPermises.remove('Gestionar');
+                      }
+                    });
+                  },
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  Icons.info_outline, // El icono que deseas usar
+                  color: Colors.blue,
+                  size: 20,
+                ),
+                SizedBox(width: 5), // Espacio entre el icono y el texto
+                Text(
+                  'Una vez creada la categoria, no se puede cambiarle el nombre',
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 14,
                   ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
+                ),
+              ],
+            ),
+            SizedBox(
+                height:
+                    20), // Espacio entre los CheckboxListTiles y los botones
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () async {
+                    // Obtener el nombre de la categoría y los tipos seleccionados
+                    String categoryName = nameController.text;
+                    List<String> selectedPermissions = this.selectedPermises;
+
+                    // Verificar que se haya ingresado un nombre de categoría válido
+                    if (categoryName.isNotEmpty &&
+                        selectedPermissions.isNotEmpty) {
+                      // Obtener la referencia a la colección de categorías personales dentro de la empresa
+                      CollectionReference categoryCollection = FirebaseFirestore
+                          .instance
+                          .collection(
+                              'companies') // Cambia 'empresas' por el nombre de tu colección de empresas
+                          .doc(widget.companyData[
+                              'companyId']) // 'id' es el campo que contiene el ID de la empresa
+                          .collection('personalCategories');
+
+                      // Crear un documento nuevo con el nombre de la categoría como ID
+                      await categoryCollection.doc(categoryName).set({
+                        'nombre': categoryName,
+                        'permissions': selectedPermissions,
+                        'members': [],
+                        'invitations': [],
+                      });
+
                       nameController.clear();
                       setState(() {
                         this.selectedPermises.clear();
                       });
+
+                      // Cerrar el diálogo actual
                       Navigator.pop(context);
-                    },
-                    style: buttonSecondary,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Cancelar',
-                          style: GoogleFonts.roboto(
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
+
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text('Categoria Creada'),
+                            content:
+                                Text('Su categoria fue creada exitosamente'),
+                            actions: <Widget>[
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context)
+                                      .pop(); // Cerrar el AlertDialog
+                                },
+                                child: Text('OK'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    } else {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text('Error'),
+                            content: Text(
+                                'Error al crear la categoria, debes ponerle nombre o tienes que seleccionar alguna opcion'),
+                            actions: <Widget>[
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: Text('Ok'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }
+                  },
+                  style: buttonPrimary,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Crear categoria'),
+                    ],
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    nameController.clear();
+                    setState(() {
+                      this.selectedPermises.clear();
+                    });
+                    Navigator.pop(context);
+                  },
+                  style: buttonSecondary,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Cancelar',
+                        style: GoogleFonts.roboto(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

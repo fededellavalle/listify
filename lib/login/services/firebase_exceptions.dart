@@ -8,6 +8,8 @@ class FirebaseAuthExceptions {
   static const String userDisabled = 'user-disabled';
   static const String tooManyRequests = 'too-many-requests';
   static const String networkRequestFailed = 'network-request-failed';
+  static const String emailNotVerified =
+      'email-not-verified'; // Nueva excepción
 
   static String getErrorMessage(String code) {
     switch (code) {
@@ -29,6 +31,8 @@ class FirebaseAuthExceptions {
         return 'Demasiados intentos. Intente más tarde.';
       case networkRequestFailed:
         return 'Error de red. Por favor, revise su conexión a internet.';
+      case emailNotVerified:
+        return 'Email no verificado. Por favor verifique su email.';
       default:
         return 'Error desconocido al autenticar.';
     }

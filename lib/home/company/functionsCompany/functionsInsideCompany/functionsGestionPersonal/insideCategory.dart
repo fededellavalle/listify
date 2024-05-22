@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../../styles/button.dart';
 import 'package:unicons/unicons.dart';
 import 'functionsInsideCategory/invitePeopleToCategory.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 
 class InsideCategory extends StatefulWidget {
   final String categoryName;
@@ -25,6 +24,8 @@ class InsideCategory extends StatefulWidget {
 class _InsideCategoryState extends State<InsideCategory> {
   List<dynamic> members = [];
   List<dynamic> invitations = [];
+  List<dynamic> filteredMembers = [];
+  String searchQuery = '';
 
   void loadMembers() async {
     DocumentReference categoryRef = FirebaseFirestore.instance
@@ -45,6 +46,7 @@ class _InsideCategoryState extends State<InsideCategory> {
         if (membersData is List && membersData.isNotEmpty) {
           setState(() {
             members = List.from(membersData);
+            filteredMembers = members;
             print(members);
           });
         } else {
@@ -75,6 +77,18 @@ class _InsideCategoryState extends State<InsideCategory> {
     });
 
     print('Invitations: $invitations');
+  }
+
+  void filterMembers(String query) {
+    setState(() {
+      searchQuery = query;
+      filteredMembers = members.where((member) {
+        final name = member['completeName']?.toLowerCase() ?? '';
+        final email = member['email']?.toLowerCase() ?? '';
+        final searchLower = query.toLowerCase();
+        return name.contains(searchLower) || email.contains(searchLower);
+      }).toList();
+    });
   }
 
   @override
@@ -143,109 +157,139 @@ class _InsideCategoryState extends State<InsideCategory> {
           ),
         ],
       ),
-      body: ListView(
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      body: Column(
         children: [
-          Center(
-            child: Text(
-              'Miembros',
-              style: GoogleFonts.roboto(
-                color: Colors.white,
-                fontSize: 24,
-              ),
-            ),
-          ),
-          if (members.isEmpty)
-            Center(
-              child: Text(
-                'No hay miembros en la categoria',
-                style: GoogleFonts.roboto(
-                  color: Colors.white,
-                  fontSize: 16,
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Buscar miembros...',
+                hintStyle: GoogleFonts.roboto(color: Colors.white54),
+                prefixIcon: Icon(Icons.search, color: Colors.white54),
+                filled: true,
+                fillColor: Colors.white10,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
                 ),
               ),
+              style: GoogleFonts.roboto(color: Colors.white),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
+              ],
+              onChanged: filterMembers,
             ),
-          ...members.map((member) {
-            String memberName = member['completeName'] ?? '';
-            String memberEmail = member['email'] ?? '';
-            String memberInstagram = member['instagram'] ?? '';
+          ),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              children: [
+                Center(
+                  child: Text(
+                    'Miembros',
+                    style: GoogleFonts.roboto(
+                      color: Colors.white,
+                      fontSize: 24,
+                    ),
+                  ),
+                ),
+                if (filteredMembers.isEmpty)
+                  Center(
+                    child: Text(
+                      'No hay miembros en la categoria',
+                      style: GoogleFonts.roboto(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ...filteredMembers.map((member) {
+                  String memberName = member['completeName'] ?? '';
+                  String memberEmail = member['email'] ?? '';
+                  String memberInstagram = member['instagram'] ?? '';
 
-            return Card(
-              margin: EdgeInsets.symmetric(vertical: 5),
-              elevation: 3,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: ListTile(
-                title: Text(
-                  memberName,
-                  style: GoogleFonts.roboto(color: Colors.black),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Email: $memberEmail',
-                      style: GoogleFonts.roboto(color: Colors.grey.shade700),
+                  return Card(
+                    margin: EdgeInsets.symmetric(vertical: 5),
+                    elevation: 3,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    Text(
-                      'Instagram: $memberInstagram',
-                      style: GoogleFonts.roboto(color: Colors.grey.shade700),
+                    child: ListTile(
+                      title: Text(
+                        memberName,
+                        style: GoogleFonts.roboto(color: Colors.black),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Email: $memberEmail',
+                            style:
+                                GoogleFonts.roboto(color: Colors.grey.shade700),
+                          ),
+                          Text(
+                            'Instagram: $memberInstagram',
+                            style:
+                                GoogleFonts.roboto(color: Colors.grey.shade700),
+                          ),
+                        ],
+                      ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.close),
+                        color: Colors.red,
+                        onPressed: () {
+                          deleteMember(
+                              memberName, memberEmail, memberInstagram);
+                        },
+                      ),
                     ),
-                  ],
+                  );
+                }).toList(),
+                SizedBox(height: 20),
+                Center(
+                  child: Text(
+                    'Invitaciones',
+                    style: GoogleFonts.roboto(
+                      color: Colors.white,
+                      fontSize: 24,
+                    ),
+                  ),
                 ),
-                trailing: IconButton(
-                  icon: Icon(Icons.close),
-                  color: Colors.red,
-                  onPressed: () {
-                    deleteMember(memberName, memberEmail, memberInstagram);
-                  },
-                ),
-              ),
-            );
-          }).toList(),
-          SizedBox(height: 20),
-          Center(
-            child: Text(
-              'Invitaciones',
-              style: GoogleFonts.roboto(
-                color: Colors.white,
-                fontSize: 24,
-              ),
+                if (invitations.isEmpty)
+                  Center(
+                    child: Text(
+                      'No hay invitaciones hechas',
+                      style: GoogleFonts.roboto(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ...invitations.map((memberEmail) {
+                  return Card(
+                    margin: EdgeInsets.symmetric(vertical: 5),
+                    elevation: 3,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: ListTile(
+                      title: Text(
+                        memberEmail,
+                        style: GoogleFonts.roboto(color: Colors.black),
+                      ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.close),
+                        color: Colors.red,
+                        onPressed: () {
+                          deleteInvitation(memberEmail);
+                        },
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ],
             ),
           ),
-          if (invitations.isEmpty)
-            Center(
-              child: Text(
-                'No hay invitaciones hechas',
-                style: GoogleFonts.roboto(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ...invitations.map((memberEmail) {
-            return Card(
-              margin: EdgeInsets.symmetric(vertical: 5),
-              elevation: 3,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: ListTile(
-                title: Text(
-                  memberEmail,
-                  style: GoogleFonts.roboto(color: Colors.black),
-                ),
-                trailing: IconButton(
-                  icon: Icon(Icons.close),
-                  color: Colors.red,
-                  onPressed: () {
-                    deleteInvitation(memberEmail);
-                  },
-                ),
-              ),
-            );
-          }).toList(),
         ],
       ),
     );

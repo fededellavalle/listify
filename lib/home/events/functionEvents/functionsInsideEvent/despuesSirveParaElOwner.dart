@@ -1,7 +1,9 @@
+//Esto sirve para mostrarle al owner las listas que va llevando cada publica
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../styles/button.dart';
+import '../../../../styles/button.dart';
 
 class AddPeopleToList extends StatefulWidget {
   final Map<String, dynamic> list;
@@ -42,70 +44,6 @@ class _AddPeopleToListState extends State<AddPeopleToList> {
   void _addPersonToList() async {
     final name = _nameController.text.trim();
     if (name.isNotEmpty) {
-      setState(() {
-        // Inicializa eventList si no existe
-        widget.list['eventLists'] = widget.list['eventLists'] ?? [];
-
-        // Encuentra el objeto de lista actual
-        bool listFound = false;
-
-        for (var list in widget.list['eventLists']) {
-          if (list['listName'] == widget.list['listName']) {
-            // Inicializa membersList si no existe
-            list['membersList'] = list['membersList'] ?? [];
-
-            bool userFound = false;
-
-            for (var memberGroup in list['membersList']) {
-              if (memberGroup['property']['uid'] == userId) {
-                memberGroup['members'].add({
-                  'name': name,
-                  'assisted': false,
-                });
-                userFound = true;
-                break;
-              }
-            }
-
-            if (!userFound) {
-              list['membersList'].add({
-                'property': {
-                  'uid': userId,
-                },
-                'members': [
-                  {
-                    'name': name,
-                    'assisted': false,
-                  },
-                ],
-              });
-            }
-
-            listFound = true;
-            break;
-          }
-        }
-
-        if (!listFound) {
-          widget.list['eventLists'].add({
-            'listName': widget.list['listName'],
-            'membersList': [
-              {
-                'property': {
-                  'uid': userId,
-                },
-                'members': [
-                  {
-                    'name': name,
-                    'assisted': false,
-                  },
-                ],
-              },
-            ],
-          });
-        }
-      });
-
       // Update Firestore
       try {
         DocumentReference listDoc = FirebaseFirestore.instance
@@ -115,11 +53,6 @@ class _AddPeopleToListState extends State<AddPeopleToList> {
             .doc(widget.eventId)
             .collection('eventLists')
             .doc(widget.list['listName']);
-
-        print(listDoc);
-
-        // Verificar si el campo 'membersList' ya existe
-        var docSnapshot = await listDoc.get();
 
         // Actualizar 'membersList' usando arrayUnion para agregar el nuevo miembro
         await listDoc.update({
@@ -227,54 +160,75 @@ class _AddPeopleToListState extends State<AddPeopleToList> {
               ],
             ),
             const SizedBox(height: 8),
-            ListView.builder(
-              shrinkWrap: true,
-              itemCount: widget.list['eventLists']?.length ?? 0,
-              itemBuilder: (context, index) {
-                final listGroup = widget.list['eventLists'][index];
-                if (listGroup['listName'] != widget.list['listName']) {
-                  return Container(); // Skip lists that don't match the current listName
+            StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('companies')
+                  .doc(widget.companyId)
+                  .collection('myEvents')
+                  .doc(widget.eventId)
+                  .collection('eventLists')
+                  .doc(widget.list['listName'])
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
                 }
-                return ExpansionTile(
-                  title: Text(
-                    'Lista: ${listGroup['listName']}',
+
+                var eventListData =
+                    snapshot.data!.data() as Map<String, dynamic>?;
+                if (eventListData == null ||
+                    !eventListData.containsKey('membersList')) {
+                  return Text(
+                    'No hay miembros en esta lista.',
                     style: TextStyle(color: Colors.white),
-                  ),
-                  children: [
-                    for (var memberGroup in listGroup['membersList'])
-                      ExpansionTile(
-                        title: Text(
-                          'Usuario: ${memberGroup['property']['uid']}',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        children: [
-                          for (var member in memberGroup['members'])
-                            ListTile(
-                              title: Text(
-                                'Persona: ${member['name']}',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              subtitle:
-                                  Text('Asistencia: ${member['assisted']}'),
-                              trailing: IconButton(
-                                icon: Icon(
-                                  Icons.clear,
-                                  color: Colors.red,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    memberGroup['members'].remove(member);
-                                    if (memberGroup['members'].isEmpty) {
-                                      listGroup['membersList']
-                                          .remove(memberGroup);
-                                    }
-                                  });
-                                },
-                              ),
-                            ),
-                        ],
+                  );
+                }
+
+                var membersList =
+                    eventListData['membersList'] as Map<String, dynamic>;
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: membersList.length,
+                  itemBuilder: (context, index) {
+                    String memberId = membersList.keys.elementAt(index);
+                    var memberGroup = membersList[memberId];
+                    var members = memberGroup['members'];
+
+                    return ExpansionTile(
+                      title: Text(
+                        'Usuario: $memberId',
+                        style: TextStyle(color: Colors.white),
                       ),
-                  ],
+                      children: [
+                        for (var member in members)
+                          ListTile(
+                            title: Text(
+                              'Persona: ${member['name']}',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            subtitle: Text('Asistencia: ${member['assisted']}'),
+                            trailing: IconButton(
+                              icon: Icon(
+                                Icons.clear,
+                                color: Colors.red,
+                              ),
+                              onPressed: () {
+                                // Elimina al miembro del grupo de miembros
+                                setState(() {
+                                  members.remove(member);
+                                  if (members.isEmpty) {
+                                    membersList.remove(memberId);
+                                  }
+                                });
+                              },
+                            ),
+                          ),
+                      ],
+                    );
+                  },
                 );
               },
             ),

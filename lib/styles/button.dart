@@ -13,6 +13,8 @@ final ButtonStyle buttonPrimary = ButtonStyle(
     ),
   ),
 );
+//Color.fromARGB(195, 1, 244, 244) Color del logo
+//Color(0xFF74BEB8),
 
 final ButtonStyle buttonSecondary = ButtonStyle(
   overlayColor: MaterialStateProperty.all<Color>(

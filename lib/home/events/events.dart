@@ -1,9 +1,8 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'insideEvent.dart';
+import 'functionEvents/insideEvent.dart';
 
 class EventsPage extends StatefulWidget {
   final String? uid;
@@ -17,18 +16,25 @@ class EventsPage extends StatefulWidget {
 }
 
 class _EventsPageState extends State<EventsPage> {
+  bool hasEventsInFirstStream = false;
+  bool hasEventsInSecondStream = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
         children: [
-          Text('Primer Stream:', style: TextStyle(fontSize: 18)),
-          _buildFirstEventList(),
-          SizedBox(height: 20),
-          Text('Segundo Stream:', style: TextStyle(fontSize: 18)),
-          _buildSecondEventList(),
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildFirstEventList(),
+                _buildSecondEventList(),
+              ],
+            ),
+          ),
+          _buildNoEventsMessage(),
         ],
       ),
     );
@@ -38,8 +44,7 @@ class _EventsPageState extends State<EventsPage> {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('companies')
-          .where('ownerUid',
-              isEqualTo: widget.uid) // Filtra por el uid del propietario
+          .where('ownerUid', isEqualTo: widget.uid)
           .snapshots(),
       builder: (context, companySnapshot) {
         if (companySnapshot.hasError) {
@@ -47,12 +52,7 @@ class _EventsPageState extends State<EventsPage> {
         }
 
         if (companySnapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
-        }
-
-        if (companySnapshot.data == null ||
-            companySnapshot.data!.docs.isEmpty) {
-          return Text('No hay companias');
+          return Center(child: CircularProgressIndicator());
         }
 
         List<String> companyIds =
@@ -65,83 +65,54 @@ class _EventsPageState extends State<EventsPage> {
                   .collection('companies')
                   .doc(companyId)
                   .collection('myEvents')
-                  .where('eventState', whereIn: ['Active', 'Live']).snapshots(),
+                  .where('eventState',
+                      whereIn: ['Active', 'Live', 'Desactive']).snapshots(),
               builder: (context, eventSnapshot) {
                 if (eventSnapshot.hasError) {
                   return Text('Error al cargar los eventos');
                 }
 
                 if (eventSnapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
+                  return Center(child: CircularProgressIndicator());
                 }
 
-                if (eventSnapshot.data == null ||
-                    eventSnapshot.data!.docs.isEmpty) {
-                  return Text('No se encontraron eventos');
-                }
+                final events = eventSnapshot.data!.docs;
+                final hasEvents = events.isNotEmpty;
+
+                // Actualizar el estado después de que la construcción haya completado
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (hasEvents && !hasEventsInSecondStream) {
+                    setState(() {
+                      // Usar una variable local en lugar de una global
+                      hasEventsInSecondStream = true;
+                    });
+                  }
+                });
 
                 return ListView.builder(
                   shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
                   itemCount: eventSnapshot.data!.docs.length,
                   itemBuilder: (context, index) {
                     var event = eventSnapshot.data!.docs[index];
-                    /*Map<String, dynamic> eventData =
-                        event.data() as Map<String, dynamic>;*/
                     var eventId = event.id;
-
-                    var startTime = event['eventStartTime']
-                        as Timestamp; // Suponiendo que 'eventStartTime' es un Timestamp
-                    var endTime = event['eventEndTime']
-                        as Timestamp; // Suponiendo que 'eventEndTime' es un Timestamp
-
-                    // Formatea las fechas utilizando la clase DateFormat de intl
+                    var startTime = event['eventStartTime'] as Timestamp;
+                    var endTime = event['eventEndTime'] as Timestamp;
                     var formattedStartTime = DateFormat('dd/MM/yyyy HH:mm')
                         .format(startTime.toDate());
                     var formattedEndTime =
                         DateFormat('dd/MM/yyyy HH:mm').format(endTime.toDate());
 
-                    // Construye el widget del evento
-                    return ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => InsideEvent(
-                              companyRelationship: 'Owner',
-                              isOwner: true,
-                              eventId: eventId,
-                              companyId: companyId,
-                            ),
-                          ),
-                        );
-                      },
-                      style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all<Color>(
-                          Colors.transparent,
-                        ),
-                        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                          EdgeInsets.all(20),
-                        ),
-                        shape:
-                            MaterialStateProperty.all<RoundedRectangleBorder>(
-                          RoundedRectangleBorder(),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(event['eventName']),
-                                SizedBox(height: 2),
-                                Text(
-                                    'Inicio: $formattedStartTime - Fin: $formattedEndTime'),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                    return EventButton(
+                      eventId: eventId,
+                      companyId: companyId,
+                      eventName: event['eventName'],
+                      eventImage: event['eventImage'],
+                      formattedStartTime: formattedStartTime,
+                      formattedEndTime: formattedEndTime,
+                      companyRelationship: 'Owner',
+                      isOwner: true,
+                      eventState: event['eventState'],
                     );
                   },
                 );
@@ -161,156 +132,102 @@ class _EventsPageState extends State<EventsPage> {
           return Text('Error al cargar las relaciones de compañía');
         } else if (relationshipSnapshot.connectionState ==
             ConnectionState.waiting) {
-          return CircularProgressIndicator();
-        } else if (relationshipSnapshot.data == null ||
-            relationshipSnapshot.data!.isEmpty) {
-          return Text('No hay relaciones de compañía disponibles');
+          return Center(child: CircularProgressIndicator());
         } else {
-          // Obtén la lista de companyRelationships
           List<Map<String, dynamic>> companyRelationships =
               relationshipSnapshot.data!;
 
-          print(companyRelationships);
+          return Column(
+            children: companyRelationships.map((relationship) {
+              var companyUsername = relationship['companyUsername'];
+              var companyCategory = relationship['category'];
 
-          return Expanded(
-            child: ListView.builder(
-              itemCount: companyRelationships.length,
-              itemBuilder: (context, index) {
-                var companyUsername =
-                    companyRelationships[index]['companyUsername'];
-                var companyCategory = companyRelationships[index]['category'];
+              return StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('companies')
+                    .where('username', isEqualTo: companyUsername)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Text(
+                        'Error al cargar los eventos de la compañía $companyUsername');
+                  }
 
-                // Ahora puedes usar companyUsername para filtrar los eventos
-                return StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('companies')
-                      .where('username', isEqualTo: companyUsername)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasError) {
-                      return Text(
-                          'Error al cargar los eventos de la compañía $companyUsername');
-                    }
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
 
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return CircularProgressIndicator();
-                    }
+                  List<String> companyIds =
+                      snapshot.data!.docs.map((doc) => doc.id).toList();
 
-                    if (snapshot.data == null || snapshot.data!.docs.isEmpty) {
-                      return Text(
-                          'No hay eventos disponibles para la compañía $companyUsername');
-                    }
+                  return Column(
+                    children: companyIds.map((companyId) {
+                      return StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('companies')
+                            .doc(companyId)
+                            .collection('myEvents')
+                            .where('eventState',
+                                whereIn: ['Active', 'Live']).snapshots(),
+                        builder: (context, eventSnapshot) {
+                          if (eventSnapshot.hasError) {
+                            return Text('Error al cargar los eventos');
+                          }
 
-                    print(companyCategory);
+                          if (eventSnapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Center(child: CircularProgressIndicator());
+                          }
 
-                    List<String> companyIds =
-                        snapshot.data!.docs.map((doc) => doc.id).toList();
-
-                    print(companyIds);
-
-                    return Column(
-                      children: companyIds.map((companyId) {
-                        return StreamBuilder<QuerySnapshot>(
-                          stream: FirebaseFirestore.instance
-                              .collection('companies')
-                              .doc(companyId)
-                              .collection('myEvents')
-                              .where('eventState',
-                                  whereIn: ['Active', 'Live']).snapshots(),
-                          builder: (context, eventSnapshot) {
-                            if (eventSnapshot.hasError) {
-                              return Text('Error al cargar los eventos');
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (eventSnapshot.data != null &&
+                                eventSnapshot.data!.docs.isNotEmpty) {
+                              if (!hasEventsInSecondStream) {
+                                setState(() {
+                                  hasEventsInSecondStream = true;
+                                });
+                              }
                             }
+                          });
 
-                            if (eventSnapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return CircularProgressIndicator();
-                            }
+                          return ListView.builder(
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            itemCount: eventSnapshot.data!.docs.length,
+                            itemBuilder: (context, index) {
+                              var event = eventSnapshot.data!.docs[index];
+                              var eventId = event.id;
+                              var eventState = event['eventState'];
+                              var startTime =
+                                  event['eventStartTime'] as Timestamp;
+                              var endTime = event['eventEndTime'] as Timestamp;
+                              var formattedStartTime =
+                                  DateFormat('dd/MM/yyyy HH:mm')
+                                      .format(startTime.toDate());
+                              var formattedEndTime =
+                                  DateFormat('dd/MM/yyyy HH:mm')
+                                      .format(endTime.toDate());
 
-                            if (eventSnapshot.data == null ||
-                                eventSnapshot.data!.docs.isEmpty) {
-                              return Text('No se encontraron eventos');
-                            }
-
-                            return ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: eventSnapshot.data!.docs.length,
-                              itemBuilder: (context, index) {
-                                var event = eventSnapshot.data!.docs[index];
-                                /*Map<String, dynamic> eventData =
-                                    event.data() as Map<String, dynamic>;*/
-                                var eventId = event.id;
-
-                                var startTime = event['eventStartTime']
-                                    as Timestamp; // Suponiendo que 'eventStartTime' es un Timestamp
-                                var endTime = event['eventEndTime']
-                                    as Timestamp; // Suponiendo que 'eventEndTime' es un Timestamp
-
-                                // Formatea las fechas utilizando la clase DateFormat de intl
-                                var formattedStartTime =
-                                    DateFormat('dd/MM/yyyy HH:mm')
-                                        .format(startTime.toDate());
-                                var formattedEndTime =
-                                    DateFormat('dd/MM/yyyy HH:mm')
-                                        .format(endTime.toDate());
-
-                                // Construye el widget del evento
-
-                                return ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => InsideEvent(
-                                          companyRelationship: companyCategory,
-                                          isOwner: false,
-                                          eventId: eventId,
-                                          companyId: companyId,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  style: ButtonStyle(
-                                    backgroundColor:
-                                        MaterialStateProperty.all<Color>(
-                                      Colors.transparent,
-                                    ),
-                                    padding: MaterialStateProperty.all<
-                                        EdgeInsetsGeometry>(
-                                      EdgeInsets.all(20),
-                                    ),
-                                    shape: MaterialStateProperty.all<
-                                        RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(event['eventName']),
-                                            SizedBox(height: 2),
-                                            Text(
-                                                'Inicio: $formattedStartTime - Fin: $formattedEndTime'),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        );
-                      }).toList(),
-                    );
-                  },
-                );
-              },
-            ),
+                              return EventButton(
+                                eventId: eventId,
+                                companyId: companyId,
+                                eventName: event['eventName'],
+                                eventImage: event['eventImage'],
+                                formattedStartTime: formattedStartTime,
+                                formattedEndTime: formattedEndTime,
+                                companyRelationship: companyCategory,
+                                isOwner: false,
+                                eventState: eventState,
+                              );
+                            },
+                          );
+                        },
+                      );
+                    }).toList(),
+                  );
+                },
+              );
+            }).toList(),
           );
         }
       },
@@ -318,8 +235,7 @@ class _EventsPageState extends State<EventsPage> {
   }
 
   Stream<List<Map<String, dynamic>>> _fetchUserEventsCompanyRelationships(
-    String? uid,
-  ) {
+      String? uid) {
     if (uid != null) {
       return FirebaseFirestore.instance
           .collection('users')
@@ -327,13 +243,10 @@ class _EventsPageState extends State<EventsPage> {
           .snapshots()
           .map((snapshot) {
         if (snapshot.exists) {
-          // Verifica si el documento existe antes de intentar acceder al campo
           Map<String, dynamic> userData =
               snapshot.data() as Map<String, dynamic>;
           var companyRelationships =
               userData['companyRelationship'] as List<dynamic>? ?? [];
-          print(companyRelationships);
-
           return companyRelationships.cast<Map<String, dynamic>>();
         } else {
           return [];
@@ -342,5 +255,245 @@ class _EventsPageState extends State<EventsPage> {
     } else {
       return Stream.empty();
     }
+  }
+
+  Widget _buildNoEventsMessage() {
+    return Visibility(
+      visible: !hasEventsInFirstStream && !hasEventsInSecondStream,
+      child: Center(
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          alignment: Alignment.center,
+          child: Text(
+            'No hay eventos activos en este momento',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class EventButton extends StatelessWidget {
+  final String eventId;
+  final String companyId;
+  final String eventName;
+  final String eventImage;
+  final String formattedStartTime;
+  final String formattedEndTime;
+  final String companyRelationship;
+  final bool isOwner;
+  final String? eventState;
+
+  EventButton({
+    required this.eventId,
+    required this.companyId,
+    required this.eventName,
+    required this.eventImage,
+    required this.formattedStartTime,
+    required this.formattedEndTime,
+    required this.companyRelationship,
+    required this.isOwner,
+    required this.eventState,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        InkWell(
+          onTap: () async {
+            bool hasPermission = await _checkPermission(companyId,
+                companyRelationship, eventState ?? 'Active', isOwner);
+            if (hasPermission) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => InsideEvent(
+                    companyRelationship: companyRelationship,
+                    isOwner: isOwner,
+                    eventId: eventId,
+                    companyId: companyId,
+                  ),
+                ),
+              );
+            } else {
+              // Manejar la falta de permisos
+              print('No tienes permiso para acceder a este evento.');
+            }
+          },
+          child: AnimatedContainer(
+            duration: Duration(milliseconds: 300),
+            padding: EdgeInsets.all(16),
+            margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.blueGrey.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    eventImage,
+                    width: 50,
+                    height: 80,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(eventName,
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white)),
+                      SizedBox(height: 4),
+                      Text('Inicio: $formattedStartTime',
+                          style: TextStyle(color: Colors.white70)),
+                      SizedBox(height: 2),
+                      Text('Fin: $formattedEndTime',
+                          style: TextStyle(color: Colors.white70)),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right, color: Colors.white),
+              ],
+            ),
+          ),
+        ),
+        Positioned(
+          top: 15,
+          right: 25,
+          child: _buildEventStateIndicator(eventState),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEventStateIndicator(String? eventState) {
+    Color color;
+    String text;
+
+    switch (eventState) {
+      case 'Active':
+        color = Colors.green;
+        text = 'Activo';
+        break;
+      case 'Live':
+        color = Colors.red;
+        text = 'En Vivo';
+        break;
+      default:
+        color = Colors.grey;
+        text = 'Desactivo';
+    }
+
+    return Row(
+      children: [
+        _BlinkingCircle(color: color),
+        SizedBox(width: 4),
+        Text(
+          text,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<bool> _checkPermission(String companyId, String category,
+      String eventState, bool isOwner) async {
+    try {
+      if (isOwner == true) {
+        return true;
+      } else {
+        DocumentSnapshot categorySnapshot = await FirebaseFirestore.instance
+            .collection('companies')
+            .doc(companyId)
+            .collection('personalCategories')
+            .doc(category)
+            .get();
+
+        if (categorySnapshot.exists) {
+          Map<String, dynamic> categoryData =
+              categorySnapshot.data() as Map<String, dynamic>;
+
+          if (categoryData['permissions'].contains('Escribir') &&
+              eventState == 'Active') {
+            print('Podes escribir');
+            return true;
+          } else if (categoryData['permissions'].contains('Leer') &&
+              eventState == 'Live') {
+            print('Podes Leer');
+            return true;
+          } else {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
+    } catch (e) {
+      print('Error al verificar permisos: $e');
+      return false;
+    }
+  }
+}
+
+class _BlinkingCircle extends StatefulWidget {
+  final Color color;
+
+  _BlinkingCircle({required this.color});
+
+  @override
+  __BlinkingCircleState createState() => __BlinkingCircleState();
+}
+
+class __BlinkingCircleState extends State<_BlinkingCircle>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _controller,
+      child: Container(
+        width: 12,
+        height: 12,
+        decoration: BoxDecoration(
+          color: widget.color,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
   }
 }

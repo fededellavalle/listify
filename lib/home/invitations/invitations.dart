@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
-//import '../../styles/button.dart';
+import '../../styles/loading.dart';
 
 class InvitationsPage extends StatefulWidget {
   const InvitationsPage({Key? key}) : super(key: key);
@@ -169,7 +169,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
                   }
 
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
+                    return LoadingScreen();
                   }
 
                   if (snapshot.data!.docs.isEmpty) {
@@ -215,7 +215,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
 
                           if (userSnapshot.connectionState ==
                               ConnectionState.waiting) {
-                            return CircularProgressIndicator();
+                            return LoadingScreen();
                           }
 
                           if (userSnapshot.data!.docs.isEmpty) {
@@ -250,7 +250,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
 
                               if (companySnapshot.connectionState ==
                                   ConnectionState.waiting) {
-                                return CircularProgressIndicator();
+                                return LoadingScreen();
                               }
 
                               var companyData = companySnapshot.data!.data()
