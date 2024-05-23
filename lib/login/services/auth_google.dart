@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import '../../home/navigation_page.dart';
 import 'firebase_exceptions.dart';
 import '../endRegisterGoogle.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  // Método para iniciar sesión con email y contraseña
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   Future<List<dynamic>> signIn(
       BuildContext context, String email, String password) async {
     String errorMessage = '';
@@ -19,6 +21,8 @@ class AuthService {
       );
 
       if (userCredential.user != null && userCredential.user!.emailVerified) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setBool('isLoggedIn', true);
         return [
           userCredential,
           errorMessage
@@ -72,6 +76,9 @@ class AuthService {
       Map<String, dynamic>? userSnapshotData =
           userSnapshot.data() as Map<String, dynamic>?;
 
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setBool('isLoggedIn', true);
+
       if (!userSnapshot.exists || userSnapshotData?['birthDate'] == null) {
         await FirebaseFirestore.instance
             .collection('users')
@@ -122,5 +129,16 @@ class AuthService {
       // Manejar errores si ocurren
       print('Error signing out from Google: $e');
     }
+  }
+
+  Future<void> signOut() async {
+    await _auth.signOut();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool('isLoggedIn', false);
+  }
+
+  Future<bool> isUserLoggedIn() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('isLoggedIn') ?? false;
   }
 }

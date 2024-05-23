@@ -1,5 +1,5 @@
+import 'package:app_listas/home/company/functionsCompany/functionsInsideCompany/functionsEvents/eventsTemplates/eventsTemplates.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../../styles/button.dart';
 import 'package:unicons/unicons.dart';
@@ -254,6 +254,57 @@ class _EventosPageState extends State<EventosPage> {
                             ),
                             Text(
                               'Historial de Eventos',
+                              style: GoogleFonts.roboto(
+                                color: Colors.white,
+                                fontSize: 18,
+                              ),
+                            ),
+                            Spacer(),
+                            Icon(
+                              UniconsLine.angle_right_b,
+                              size: 20, // Tamaño grande
+                              color: Colors.grey.shade600,
+                            ),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EventTemplatesPage(
+                                companyData: widget.companyData,
+                              ),
+                            ),
+                          );
+                        },
+                        style: buttonCompany,
+                        child: Row(
+                          mainAxisAlignment:
+                              MainAxisAlignment.start, // Alineación al inicio
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors
+                                    .blue, // Color de fondo del contenedor
+                                borderRadius: BorderRadius.circular(
+                                    8), // Opcional: radio de borde para el contenedor
+                              ),
+                              child: const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Icon(
+                                  UniconsSolid.user_arrows,
+                                  size: 20, // Tamaño grande
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 15,
+                            ),
+                            Text(
+                              'Plantillas de Eventos',
                               style: GoogleFonts.roboto(
                                 color: Colors.white,
                                 fontSize: 18,

@@ -9,7 +9,7 @@ class LoadingScreen extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          BlinkingDots(),
+          AnimatedDots(),
           SizedBox(height: 10),
           Text(
             'Cargando',
@@ -24,12 +24,12 @@ class LoadingScreen extends StatelessWidget {
   }
 }
 
-class BlinkingDots extends StatefulWidget {
+class AnimatedDots extends StatefulWidget {
   @override
-  _BlinkingDotsState createState() => _BlinkingDotsState();
+  _AnimatedDotsState createState() => _AnimatedDotsState();
 }
 
-class _BlinkingDotsState extends State<BlinkingDots>
+class _AnimatedDotsState extends State<AnimatedDots>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -56,15 +56,16 @@ class _BlinkingDotsState extends State<BlinkingDots>
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(3, (index) {
         return FadeTransition(
-          opacity: DelayTween(begin: 0.0, end: 1.0, delay: index * 0.2)
+          opacity: DelayTween(begin: 0.3, end: 1.0, delay: index * 0.2)
               .animate(_animation),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2.0),
-            child: Text(
-              '.',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 50,
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: Container(
+              width: 15,
+              height: 15,
+              decoration: BoxDecoration(
+                color: Color(0xFF74BEB8),
+                shape: BoxShape.circle,
               ),
             ),
           ),

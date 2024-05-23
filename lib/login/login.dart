@@ -103,15 +103,16 @@ class _LoginFormState extends State<LoginForm>
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(
-                                  color: Color.fromARGB(255, 242, 187,
-                                      29)), // Borde resaltado al enfocar
+                                  color: Color(
+                                      0xFF74BEB8)), // Borde resaltado al enfocar
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(
                                   color: Color.fromARGB(
-                                      255, 158, 128, 36)), // Borde regular
+                                      255, 117, 168, 184)), // Borde regular
                             ),
+                            counterText: "",
                           ),
                           style: TextStyle(color: Colors.white),
                           validator: (value) {
@@ -123,6 +124,7 @@ class _LoginFormState extends State<LoginForm>
                           onSaved: (value) {
                             _email = value!;
                           },
+                          maxLength: 50,
                         ),
                         const SizedBox(height: 20),
                         TextFormField(
@@ -140,14 +142,14 @@ class _LoginFormState extends State<LoginForm>
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(
-                                  color: Color.fromARGB(255, 242, 187,
-                                      29)), // Borde resaltado al enfocar
+                                  color: Color(
+                                      0xFF74BEB8)), // Borde resaltado al enfocar
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(
                                   color: Color.fromARGB(
-                                      255, 158, 128, 36)), // Borde regular
+                                      255, 117, 168, 184)), // Borde regular
                             ),
                             suffixIcon: GestureDetector(
                               onTap: () {
@@ -163,6 +165,7 @@ class _LoginFormState extends State<LoginForm>
                                 color: Colors.grey, // Color del icono
                               ),
                             ),
+                            counterText: "",
                           ),
                           obscureText:
                               _obscureText, // Estado de visibilidad de la contraseña
@@ -170,6 +173,7 @@ class _LoginFormState extends State<LoginForm>
                             color: Colors.white,
                             fontSize: 16,
                           ),
+                          maxLength: 40,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Por favor, ingrese su contraseña';
@@ -341,7 +345,7 @@ class _LoginFormState extends State<LoginForm>
                             color: Colors.black,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: Color.fromARGB(255, 158, 128, 36),
+                              color: Color.fromARGB(255, 117, 168, 184),
                             ),
                           ),
                           padding: EdgeInsets.symmetric(
@@ -357,7 +361,7 @@ class _LoginFormState extends State<LoginForm>
                               Text(
                                 'Continuar con Google',
                                 style: TextStyle(
-                                  color: Color.fromARGB(255, 253, 205, 62),
+                                  color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
@@ -446,7 +450,7 @@ class _LoginFormState extends State<LoginForm>
                       child: Text(
                         'Registrate aquí',
                         style: GoogleFonts.roboto(
-                          color: Color.fromARGB(255, 242, 187, 29),
+                          color: Color(0xFF74BEB8),
                           fontWeight: FontWeight.bold,
                         ),
                       ),

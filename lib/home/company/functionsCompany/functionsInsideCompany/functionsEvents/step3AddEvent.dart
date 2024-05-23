@@ -16,6 +16,7 @@ class Step3AddEvent extends StatefulWidget {
   final List<ListItem> lists;
   File? image;
   final Map<String, dynamic> companyData;
+  final Map<String, dynamic>? template;
 
   Step3AddEvent({
     Key? key,
@@ -26,6 +27,7 @@ class Step3AddEvent extends StatefulWidget {
     required this.lists,
     required this.image,
     required this.companyData,
+    this.template,
   }) : super(key: key);
 
   @override
@@ -34,6 +36,7 @@ class Step3AddEvent extends StatefulWidget {
 
 class _Step3AddEventState extends State<Step3AddEvent> {
   bool _guardarPlantilla = false;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -130,8 +133,7 @@ class _Step3AddEventState extends State<Step3AddEvent> {
                               255, 242, 187, 29), // Color del texto
                         ),
                       ),
-                      if (widget.lists[index]
-                          .addExtraTime) // Sin llaves para una única instrucción
+                      if (widget.lists[index].addExtraTime)
                         Text(
                           'y con un extra de tiempo desde ${DateFormat('dd-MM-yyyy HH:mm').format(widget.lists[index].selectedStartExtraDate ?? DateTime.now())} hasta ${DateFormat('dd-MM-yyyy HH:mm').format(widget.lists[index].selectedEndExtraDate ?? DateTime.now())}',
                           style: TextStyle(
@@ -145,41 +147,54 @@ class _Step3AddEventState extends State<Step3AddEvent> {
                 },
               ),
               SizedBox(height: 10),
-              CheckboxListTile(
-                title: Text(
-                  'Guardar plantilla del Evento para proximos',
-                  style: TextStyle(color: Colors.white),
+              if (widget.template != null)
+                SwitchListTile(
+                  title: Text(
+                    'Guardar plantilla del Evento para próximos',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  value: _guardarPlantilla,
+                  onChanged: (newValue) {
+                    setState(() {
+                      _guardarPlantilla = newValue;
+                    });
+                  },
+                  activeColor: Color.fromARGB(255, 242, 187, 29),
                 ),
-                value: _guardarPlantilla,
-                onChanged: (newValue) {
-                  setState(() {
-                    _guardarPlantilla = newValue ?? false;
-                  });
-                },
-                controlAffinity: ListTileControlAffinity
-                    .leading, // Coloca el Checkbox a la izquierda del texto
-                activeColor: Color.fromARGB(255, 242, 187,
-                    29), // Color cuando el Checkbox está seleccionado
-                checkColor: Colors
-                    .green.shade900, // Color del check dentro del Checkbox
-                tileColor:
-                    Colors.transparent, // Color del contenedor del Checkbox
-                contentPadding: EdgeInsets
-                    .zero, // Elimina el espacio entre el Checkbox y el borde del ListTile
-              ),
               SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    createEvent(context);
-                  },
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          setState(() {
+                            _isLoading = true;
+                          });
+                          createEvent(context);
+                        },
                   style: buttonPrimary,
-                  child: Text(
-                    'Crear Evento',
-                    style: TextStyle(
-                      fontSize: 16,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _isLoading
+                          ? SizedBox(
+                              width: 23,
+                              height: 23,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.black,
+                                ),
+                              ),
+                            )
+                          : Text(
+                              'Crear Evento',
+                              style: TextStyle(
+                                fontSize: 16,
+                              ),
+                            ),
+                    ],
                   ),
                 ),
               ),
@@ -193,69 +208,138 @@ class _Step3AddEventState extends State<Step3AddEvent> {
   Future<void> createEvent(BuildContext context) async {
     String uuid = Uuid().v4();
 
-    // Subir la imagen y obtener su URL
-    Reference ref = FirebaseStorage.instance.ref().child(
-        'company_images/${widget.companyData['companyId']}/myEvents/$uuid.jpg');
-    UploadTask uploadTask = ref.putFile(widget.image!);
-    TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
-    String imageUrl = await taskSnapshot.ref.getDownloadURL();
+    try {
+      // Subir la imagen y obtener su URL
+      Reference ref = FirebaseStorage.instance.ref().child(
+          'company_images/${widget.companyData['companyId']}/myEvents/$uuid.jpg');
+      UploadTask uploadTask = ref.putFile(widget.image!);
+      TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
+      String imageUrl = await taskSnapshot.ref.getDownloadURL();
 
-    // Crear un documento para el evento
+      // Crear un documento para el evento
+      await FirebaseFirestore.instance
+          .collection('companies')
+          .doc(widget.companyData['companyId'])
+          .collection('myEvents')
+          .doc(uuid)
+          .set({
+        'eventName': widget.name,
+        'eventTicketValue': widget.ticketValue,
+        'eventStartTime': widget.startDateTime,
+        'eventEndTime': widget.endDateTime,
+        'eventImage': imageUrl,
+        'eventState': 'Desactive',
+      });
+
+      // Colección de listas de eventos
+      CollectionReference eventListsCollection = FirebaseFirestore.instance
+          .collection('companies')
+          .doc(widget.companyData['companyId'])
+          .collection('myEvents')
+          .doc(uuid)
+          .collection('eventLists');
+
+      // Agregar cada lista como un documento en la colección de listas de eventos
+      for (var listItem in widget.lists) {
+        await eventListsCollection.doc(listItem.name).set({
+          'listName': listItem.name,
+          'listType': listItem.type,
+          'listStartTime': listItem.selectedStartDate,
+          'listEndTime': listItem.selectedEndDate,
+          'ticketPrice': listItem.ticketPrice,
+          'membersList': [],
+          'allowSublists': listItem.allowSublists,
+        });
+      }
+
+      if (_guardarPlantilla) {
+        await saveTemplate();
+      }
+
+      // Mostrar el AlertDialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Evento Creado'),
+            content:
+                Text('El evento ${widget.name} se ha creado correctamente.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                },
+                child: Text('Aceptar'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al crear el evento: $e'),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> saveTemplate() async {
+    // Verificar el número de plantillas existentes
+    QuerySnapshot templateSnapshot = await FirebaseFirestore.instance
+        .collection('companies')
+        .doc(widget.companyData['companyId'])
+        .collection('eventTemplates')
+        .get();
+
+    if (templateSnapshot.size >= 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              'Ya tienes 3 plantillas guardadas. Elimina una para poder guardar una nueva.'),
+        ),
+      );
+      return;
+    }
+
+    // Guardar la plantilla
     await FirebaseFirestore.instance
         .collection('companies')
         .doc(widget.companyData['companyId'])
-        .collection('myEvents')
-        .doc(uuid)
-        .set({
+        .collection('eventTemplates')
+        .add({
       'eventName': widget.name,
       'eventTicketValue': widget.ticketValue,
       'eventStartTime': widget.startDateTime,
       'eventEndTime': widget.endDateTime,
-      'eventImage': imageUrl,
-      'eventState': 'Desactive',
+      'eventImage': widget.image != null ? widget.image!.path : null,
+      'lists': widget.lists.map((listItem) {
+        return {
+          'listName': listItem.name,
+          'listType': listItem.type,
+          'listStartTime': listItem.selectedStartDate,
+          'listEndTime': listItem.selectedEndDate,
+          'ticketPrice': listItem.ticketPrice,
+          'addExtraTime': listItem.addExtraTime,
+          'selectedStartExtraDate': listItem.selectedStartExtraDate,
+          'selectedEndExtraDate': listItem.selectedEndExtraDate,
+          'ticketExtraPrice': listItem.ticketExtraPrice,
+          'allowSublists': listItem.allowSublists,
+        };
+      }).toList(),
     });
 
-    // Colección de listas de eventos
-    CollectionReference eventListsCollection = FirebaseFirestore.instance
-        .collection('companies')
-        .doc(widget.companyData['companyId'])
-        .collection('myEvents')
-        .doc(uuid)
-        .collection('eventLists');
-
-    // Agregar cada lista como un documento en la colección de listas de eventos
-    for (var listItem in widget.lists) {
-      await eventListsCollection.doc(listItem.name).set({
-        'listName': listItem.name,
-        'listType': listItem.type,
-        'listStartTime': listItem.selectedStartDate,
-        'listEndTime': listItem.selectedEndDate,
-        'ticketPrice': listItem.ticketPrice,
-        'membersList': [],
-        'allowSublists': listItem.allowSublists ?? false,
-      });
-    }
-
-    // Mostrar el AlertDialog
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Evento Creado'),
-          content: Text('El evento ${widget.name} se ha creado correctamente.'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
-              },
-              child: Text('Aceptar'),
-            ),
-          ],
-        );
-      },
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Plantilla guardada exitosamente.'),
+      ),
     );
   }
 }

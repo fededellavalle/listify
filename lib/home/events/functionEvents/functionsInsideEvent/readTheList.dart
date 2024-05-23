@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
 
 class ReadTheList extends StatefulWidget {
   final Map<String, dynamic> list;
@@ -23,7 +22,6 @@ class _ReadTheListState extends State<ReadTheList> {
   TextEditingController _searchController = TextEditingController();
   String _searchTerm = '';
   Timer? _timer;
-  bool _isEventClosed = false;
 
   @override
   void initState() {
@@ -220,7 +218,6 @@ class _ReadTheListState extends State<ReadTheList> {
                         eventListData['listStartExtraTime'];
 
                     if ((listEndExtraTime == null &&
-                            listEndTime != null &&
                             listEndTime.toDate().isBefore(DateTime.now())) ||
                         (listEndExtraTime != null &&
                             listEndExtraTime
@@ -236,7 +233,6 @@ class _ReadTheListState extends State<ReadTheList> {
                     }
 
                     if ((listStartExtraTime == null &&
-                            listStartTime != null &&
                             listStartTime.toDate().isAfter(DateTime.now())) ||
                         (listStartExtraTime != null &&
                             listStartExtraTime

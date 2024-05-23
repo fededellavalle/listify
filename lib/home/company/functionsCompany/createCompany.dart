@@ -2,10 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
-//import 'package:uuid/uuid.dart';
+import 'package:country_picker/country_picker.dart';
 import '../../../styles/button.dart';
 
 class CreateCompany extends StatefulWidget {
@@ -23,7 +24,10 @@ class CreateCompany extends StatefulWidget {
 class _CreateCompanyState extends State<CreateCompany> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController userController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  String? _selectedCountry;
   File? _image;
+  bool _isLoading = false;
 
   Future<void> _getImage() async {
     final picker = ImagePicker();
@@ -39,17 +43,30 @@ class _CreateCompanyState extends State<CreateCompany> {
   }
 
   Future<CroppedFile?> _cropImage(File imageFile) async {
-    final imageCropper = ImageCropper(); // Crear una instancia de ImageCropper
+    final imageCropper = ImageCropper();
     CroppedFile? croppedFile = await imageCropper.cropImage(
       sourcePath: imageFile.path,
-      aspectRatio:
-          CropAspectRatio(ratioX: 1, ratioY: 1), // Ratio 1:1 para un círculo
+      aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
       compressQuality: 100,
       maxWidth: 512,
       maxHeight: 512,
-      cropStyle: CropStyle.circle, // Estilo de recorte circular
+      cropStyle: CropStyle.circle,
     );
     return croppedFile;
+  }
+
+  String? _validateName(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Por favor, ingrese el nombre de la empresa';
+    }
+    return null;
+  }
+
+  String? _validateUsername(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Por favor, ingrese el username de la empresa';
+    }
+    return null;
   }
 
   @override
@@ -71,159 +88,247 @@ class _CreateCompanyState extends State<CreateCompany> {
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            InkWell(
-              onTap: () async {
-                await _getImage();
-              },
-              child: CircleAvatar(
-                radius: 50,
-                backgroundColor: Colors.grey[
-                    300], // Color de fondo del avatar si la imagen no está presente
-                foregroundColor: Colors.black, // Color del borde del avatar
-                child: _image == null
-                    ? Icon(Icons.camera_alt,
-                        size:
-                            50) // Icono de la cámara si no se selecciona ninguna imagen
-                    : ClipOval(
-                        child: Image.file(
-                          _image!,
-                          width: 120, // Ancho de la imagen
-                          height: 120, // Alto de la imagen
-                          fit: BoxFit
-                              .cover, // Ajuste de la imagen para cubrir todo el espacio disponible
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              InkWell(
+                onTap: () async {
+                  await _getImage();
+                },
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Colors.grey[300],
+                  foregroundColor: Colors.black,
+                  child: _image == null
+                      ? Icon(Icons.camera_alt, size: 50)
+                      : ClipOval(
+                          child: Image.file(
+                            _image!,
+                            width: 120,
+                            height: 120,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                ),
+              ),
+              SizedBox(height: 20),
+              TextFormField(
+                controller: nameController,
+                style: GoogleFonts.roboto(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Nombre de la empresa',
+                  labelStyle: GoogleFonts.roboto(color: Colors.white),
+                  prefixIcon: Icon(Icons.business, color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: Color.fromARGB(255, 242, 187, 29),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: Color.fromARGB(255, 158, 128, 36),
+                    ),
+                  ),
+                  counterText: "",
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
+                ],
+                validator: _validateName,
+                maxLength: 25,
+              ),
+              SizedBox(height: 20),
+              TextFormField(
+                style: GoogleFonts.roboto(color: Colors.white),
+                controller: userController,
+                decoration: InputDecoration(
+                  labelText: 'Username de la empresa',
+                  labelStyle: GoogleFonts.roboto(color: Colors.white),
+                  prefixIcon: Icon(Icons.alternate_email, color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: Color.fromARGB(255, 242, 187, 29),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: Color.fromARGB(255, 158, 128, 36),
+                    ),
+                  ),
+                  counterText: "",
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(
+                      RegExp(r'^[a-zA-Z0-9._-]+$')),
+                ],
+                validator: _validateUsername,
+                maxLength: 15,
+              ),
+              SizedBox(height: 20),
+              GestureDetector(
+                onTap: () {
+                  showCountryPicker(
+                    context: context,
+                    showPhoneCode: false,
+                    onSelect: (Country country) {
+                      setState(() {
+                        _selectedCountry = country.name;
+                      });
+                    },
+                  );
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color:
+                          _selectedCountry != null ? Colors.white : Colors.grey,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.flag, color: Colors.grey),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _selectedCountry ?? 'Seleccione la nacionalidad',
+                          style: GoogleFonts.roboto(
+                            color: _selectedCountry != null
+                                ? Colors.white
+                                : Colors.grey,
+                          ),
                         ),
                       ),
-              ),
-            ),
-            SizedBox(height: 20),
-            TextFormField(
-              controller: nameController,
-              style: GoogleFonts.roboto(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: 'Nombre de la empresa',
-                labelStyle: GoogleFonts.roboto(
-                    color: Colors.white), // Color del texto de la etiqueta
-                prefixIcon:
-                    Icon(Icons.person, color: Colors.grey), // Color del icono
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10), // Bordes redondeados
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(
-                    color: Color.fromARGB(
-                        255, 242, 187, 29), // Borde resaltado al enfocar
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(
-                    color: Color.fromARGB(255, 158, 128, 36), // Borde regular
+                    ],
                   ),
                 ),
               ),
-            ),
-            SizedBox(height: 20),
-            TextFormField(
-              style: GoogleFonts.roboto(color: Colors.white),
-              controller: userController,
-              decoration: InputDecoration(
-                labelText: 'Username de la empresa',
-                labelStyle: GoogleFonts.roboto(color: Colors.white),
-                prefixIcon: Icon(Icons.alternate_email,
-                    color: Colors.grey), // Icono de arroba al frente
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10), // Bordes redondeados
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(
-                      color: Color.fromARGB(
-                          255, 242, 187, 29)), // Borde resaltado al enfocar
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(
-                      color:
-                          Color.fromARGB(255, 158, 128, 36)), // Borde regular
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _isLoading
+                    ? null
+                    : () async {
+                        FocusScope.of(context).unfocus();
+                        if (_formKey.currentState!.validate()) {
+                          setState(() {
+                            _isLoading = true;
+                          });
+
+                          String companyName = nameController.text.trim();
+                          String companyUser = userController.text.trim();
+                          String ownerUid = widget.uid ?? '';
+                          String? country = _selectedCountry;
+
+                          if (companyName.isNotEmpty &&
+                              companyUser.isNotEmpty &&
+                              ownerUid.isNotEmpty &&
+                              country != null) {
+                            try {
+                              QuerySnapshot<Map<String, dynamic>>
+                                  usernameCheck = await FirebaseFirestore
+                                      .instance
+                                      .collection('companies')
+                                      .where('username', isEqualTo: companyUser)
+                                      .get();
+
+                              if (usernameCheck.docs.isEmpty) {
+                                String imageUrl = '';
+
+                                if (_image != null) {
+                                  Reference ref = FirebaseStorage.instance
+                                      .ref()
+                                      .child(
+                                          'company_images/$companyUser/company_image.jpg');
+                                  UploadTask uploadTask = ref.putFile(_image!);
+                                  TaskSnapshot taskSnapshot =
+                                      await uploadTask.whenComplete(() => null);
+                                  imageUrl =
+                                      await taskSnapshot.ref.getDownloadURL();
+                                } else {
+                                  imageUrl =
+                                      'https://firebasestorage.googleapis.com/v0/b/app-listas-eccd1.appspot.com/o/users%2Fcompany-image-standard.png?alt=media&token=215f501d-c691-4804-93d3-97187cf5e677';
+                                }
+
+                                await FirebaseFirestore.instance
+                                    .collection('companies')
+                                    .doc(companyUser)
+                                    .set({
+                                  'name': companyName,
+                                  'username': companyUser,
+                                  'ownerUid': ownerUid,
+                                  'imageUrl': imageUrl,
+                                  'nationality': country,
+                                });
+
+                                setState(() {
+                                  _isLoading = false;
+                                });
+
+                                Navigator.pop(context);
+                              } else {
+                                setState(() {
+                                  _isLoading = false;
+                                });
+                                print('El username ya está en uso');
+                              }
+                            } catch (e) {
+                              setState(() {
+                                _isLoading = false;
+                              });
+                              print('Error adding company: $e');
+                            }
+                          } else {
+                            setState(() {
+                              _isLoading = false;
+                            });
+                            print('Todos los campos son obligatorios');
+                          }
+                        } else {
+                          setState(() {
+                            _isLoading = false;
+                          });
+                        }
+                      },
+                style: buttonPrimary,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _isLoading
+                        ? SizedBox(
+                            width: 23,
+                            height: 23,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.black,
+                              ),
+                            ),
+                          )
+                        : Text(
+                            'Agregar',
+                            style: GoogleFonts.roboto(
+                              fontSize: 16,
+                            ),
+                          ),
+                  ],
                 ),
               ),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-                // Acción al presionar el botón de agregar
-                String companyName = nameController.text.trim();
-                String companyUser = userController.text.trim();
-                String ownerUid = widget.uid ?? '';
-
-                if (companyName.isNotEmpty &&
-                    companyUser.isNotEmpty &&
-                    ownerUid.isNotEmpty) {
-                  try {
-                    // Verificar si el username ya existe en Firestore
-                    QuerySnapshot<Map<String, dynamic>> usernameCheck =
-                        await FirebaseFirestore.instance
-                            .collection('companies')
-                            .where('username', isEqualTo: companyUser)
-                            .get();
-
-                    if (usernameCheck.docs.isEmpty) {
-                      // El username es único, proceder con el registro de la empresa
-                      String imageUrl = '';
-
-                      if (_image != null) {
-                        // Subir la imagen a Firebase Storage
-                        Reference ref = FirebaseStorage.instance.ref().child(
-                            'company_images/$companyUser/company_image.jpg');
-                        UploadTask uploadTask = ref.putFile(_image!);
-                        TaskSnapshot taskSnapshot =
-                            await uploadTask.whenComplete(() => null);
-                        imageUrl = await taskSnapshot.ref.getDownloadURL();
-                      } else {
-                        imageUrl =
-                            'https://firebasestorage.googleapis.com/v0/b/app-listas-eccd1.appspot.com/o/users%2Fcompany-image-standard.png?alt=media&token=215f501d-c691-4804-93d3-97187cf5e677';
-                      }
-
-                      // Guardar la información de la empresa en Firestore junto con la URL de la imagen
-                      await FirebaseFirestore.instance
-                          .collection('companies')
-                          .doc(
-                              companyUser) // Utilizar el username como ID del documento
-                          .set({
-                        'name': companyName,
-                        'username': companyUser,
-                        'ownerUid': ownerUid,
-                        'imageUrl': imageUrl,
-                      });
-
-                      Navigator.pop(
-                          context); // Cerrar el diálogo después de agregar la empresa
-                    } else {
-                      // Mostrar mensaje de error si el username ya está en uso
-                      print('El username ya está en uso');
-                    }
-                  } catch (e) {
-                    print('Error adding company: $e');
-                    // Manejar el error si ocurriera al agregar la empresa
-                  }
-                } else {
-                  // Mostrar un mensaje al usuario si algún valor está vacío
-                  print('Todos los campos son obligatorios');
-                }
-              },
-              style: buttonPrimary,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Agregar'),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

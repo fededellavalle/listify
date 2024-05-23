@@ -25,13 +25,11 @@ class InsideEvent extends StatefulWidget {
 }
 
 class _InsideEventState extends State<InsideEvent> {
-  late TextEditingController _listNameController;
   List<Map<String, dynamic>> eventListsData = [];
 
   @override
   void initState() {
     super.initState();
-    _listNameController = TextEditingController();
     fetchEventLists();
   }
 
@@ -552,13 +550,13 @@ class _InsideEventState extends State<InsideEvent> {
                                 children: [
                                   Container(
                                     decoration: BoxDecoration(
-                                      color: Colors.blue.shade300,
+                                      color: Colors.orange,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: const Padding(
                                       padding: EdgeInsets.all(8.0),
                                       child: Icon(
-                                        Icons.person_pin_rounded,
+                                        Icons.library_books_outlined,
                                         size: 20,
                                         color: Colors.white,
                                       ),

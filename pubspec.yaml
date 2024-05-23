@@ -45,6 +45,8 @@ dependencies:
   unicons:
   flutter_datetime_picker:
   intl:
+  country_picker:
+  liquid_pull_to_refresh:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6

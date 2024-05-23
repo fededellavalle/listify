@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:country_picker/country_picker.dart';
 
 class RegisterPage extends StatelessWidget {
   @override
@@ -46,6 +47,7 @@ class _RegisterFormState extends State<RegisterForm> {
   late DateTime _fechaNacimiento = DateTime.now();
   File? _image;
   String _instagramUsername = 'Undefined';
+  String? _selectedCountry;
 
   bool _showPassword = false;
   bool _showConfirmPassword = false;
@@ -57,7 +59,6 @@ class _RegisterFormState extends State<RegisterForm> {
   final _emailValidator = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
   final _passwordValidator =
       RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$&*]).{8,}$');
-  final _usernameValidator = RegExp(r'^[a-zA-Z0-9_.-]+$');
 
   bool _hasUpperCase = false;
   bool _hasLowerCase = false;
@@ -113,15 +114,14 @@ class _RegisterFormState extends State<RegisterForm> {
   }
 
   Future<CroppedFile?> _cropImage(File imageFile) async {
-    final imageCropper = ImageCropper(); // Crear una instancia de ImageCropper
+    final imageCropper = ImageCropper();
     CroppedFile? croppedFile = await imageCropper.cropImage(
       sourcePath: imageFile.path,
-      aspectRatio:
-          CropAspectRatio(ratioX: 1, ratioY: 1), // Ratio 1:1 para un círculo
+      aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
       compressQuality: 100,
       maxWidth: 512,
       maxHeight: 512,
-      cropStyle: CropStyle.circle, // Estilo de recorte circular
+      cropStyle: CropStyle.circle,
     );
     return croppedFile;
   }
@@ -137,119 +137,130 @@ class _RegisterFormState extends State<RegisterForm> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               SizedBox(height: 5),
+              InkWell(
+                onTap: () async {
+                  await _getImage();
+                },
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Colors.grey[
+                      300], // Color de fondo del avatar si la imagen no está presente
+                  foregroundColor: Colors.black, // Color del borde del avatar
+                  child: _image == null
+                      ? Icon(Icons.camera_alt,
+                          size:
+                              50) // Icono de la cámara si no se selecciona ninguna imagen
+                      : ClipOval(
+                          child: Image.file(
+                            _image!,
+                            width: 100, // Ancho de la imagen
+                            height: 100, // Alto de la imagen
+                            fit: BoxFit
+                                .cover, // Ajuste de la imagen para cubrir todo el espacio disponible
+                          ),
+                        ),
+                ),
+              ),
+              SizedBox(height: 8), // Espacio entre el círculo y el texto
+              const Center(
+                child: Text(
+                  'Seleccione su foto de perfil(opcional)',
+                  style: TextStyle(
+                    color: Colors.white,
+                  ), // Color del texto
+                  textAlign:
+                      TextAlign.center, // Centra el texto horizontalmente
+                ),
+              ),
+              SizedBox(height: 20),
+
               Row(
                 children: [
-                  InkWell(
-                    onTap: () async {
-                      await _getImage();
-                      setState(
-                          () {}); // Actualiza la vista después de obtener la imagen
-                    },
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.grey[300],
-                      foregroundColor: Colors.black,
-                      child: _image == null
-                          ? Icon(Icons.camera_alt, size: 50)
-                          : ClipOval(
-                              child: Image.file(
-                                _image!,
-                                width: 100,
-                                height: 100,
-                                fit: BoxFit.cover,
-                              ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                      child: TextFormField(
+                        decoration: InputDecoration(
+                          labelText: 'Nombre',
+                          labelStyle: TextStyle(
+                            color: Color.fromARGB(255, 242, 187, 29),
+                          ),
+                          prefixIcon: Icon(Icons.person, color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(
+                              color: Color.fromARGB(255, 242, 187, 29),
                             ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(
+                              color: Color.fromARGB(255, 158, 128, 36),
+                            ),
+                          ),
+                        ),
+                        style: TextStyle(color: Colors.white),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Por favor, ingrese su Nombre';
+                          } else if (!_nameValidator.hasMatch(value)) {
+                            return 'Ingrese solo letras y espacios';
+                          }
+                          return null;
+                        },
+                        onSaved: (value) {
+                          _nombre = value!;
+                        },
+                      ),
                     ),
                   ),
-                  SizedBox(width: 8),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TextFormField(
-                          decoration: InputDecoration(
-                            labelText: 'Nombre',
-                            labelStyle: TextStyle(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                      child: TextFormField(
+                        decoration: InputDecoration(
+                          labelText: 'Apellido',
+                          labelStyle: TextStyle(
+                            color: Color.fromARGB(255, 242, 187, 29),
+                          ),
+                          prefixIcon: Icon(Icons.person, color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(
                               color: Color.fromARGB(255, 242, 187, 29),
                             ),
-                            prefixIcon: Icon(Icons.person, color: Colors.grey),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(
-                                color: Color.fromARGB(255, 242, 187, 29),
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(
-                                color: Color.fromARGB(255, 158, 128, 36),
-                              ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(
+                              color: Color.fromARGB(255, 158, 128, 36),
                             ),
                           ),
-                          style: TextStyle(color: Colors.white),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Por favor, ingrese su Nombre';
-                            } else if (!_nameValidator.hasMatch(value)) {
-                              return 'Ingrese solo letras y espacios';
-                            }
-                            return null;
-                          },
-                          onSaved: (value) {
-                            _nombre = value!;
-                          },
                         ),
-                        SizedBox(height: 8),
-                        TextFormField(
-                          decoration: InputDecoration(
-                            labelText: 'Apellido',
-                            labelStyle: TextStyle(
-                              color: Color.fromARGB(255, 242, 187, 29),
-                            ),
-                            prefixIcon: Icon(Icons.person, color: Colors.grey),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(
-                                color: Color.fromARGB(255, 242, 187, 29),
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(
-                                color: Color.fromARGB(255, 158, 128, 36),
-                              ),
-                            ),
-                          ),
-                          style: TextStyle(color: Colors.white),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Por favor, ingrese su Apellido';
-                            } else if (!_surnameValidator.hasMatch(value)) {
-                              return 'Ingrese solo letras y espacios';
-                            }
-                            return null;
-                          },
-                          onSaved: (value) {
-                            _apellido = value!;
-                          },
-                        ),
-                      ],
+                        style: TextStyle(color: Colors.white),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Por favor, ingrese su Apellido';
+                          } else if (!_surnameValidator.hasMatch(value)) {
+                            return 'Ingrese solo letras y espacios';
+                          }
+                          return null;
+                        },
+                        onSaved: (value) {
+                          _apellido = value!;
+                        },
+                      ),
                     ),
                   ),
                 ],
               ),
-
-              // Espacio entre el círculo y el texto
-
-              SizedBox(
-                height: 20.0,
-              ),
+              SizedBox(height: 20),
               TextFormField(
                 decoration: InputDecoration(
                   labelText: 'Email',
@@ -318,13 +329,12 @@ class _RegisterFormState extends State<RegisterForm> {
                     },
                     icon: Icon(
                       _showPassword ? Icons.visibility : Icons.visibility_off,
-                      color: Colors.grey, // Color del icono del ojo
+                      color: Colors.grey,
                     ),
                   ),
                 ),
                 style: TextStyle(color: Colors.white),
-                obscureText:
-                    !_showPassword, // Mostrar u ocultar la contraseña según el estado de _showPassword
+                obscureText: !_showPassword,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Por favor, ingrese su contraseña';
@@ -336,7 +346,7 @@ class _RegisterFormState extends State<RegisterForm> {
                       _hasSpecialChar = value.contains(RegExp(r'[!@#$&*]'));
                       _hasMinLength = value.length >= 8;
                     });
-                    return null; // No return an error message here
+                    return null;
                   } else if (_passwordValidator.hasMatch(value)) {
                     setState(() {
                       _hasUpperCase = value.contains(RegExp(r'[A-Z]'));
@@ -346,18 +356,16 @@ class _RegisterFormState extends State<RegisterForm> {
                       _hasMinLength = value.length >= 8;
                       _password = value;
                     });
-                    return null; // No return an error message here
+                    return null;
                   }
+                  return null;
                 },
                 onSaved: (value) {
                   _password = value!;
                 },
                 onChanged: (_) => _validateForm(),
               ),
-
-              SizedBox(
-                height: 10.0,
-              ),
+              SizedBox(height: 10.0),
               Row(
                 children: <Widget>[
                   Expanded(
@@ -372,9 +380,7 @@ class _RegisterFormState extends State<RegisterForm> {
                   ),
                 ],
               ),
-              SizedBox(
-                height: 20.0,
-              ),
+              SizedBox(height: 20.0),
               TextFormField(
                 key: Key('confirmPassword'),
                 decoration: InputDecoration(
@@ -408,7 +414,7 @@ class _RegisterFormState extends State<RegisterForm> {
                       _showConfirmPassword
                           ? Icons.visibility
                           : Icons.visibility_off,
-                      color: Colors.grey, // Color del icono del ojo
+                      color: Colors.grey,
                     ),
                   ),
                 ),
@@ -421,8 +427,7 @@ class _RegisterFormState extends State<RegisterForm> {
                     _passwordsMatch = false;
                     return 'Las contraseñas no coinciden';
                   }
-                  _passwordsMatch =
-                      true; // Actualizamos la variable cuando las contraseñas coinciden
+                  _passwordsMatch = true;
                   return null;
                 },
                 onChanged: (_) => _validateForm(),
@@ -483,23 +488,19 @@ class _RegisterFormState extends State<RegisterForm> {
                     labelText: 'Fecha de Nacimiento (Mayor a 14 años)',
                     labelStyle:
                         TextStyle(color: Color.fromARGB(255, 242, 187, 29)),
-                    prefixIcon: Icon(Icons.calendar_today,
-                        color: Colors.grey), // Color del icono
+                    prefixIcon: Icon(Icons.calendar_today, color: Colors.grey),
                     border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(10), // Bordes redondeados
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                          color: Color.fromARGB(
-                              255, 242, 187, 29)), // Borde resaltado al enfocar
+                      borderSide:
+                          BorderSide(color: Color.fromARGB(255, 242, 187, 29)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                          color: Color.fromARGB(
-                              255, 158, 128, 36)), // Borde regular
+                      borderSide:
+                          BorderSide(color: Color.fromARGB(255, 158, 128, 36)),
                     ),
                   ),
                   child: Row(
@@ -513,30 +514,75 @@ class _RegisterFormState extends State<RegisterForm> {
                   ),
                 ),
               ),
-
-              SizedBox(height: 20.0),
+              const SizedBox(height: 20),
+              GestureDetector(
+                onTap: () {
+                  showCountryPicker(
+                    context: context,
+                    showPhoneCode: false,
+                    onSelect: (Country country) {
+                      setState(() {
+                        _selectedCountry = country.name;
+                      });
+                    },
+                  );
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color:
+                          _selectedCountry != null ? Colors.white : Colors.grey,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.flag, color: Colors.grey),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _selectedCountry ?? 'Seleccione la nacionalidad',
+                          style: TextStyle(
+                            color: _selectedCountry != null
+                                ? Colors.white
+                                : Colors.grey,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: _isLoading // Verifica si isLoading es true
-                    ? null // Si es true, deshabilita el botón
+                onPressed: _isLoading
+                    ? null
                     : () async {
                         if (_formKey.currentState!.validate()) {
                           _formKey.currentState!.save();
                           setState(() {
-                            _isLoading = true; // Activar el estado de carga
+                            _isLoading = true;
                           });
+
                           List<dynamic> result = await register(
-                              _email,
-                              _password,
-                              _nombre,
-                              _apellido,
-                              _fechaNacimiento,
-                              _image,
-                              _instagramUsername);
+                            _email,
+                            _password,
+                            _nombre,
+                            _apellido,
+                            _fechaNacimiento,
+                            _image,
+                            _instagramUsername,
+                            _selectedCountry,
+                          );
                           bool success = result[0];
                           String errorMessage = result[1];
+
                           setState(() {
-                            _isLoading = false; // Desactivar el estado de carga
+                            _isLoading = false;
                           });
+
                           if (success) {
                             showDialog(
                               context: context,
@@ -586,10 +632,6 @@ class _RegisterFormState extends State<RegisterForm> {
                               },
                             );
                           }
-                        } else {
-                          setState(() {
-                            _isLoading = false;
-                          });
                         }
                       },
                 style: ButtonStyle(
@@ -613,19 +655,17 @@ class _RegisterFormState extends State<RegisterForm> {
                     _isLoading
                         ? const Row(
                             children: [
-                              const SizedBox(
+                              SizedBox(
                                 width: 23,
                                 height: 23,
                                 child: CircularProgressIndicator(
-                                  strokeWidth: 2, // Grosor del círculo de carga
+                                  strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(
                                     Colors.black,
                                   ),
                                 ),
                               ),
-                              const SizedBox(
-                                  width:
-                                      10), // Espacio entre el círculo y el texto
+                              SizedBox(width: 10),
                               Text(
                                 'Registrando',
                                 style: TextStyle(
@@ -650,7 +690,6 @@ class _RegisterFormState extends State<RegisterForm> {
     );
   }
 
-  // Función para seleccionar la fecha
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -671,22 +710,22 @@ class _RegisterFormState extends State<RegisterForm> {
     }
   }
 
-  // Función para validar la fecha de nacimiento
   bool validateDateOfBirth(DateTime fechaNacimiento) {
     DateTime currentDate = DateTime.now();
-    DateTime minimumDate =
-        currentDate.subtract(Duration(days: 365 * 14)); // 14 años atrás
+    DateTime minimumDate = currentDate.subtract(Duration(days: 365 * 14));
     return fechaNacimiento.isBefore(minimumDate);
   }
 
   Future<List<dynamic>> register(
-      String email,
-      String password,
-      String nombre,
-      String apellido,
-      DateTime fechaNacimiento,
-      File? image,
-      String instagramUsername) async {
+    String email,
+    String password,
+    String nombre,
+    String apellido,
+    DateTime fechaNacimiento,
+    File? image,
+    String instagramUsername,
+    String? nationality,
+  ) async {
     try {
       UserCredential userCredential =
           await FirebaseAuth.instance.createUserWithEmailAndPassword(
@@ -694,7 +733,6 @@ class _RegisterFormState extends State<RegisterForm> {
         password: password,
       );
 
-      // Enviar correo de verificación
       await userCredential.user!.sendEmailVerification();
 
       String errorMessage = '';
@@ -707,7 +745,6 @@ class _RegisterFormState extends State<RegisterForm> {
         TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
         String imageUrl = await taskSnapshot.ref.getDownloadURL();
 
-        // Guardar información adicional en Firestore
         Timestamp fechaNacimientoTimestamp =
             Timestamp.fromDate(fechaNacimiento);
         await FirebaseFirestore.instance
@@ -720,11 +757,11 @@ class _RegisterFormState extends State<RegisterForm> {
           'birthDate': fechaNacimientoTimestamp,
           'imageUrl': imageUrl,
           'instagram': instagramUsername,
+          'nationality': nationality,
         });
       } else {
         String imageUrl =
             "https://firebasestorage.googleapis.com/v0/b/app-listas-eccd1.appspot.com/o/users%2Fprofile-image-standard.png?alt=media&token=f3a904df-f908-4743-8b16-1f3939986569";
-        // No se proporcionó una imagen, guardar la información sin la URL de la imagen
         Timestamp fechaNacimientoTimestamp =
             Timestamp.fromDate(fechaNacimiento);
         await FirebaseFirestore.instance
@@ -737,13 +774,13 @@ class _RegisterFormState extends State<RegisterForm> {
           'email': email,
           'imageUrl': imageUrl,
           'instagram': instagramUsername,
+          'nationality': nationality,
         });
       }
 
-      // Redirigir a la página de espera de confirmación de email
       Navigator.pushReplacementNamed(context, '/waitingForEmailConfirmation');
 
-      return [true, errorMessage]; // Registro exitoso
+      return [true, errorMessage];
     } catch (e) {
       String errorMessage = '';
       if (e is FirebaseAuthException) {
@@ -752,7 +789,7 @@ class _RegisterFormState extends State<RegisterForm> {
       } else {
         print('Error registering user: $e');
       }
-      return [false, errorMessage]; // Error al registrar usuario
+      return [false, errorMessage];
     }
   }
 }

@@ -6,7 +6,7 @@ final ButtonStyle buttonPrimary = ButtonStyle(
   ),
   foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
   backgroundColor: MaterialStateProperty.all<Color>(
-      Color.fromARGB(255, 242, 187, 29)), // Cambia el color de fondo del botón
+      Color(0xFF74BEB8)), // Cambia el color de fondo del botón
   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
     RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(10.0),
@@ -15,6 +15,7 @@ final ButtonStyle buttonPrimary = ButtonStyle(
 );
 //Color.fromARGB(195, 1, 244, 244) Color del logo
 //Color(0xFF74BEB8),
+//Color.fromARGB(255, 242, 187, 29) color amarillo
 
 final ButtonStyle buttonSecondary = ButtonStyle(
   overlayColor: MaterialStateProperty.all<Color>(

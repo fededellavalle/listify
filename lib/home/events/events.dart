@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:app_listas/styles/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -15,9 +16,123 @@ class EventsPage extends StatefulWidget {
   State<EventsPage> createState() => _EventsPageState();
 }
 
-class _EventsPageState extends State<EventsPage> {
+class _EventsPageState extends State<EventsPage>
+    with SingleTickerProviderStateMixin {
   bool hasEventsInFirstStream = false;
   bool hasEventsInSecondStream = false;
+  bool _isLoading = true;
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    );
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    await Future.wait([
+      _checkFirstStreamEvents(),
+      _checkSecondStreamEvents(),
+    ]);
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+      _controller.forward();
+    }
+  }
+
+  Future<void> _checkFirstStreamEvents() async {
+    try {
+      QuerySnapshot<Map<String, dynamic>> companySnapshot =
+          await FirebaseFirestore.instance
+              .collection('companies')
+              .where('ownerUid', isEqualTo: widget.uid)
+              .get();
+
+      List<String> companyIds =
+          companySnapshot.docs.map((doc) => doc.id).toList();
+
+      for (String companyId in companyIds) {
+        QuerySnapshot eventSnapshot = await FirebaseFirestore.instance
+            .collection('companies')
+            .doc(companyId)
+            .collection('myEvents')
+            .where('eventState',
+                whereIn: ['Active', 'Live', 'Desactive']).get();
+
+        if (eventSnapshot.docs.isNotEmpty) {
+          if (mounted) {
+            setState(() {
+              hasEventsInFirstStream = true;
+            });
+          }
+          break;
+        }
+      }
+    } catch (error) {
+      print('Error al comprobar eventos en el primer stream: $error');
+    }
+  }
+
+  Future<void> _checkSecondStreamEvents() async {
+    try {
+      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.uid)
+          .get();
+
+      if (userSnapshot.exists) {
+        Map<String, dynamic>? userData =
+            userSnapshot.data() as Map<String, dynamic>?;
+        if (userData != null) {
+          List<dynamic> companyRelationships =
+              userData['companyRelationship'] ?? [];
+
+          for (Map<String, dynamic> relationship in companyRelationships) {
+            String companyUsername = relationship['companyUsername'];
+
+            QuerySnapshot companySnapshot = await FirebaseFirestore.instance
+                .collection('companies')
+                .where('username', isEqualTo: companyUsername)
+                .get();
+
+            List<String> companyIds =
+                companySnapshot.docs.map((doc) => doc.id).toList();
+
+            for (String companyId in companyIds) {
+              QuerySnapshot eventSnapshot = await FirebaseFirestore.instance
+                  .collection('companies')
+                  .doc(companyId)
+                  .collection('myEvents')
+                  .where('eventState', whereIn: ['Active', 'Live']).get();
+
+              if (eventSnapshot.docs.isNotEmpty) {
+                if (mounted) {
+                  setState(() {
+                    hasEventsInSecondStream = true;
+                  });
+                }
+                break;
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      print('Error al comprobar eventos en el segundo stream: $error');
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,18 +140,30 @@ class _EventsPageState extends State<EventsPage> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildFirstEventList(),
-                _buildSecondEventList(),
-              ],
+          _buildMainContent(context),
+          if (_isLoading)
+            Center(
+              child: LoadingScreen(),
             ),
-          ),
-          _buildNoEventsMessage(),
         ],
       ),
+    );
+  }
+
+  Widget _buildMainContent(BuildContext context) {
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildFirstEventList(),
+              _buildSecondEventList(),
+            ],
+          ),
+        ),
+        _buildNoEventsMessage(),
+      ],
     );
   }
 
@@ -79,12 +206,10 @@ class _EventsPageState extends State<EventsPage> {
                 final events = eventSnapshot.data!.docs;
                 final hasEvents = events.isNotEmpty;
 
-                // Actualizar el estado después de que la construcción haya completado
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (hasEvents && !hasEventsInSecondStream) {
+                  if (hasEvents && !hasEventsInFirstStream && mounted) {
                     setState(() {
-                      // Usar una variable local en lugar de una global
-                      hasEventsInSecondStream = true;
+                      hasEventsInFirstStream = true;
                     });
                   }
                 });
@@ -181,7 +306,8 @@ class _EventsPageState extends State<EventsPage> {
 
                           WidgetsBinding.instance.addPostFrameCallback((_) {
                             if (eventSnapshot.data != null &&
-                                eventSnapshot.data!.docs.isNotEmpty) {
+                                eventSnapshot.data!.docs.isNotEmpty &&
+                                mounted) {
                               if (!hasEventsInSecondStream) {
                                 setState(() {
                                   hasEventsInSecondStream = true;
@@ -319,7 +445,6 @@ class EventButton extends StatelessWidget {
                 ),
               );
             } else {
-              // Manejar la falta de permisos
               print('No tienes permiso para acceder a este evento.');
             }
           },

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'functionsCompany/insideCompany.dart';
 import 'package:unicons/unicons.dart';
 import 'functionsCompany/createCompany.dart';
+import '../../styles/loading.dart';
 
 class CompanyPage extends StatefulWidget {
   final String? uid;
@@ -47,10 +48,10 @@ class _CompanyPageState extends State<CompanyPage>
                 Tab(text: 'Mis Empresas'),
                 Tab(text: 'Empresas Invitadas'),
               ],
-              indicatorColor: Color.fromARGB(255, 242, 187,
-                  29), // Color del indicador cuando está seleccionado
-              labelColor: Color.fromARGB(255, 242, 187,
-                  29), // Color del texto cuando está seleccionado
+              indicatorColor: Color(
+                  0xFF74BEB8), // Color del indicador cuando está seleccionado
+              labelColor:
+                  Color(0xFF74BEB8), // Color del texto cuando está seleccionado
               unselectedLabelColor:
                   Colors.grey, // Color del texto cuando no está seleccionado
             ),
@@ -91,7 +92,7 @@ class _CompanyPageState extends State<CompanyPage>
             ),
           );
         },
-        backgroundColor: Color.fromARGB(255, 242, 187, 29),
+        backgroundColor: Color(0xFF74BEB8),
         icon: Icon(
           Icons.add_business,
           size: 24,
@@ -113,7 +114,7 @@ class _CompanyPageState extends State<CompanyPage>
             stream: _fetchUserCompanyData(widget.uid),
             builder: (context, companySnapshot) {
               if (companySnapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
+                return Center(child: LoadingScreen());
               } else if (companySnapshot.hasError) {
                 return Center(child: Text('Error fetching company data'));
               } else if (companySnapshot.data!.isEmpty) {
@@ -157,7 +158,7 @@ class _CompanyPageState extends State<CompanyPage>
             builder: (context, relationshipSnapshot) {
               if (relationshipSnapshot.connectionState ==
                   ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
+                return Center(child: LoadingScreen());
               } else if (relationshipSnapshot.hasError) {
                 return Center(
                     child: Text('Error fetching company relationships'));

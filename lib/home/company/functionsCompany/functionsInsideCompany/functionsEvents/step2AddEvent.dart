@@ -2,11 +2,11 @@ import 'package:app_listas/styles/button.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
-import '../../../../../styles/button.dart';
 import 'step3AddEvent.dart';
 import 'list_item.dart';
 import 'dart:io';
 
+// ignore: must_be_immutable
 class Step2AddEvent extends StatefulWidget {
   final String name;
   final double ticketValue;
@@ -14,6 +14,7 @@ class Step2AddEvent extends StatefulWidget {
   final DateTime? endDateTime;
   File? image;
   final Map<String, dynamic> companyData;
+  final Map<String, dynamic>? template;
 
   Step2AddEvent({
     Key? key,
@@ -23,6 +24,7 @@ class Step2AddEvent extends StatefulWidget {
     required this.endDateTime,
     required this.image,
     required this.companyData,
+    required this.template,
   }) : super(key: key);
 
   @override
@@ -53,20 +55,47 @@ class _Step2AddEventState extends State<Step2AddEvent> {
     _ticketPriceController = TextEditingController();
     _ticketExtraPriceController = TextEditingController();
     _initializeDates();
-    _lists = [
-      ListItem(
-        name: 'Invitados',
-        type: 'Lista de Asistencia',
-        addExtraTime: false,
-        selectedStartDate: _availableDates.first,
-        selectedEndDate: _availableDates.last,
-        ticketPrice: widget.ticketValue,
-        selectedStartExtraDate: null,
-        selectedEndExtraDate: null,
-        ticketExtraPrice: null,
-        allowSublists: false,
-      ),
-    ];
+
+    if (widget.template == null) {
+      _lists = [
+        ListItem(
+          name: 'Invitados',
+          type: 'Lista de Asistencia',
+          addExtraTime: false,
+          selectedStartDate: _availableDates.first,
+          selectedEndDate: _availableDates.last,
+          ticketPrice: widget.ticketValue,
+          selectedStartExtraDate: null,
+          selectedEndExtraDate: null,
+          ticketExtraPrice: null,
+          allowSublists: false,
+        ),
+      ];
+    } else {
+      _lists = [
+        for (var list in widget.template!['lists'])
+          ListItem(
+            name: list['listName'],
+            type: list['listType'],
+            addExtraTime: list['addExtraTime'],
+            selectedStartDate: _availableDates.first,
+            selectedEndDate: _availableDates.last,
+            ticketPrice: (list['ticketPrice'] as num).toDouble(),
+            selectedStartExtraDate: list['selectedStartExtraDate'] != null
+                ? _availableDates.first
+                : null,
+            selectedEndExtraDate: list['selectedEndExtraDate'] != null
+                ? _availableDates.last
+                : null,
+            ticketExtraPrice: list['ticketExtraPrice'] != null
+                ? (list['ticketExtraPrice'] as num).toDouble()
+                : null,
+            allowSublists: list['allowSublists'] ?? false,
+          ),
+      ];
+    }
+
+    print(_lists);
   }
 
   @override
@@ -1115,6 +1144,7 @@ class _Step2AddEventState extends State<Step2AddEvent> {
             lists: _lists,
             image: widget.image,
             companyData: widget.companyData,
+            template: widget.template,
           ),
         ),
       );

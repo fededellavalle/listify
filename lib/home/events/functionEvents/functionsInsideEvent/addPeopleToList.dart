@@ -194,7 +194,7 @@ class _AddPeopleToListState extends State<AddPeopleToList> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
-          '${widget.list['listName']}',
+          'Lista de ${widget.list['listName']}',
           style: TextStyle(color: Colors.white),
         ),
         iconTheme: IconThemeData(
@@ -237,7 +237,7 @@ class _AddPeopleToListState extends State<AddPeopleToList> {
                       decoration: InputDecoration(
                         prefixIcon: Icon(
                           Icons.list_alt_outlined,
-                          color: Color.fromARGB(255, 242, 187, 29),
+                          color: Colors.grey,
                         ),
                         hintText: 'Escribir el nombre de la persona',
                         hintStyle: TextStyle(
@@ -249,13 +249,13 @@ class _AddPeopleToListState extends State<AddPeopleToList> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(
-                            color: Color.fromARGB(255, 242, 187, 29),
+                            color: Colors.white,
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(
-                            color: Color.fromARGB(255, 158, 128, 36),
+                            color: Colors.grey,
                           ),
                         ),
                       ),

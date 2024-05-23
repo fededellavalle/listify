@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:unicons/unicons.dart';
 import '../../../styles/button.dart';
 import 'functionsInsideCompany/gestionPersonal.dart';
-import 'functionsInsideCompany/events.dart';
+import 'functionsInsideCompany/eventsCompany.dart';
 
 class CompanyWidget extends StatelessWidget {
   final Map<String, dynamic> companyData;

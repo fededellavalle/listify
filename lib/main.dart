@@ -1,10 +1,10 @@
+import 'package:app_listas/styles/loading.dart';
 import 'package:flutter/material.dart';
-//import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'login/login.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
-//import 'package:device_preview/device_preview.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app_listas/home/navigation_page.dart';
 import 'package:app_listas/login/services/waiting_for_email_confirmation.dart';
 
@@ -13,9 +13,7 @@ Future<void> initializeFirebase() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  await FirebaseAppCheck.instance
-      // Your personal reCaptcha public key goes here:
-      .activate(
+  await FirebaseAppCheck.instance.activate(
     androidProvider: AndroidProvider.playIntegrity,
   );
 }
@@ -36,7 +34,8 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => LoginPage(),
+        '/': (context) => SplashScreen(),
+        '/login': (context) => LoginPage(),
         '/waitingForEmailConfirmation': (context) =>
             WaitingForEmailConfirmationPage(),
         '/navigationPage': (context) => NavigationPage(),
@@ -44,6 +43,45 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+class SplashScreen extends StatefulWidget {
+  @override
+  _SplashScreenState createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    startLoading();
+  }
+
+  Future<void> startLoading() async {
+    await Future.delayed(Duration(seconds: 1));
+    checkLoginStatus();
+  }
+
+  Future<void> checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+    if (isLoggedIn) {
+      Navigator.pushReplacementNamed(context, '/navigationPage');
+    } else {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: LoadingScreen(),
+      ),
+    );
+  }
+}
+
 
 /* Device Preview
 void main() async {

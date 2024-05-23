@@ -1,59 +1,70 @@
-import 'package:app_listas/home/invitations/invitations.dart';
+import 'package:app_listas/styles/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'company/company.dart';
-import 'events/events.dart';
-import 'home.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:unicons/unicons.dart';
 import '../login/services/auth_google.dart';
 import '../login/login.dart';
-import 'package:unicons/unicons.dart';
+import 'homePage/home.dart';
+import 'events/events.dart';
+import 'company/company.dart';
+import 'invitations/invitations.dart';
+import 'profile/profile.dart'; // Import the ProfilePage
+import 'dart:async'; // Importar la librería para usar StreamController
 
 class NavigationPage extends StatefulWidget {
-  NavigationPage({
-    super.key,
-  });
+  NavigationPage({super.key});
 
   @override
   _NavigationPageState createState() => _NavigationPageState();
 }
 
-class _NavigationPageState extends State<NavigationPage> {
-  int _selectedIndex = 0;
+class _NavigationPageState extends State<NavigationPage>
+    with SingleTickerProviderStateMixin {
+  int _selectedIndex = 0; // Default to Home
   late List<Widget> _widgetOptions;
   String? _profileImageUrl;
   String _firstName = '';
   late String uid;
-
-  Future<void> _getCurrentUserId() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      setState(() {
-        uid = user.uid;
-      });
-    }
-  }
+  bool _isLoading = true;
+  late AnimationController _controller;
+  late User? currentUser; // Usuario actual
 
   @override
   void initState() {
     super.initState();
-    _getCurrentUserId();
-    _getProfileImageUrl();
-    _getFirstName(uid);
+    _controller = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    );
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    await _getCurrentUserId();
+    currentUser = FirebaseAuth.instance.currentUser;
+    await _getProfileImageUrl();
+    await _getFirstName(uid);
     _widgetOptions = <Widget>[
-      HomePage(
-        uid: uid,
-      ),
-      EventsPage(
-        uid: uid,
-      ),
+      HomePage(uid: uid),
+      EventsPage(uid: uid),
       CompanyPage(uid: uid),
     ];
+    setState(() {
+      _isLoading = false;
+    });
+    _controller.forward();
+  }
+
+  Future<void> _getCurrentUserId() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      uid = user.uid;
+    }
   }
 
   Future<void> _getProfileImageUrl() async {
     try {
-      // Obtener la URL de la imagen desde la base de datos
       String? imageUrl = await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
@@ -61,9 +72,7 @@ class _NavigationPageState extends State<NavigationPage> {
           .then((doc) => doc.data()?['imageUrl']);
 
       if (imageUrl != null) {
-        setState(() {
-          _profileImageUrl = imageUrl;
-        });
+        _profileImageUrl = imageUrl;
       }
     } catch (error) {
       print('Error obteniendo la URL de la foto de perfil: $error');
@@ -76,9 +85,7 @@ class _NavigationPageState extends State<NavigationPage> {
           await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (userSnapshot.exists) {
         String firstname = userSnapshot.get('name');
-        setState(() {
-          _firstName = firstname;
-        });
+        _firstName = firstname;
       }
     } catch (error) {
       print('Error obteniendo el nombre del usuario: $error');
@@ -112,14 +119,109 @@ class _NavigationPageState extends State<NavigationPage> {
     return email;
   }
 
-  void _onItemTapped(int index) {
+  Stream<List<Map<String, dynamic>>> _getNotifications() async* {
+    List<Map<String, dynamic>> notifications = [];
+
+    // Fetch active events
+    QuerySnapshot<Map<String, dynamic>> activeEventsSnapshot =
+        await FirebaseFirestore.instance
+            .collection('companies')
+            .where('ownerUid', isEqualTo: uid)
+            .get();
+
+    for (var companyDoc in activeEventsSnapshot.docs) {
+      QuerySnapshot activeEvents = await FirebaseFirestore.instance
+          .collection('companies')
+          .doc(companyDoc.id)
+          .collection('myEvents')
+          .where('eventState', isEqualTo: 'Active')
+          .get();
+      for (var eventDoc in activeEvents.docs) {
+        notifications.add({
+          'title': 'Evento Activo',
+          'body': 'El evento ${eventDoc['eventName']} está activo.',
+        });
+      }
+    }
+
+    // Fetch live events
+    QuerySnapshot<Map<String, dynamic>> liveEventsSnapshot =
+        await FirebaseFirestore.instance
+            .collection('companies')
+            .where('ownerUid', isEqualTo: uid)
+            .get();
+
+    for (var companyDoc in liveEventsSnapshot.docs) {
+      QuerySnapshot liveEvents = await FirebaseFirestore.instance
+          .collection('companies')
+          .doc(companyDoc.id)
+          .collection('myEvents')
+          .where('eventState', isEqualTo: 'Live')
+          .get();
+      for (var eventDoc in liveEvents.docs) {
+        notifications.add({
+          'title': 'Evento En Vivo',
+          'body': 'El evento ${eventDoc['eventName']} está en vivo.',
+        });
+      }
+    }
+
+    // Fetch new invitations
+    QuerySnapshot invitationSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('receivedInvitations')
+        .where('status', isEqualTo: 'pending')
+        .get();
+
+    for (var invitationDoc in invitationSnapshot.docs) {
+      notifications.add({
+        'title': 'Nueva Invitación',
+        'body':
+            'Tienes una nueva invitación de ${invitationDoc['companyName']}.',
+      });
+    }
+
+    yield notifications;
+  }
+
+  Stream<int> _getInvitationCount() {
+    return FirebaseFirestore.instance
+        .collection('invitations')
+        .doc(currentUser!.email) // Uso del email del usuario actual
+        .collection(
+            'receivedInvitations') // Subcolección de invitaciones recibidas
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
+  }
+
+  void _onItemTapped(int index) async {
     setState(() {
       _selectedIndex = index;
     });
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    return _isLoading
+        ? Scaffold(
+            body: Center(
+              child: LoadingScreen(),
+            ),
+          )
+        : FadeTransition(
+            opacity: _controller,
+            child: _buildMainContent(context),
+          );
+  }
+
+  Widget _buildMainContent(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       drawer: Drawer(
@@ -157,8 +259,19 @@ class _NavigationPageState extends State<NavigationPage> {
               ),
               currentAccountPicture: _profileImageUrl != null
                   ? GestureDetector(
-                      onTap: () {
-                        print('Entrando a perfil');
+                      onTap: () async {
+                        final updatedProfileImageUrl = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ProfilePage(uid: uid),
+                          ),
+                        );
+
+                        if (updatedProfileImageUrl != null) {
+                          setState(() {
+                            _profileImageUrl = updatedProfileImageUrl;
+                          });
+                        }
                       },
                       child: CircleAvatar(
                         backgroundImage: NetworkImage(_profileImageUrl!),
@@ -167,8 +280,19 @@ class _NavigationPageState extends State<NavigationPage> {
                   : CircleAvatar(
                       child: IconButton(
                         icon: Icon(Icons.question_mark),
-                        onPressed: () {
-                          print('Entrando a perfil');
+                        onPressed: () async {
+                          final updatedProfileImageUrl = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ProfilePage(uid: uid),
+                            ),
+                          );
+
+                          if (updatedProfileImageUrl != null) {
+                            setState(() {
+                              _profileImageUrl = updatedProfileImageUrl;
+                            });
+                          }
                         },
                       ),
                     ),
@@ -224,21 +348,55 @@ class _NavigationPageState extends State<NavigationPage> {
                 });
               },
             ),
-            ListTile(
-              title: const Text(
-                'Invitaciones',
-                style: TextStyle(color: Colors.white),
-              ),
-              leading: const Icon(
-                UniconsLine.envelope_alt,
-                color: Color.fromARGB(255, 242, 187, 29),
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => InvitationsPage(),
+            StreamBuilder<int>(
+              stream: _getInvitationCount(),
+              builder: (context, snapshot) {
+                int invitationCount = snapshot.data ?? 0;
+                return ListTile(
+                  title: Text(
+                    'Invitaciones',
+                    style: TextStyle(color: Colors.white),
                   ),
+                  leading: Stack(
+                    children: [
+                      Icon(
+                        UniconsLine.envelope_alt,
+                        color: Color.fromARGB(255, 242, 187, 29),
+                      ),
+                      if (invitationCount > 0)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            padding: EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            constraints: BoxConstraints(
+                              minWidth: 14,
+                              minHeight: 14,
+                            ),
+                            child: Text(
+                              '$invitationCount',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => InvitationsPage(),
+                      ),
+                    );
+                  },
                 );
               },
             ),
@@ -270,7 +428,7 @@ class _NavigationPageState extends State<NavigationPage> {
                   },
                 );
 
-                await FirebaseAuth.instance.signOut();
+                await AuthService().signOut();
                 await AuthService().signOutGoogle();
 
                 Navigator.of(context).pop();
@@ -320,58 +478,82 @@ class _NavigationPageState extends State<NavigationPage> {
         ),
       ),
       appBar: AppBar(
-        title: Text(
-          'Listify',
-          style: TextStyle(
-            color: Colors.white,
-          ),
-        ),
         backgroundColor: Colors.black,
         centerTitle: true,
+        title: Stack(
+          children: [
+            Align(
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'lib/assets/images/listifyIconRecortada.png',
+                    height: 30.0, // Ajusta el tamaño según tus necesidades
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Listify',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
         actions: [
           PopupMenuButton(
             icon: Icon(Icons.notifications),
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                child: ListTile(
-                  leading: Icon(Icons.message),
-                  title: Text('Mensaje 1'),
-                  onTap: () {
-                    // Acción al seleccionar el primer elemento del menú
-                  },
+            itemBuilder: (context) {
+              return [
+                PopupMenuItem(
+                  child: StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: _getNotifications(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      }
+
+                      if (snapshot.hasError) {
+                        return ListTile(
+                          leading: Icon(Icons.error, color: Colors.red),
+                          title: Text('Error al cargar notificaciones'),
+                        );
+                      }
+
+                      List<Map<String, dynamic>> notifications =
+                          snapshot.data ?? [];
+
+                      if (notifications.isEmpty) {
+                        return ListTile(
+                          leading: Icon(Icons.notifications_off),
+                          title: Text('No hay notificaciones'),
+                        );
+                      } else {
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: notifications.map((notification) {
+                            return ListTile(
+                              leading: Icon(Icons.notifications),
+                              title: Text(notification['title']),
+                              subtitle: Text(notification['body']),
+                              onTap: () {
+                                // Handle notification tap
+                              },
+                            );
+                          }).toList(),
+                        );
+                      }
+                    },
+                  ),
                 ),
-              ),
-              PopupMenuItem(
-                child: ListTile(
-                  leading: Icon(Icons.message),
-                  title: Text('Mensaje 2'),
-                  onTap: () {
-                    // Acción al seleccionar el segundo elemento del menú
-                  },
-                ),
-              ),
-              // Agrega más elementos del menú si es necesario
-            ],
-            offset: Offset(0,
-                kToolbarHeight), // Ajusta la posición vertical del menú emergente
+              ];
+            },
+            offset: Offset(0, kToolbarHeight),
           ),
-          if (_profileImageUrl != null)
-            GestureDetector(
-              onTap: () {
-                print('Entrando a perfil');
-              },
-              child: CircleAvatar(
-                backgroundImage: NetworkImage(_profileImageUrl!),
-              ),
-            )
-          else
-            IconButton(
-              icon: Icon(Icons.question_mark),
-              onPressed: () {
-                print('Entrando a perfil');
-              },
-            ),
-          SizedBox(width: 8),
         ],
         iconTheme: IconThemeData(color: Colors.white),
       ),
@@ -379,14 +561,14 @@ class _NavigationPageState extends State<NavigationPage> {
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.black,
         unselectedItemColor: Colors.grey,
-        selectedItemColor: Color.fromARGB(255, 242, 187, 29),
+        selectedItemColor: Color(0xFF74BEB8),
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(UniconsLine.home),
+            icon: Icon(Icons.home),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(UniconsLine.calendar_alt),
+            icon: Icon(Icons.calendar_month),
             label: 'Mis Eventos',
           ),
           BottomNavigationBarItem(
@@ -400,41 +582,3 @@ class _NavigationPageState extends State<NavigationPage> {
     );
   }
 }
-
-/*
-
-class _NavigationPageState extends State<NavigationPage>{
-  @override
-  Widget build(BuildContext context){
-    return Scaffold(
-      bottomNavigationBar: Container(
-        color: Colors.black,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
-          child: GNav(
-            backgroundColor: Colors.black,
-            color: Colors.white,
-            activeColor: Colors.white,
-            tabBackgroundColor: Colors.grey.shade800,
-            gap: 8,
-            padding: EdgeInsets.all(16),
-            tabs: [
-              GButton(
-                icon: Icons.home,
-                text: 'Home',
-              ),
-              GButton(
-                icon: Icons.event,
-                text: 'Mis Eventos',
-              ),
-              GButton(
-                icon: Icons.cabin,
-                text: 'Mi Empresa',
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}*/
