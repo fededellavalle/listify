@@ -1,12 +1,14 @@
 import 'package:app_listas/login/services/forgotpassword.dart';
+import 'package:app_listas/styles/color.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/widgets.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../home/navigation_page.dart'; // Importa HomePage desde la carpeta home
+import '../home/navigation_page.dart';
 import 'register.dart';
 import 'services/auth_google.dart';
-import '../styles/button.dart';
+import 'package:flutter/cupertino.dart';
+//import 'package:url_launcher/url_launcher.dart';
+//import 'package:url_launcher/url_launcher_string.dart';
 
 class LoginPage extends StatelessWidget {
   @override
@@ -30,19 +32,22 @@ class _LoginFormState extends State<LoginForm>
   bool _obscureText = true;
   bool _isLoading = false;
   late AnimationController _controller;
-  late Animation<double> _animation;
+  late Animation<Offset> _offsetAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(seconds: 1),
+      duration: const Duration(milliseconds: 700),
       vsync: this,
     );
-    _animation = CurvedAnimation(
+    _offsetAnimation = Tween<Offset>(
+      begin: const Offset(1.0, 0.0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeIn,
-    );
+      curve: Curves.easeInOut,
+    ));
     _controller.forward();
   }
 
@@ -54,11 +59,13 @@ class _LoginFormState extends State<LoginForm>
 
   @override
   Widget build(BuildContext context) {
+    final double scaleFactor = MediaQuery.of(context).size.width / 375.0;
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Center(
-        child: FadeTransition(
-          opacity: _animation,
+        child: SlideTransition(
+          position: _offsetAnimation,
           child: SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -69,14 +76,15 @@ class _LoginFormState extends State<LoginForm>
                     children: [
                       Image.asset(
                         'lib/assets/images/listifyIconRecortada.png',
-                        height: 128.0,
+                        height: 128.0 * scaleFactor,
                       ),
-                      SizedBox(height: 30.0),
+                      SizedBox(height: 30.0 * scaleFactor),
                       Text(
                         'Bienvenido/a a Listify',
                         style: TextStyle(
-                          fontSize: 25.0,
+                          fontSize: 25.0 * scaleFactor,
                           color: Colors.white,
+                          fontFamily: 'SFPro',
                         ),
                       ),
                     ],
@@ -93,28 +101,38 @@ class _LoginFormState extends State<LoginForm>
                         TextFormField(
                           decoration: InputDecoration(
                             labelText: 'Email',
-                            labelStyle: TextStyle(color: Colors.white),
-                            prefixIcon: Icon(Icons.person,
-                                color: Colors.grey), // Color del icono
+                            labelStyle: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16.0 * scaleFactor,
+                              fontFamily: 'SFPro',
+                            ),
+                            prefixIcon: Icon(
+                              Icons.person,
+                              color: Colors.grey,
+                              size: 24.0 * scaleFactor,
+                            ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                  10), // Bordes redondeados
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(
-                                  color: Color(
-                                      0xFF74BEB8)), // Borde resaltado al enfocar
+                                color: Color(0xFF74BEB8),
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(
-                                  color: Color.fromARGB(
-                                      255, 117, 168, 184)), // Borde regular
+                                color: Color.fromARGB(255, 117, 168, 184),
+                              ),
                             ),
                             counterText: "",
                           ),
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.0 * scaleFactor,
+                            fontFamily: 'SFPro',
+                          ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Por favor, ingrese su email';
@@ -132,46 +150,50 @@ class _LoginFormState extends State<LoginForm>
                             labelText: 'Contraseña',
                             labelStyle: TextStyle(
                               color: Colors.white,
+                              fontSize: 16.0 * scaleFactor,
+                              fontFamily: 'SFPro',
                             ),
-                            prefixIcon: Icon(Icons.password,
-                                color: Colors.grey), // Color del icono
+                            prefixIcon: Icon(
+                              Icons.password,
+                              color: Colors.grey,
+                              size: 24.0 * scaleFactor,
+                            ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                  10), // Bordes redondeados
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(
-                                  color: Color(
-                                      0xFF74BEB8)), // Borde resaltado al enfocar
+                                color: Color(0xFF74BEB8),
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(
-                                  color: Color.fromARGB(
-                                      255, 117, 168, 184)), // Borde regular
+                                color: Color.fromARGB(255, 117, 168, 184),
+                              ),
                             ),
                             suffixIcon: GestureDetector(
                               onTap: () {
                                 setState(() {
-                                  _obscureText =
-                                      !_obscureText; // Cambia el estado de la visibilidad de la contraseña
+                                  _obscureText = !_obscureText;
                                 });
                               },
                               child: Icon(
                                 _obscureText
                                     ? Icons.visibility_off
                                     : Icons.visibility,
-                                color: Colors.grey, // Color del icono
+                                color: Colors.grey,
+                                size: 24.0 * scaleFactor,
                               ),
                             ),
                             counterText: "",
                           ),
-                          obscureText:
-                              _obscureText, // Estado de visibilidad de la contraseña
+                          obscureText: _obscureText,
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 16,
+                            fontSize: 16.0 * scaleFactor,
+                            fontFamily: 'SFPro',
                           ),
                           maxLength: 40,
                           validator: (value) {
@@ -201,13 +223,17 @@ class _LoginFormState extends State<LoginForm>
                             children: [
                               Text(
                                 'Olvidaste tu Contraseña?',
-                                style: TextStyle(color: Colors.white70),
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14.0 * scaleFactor,
+                                  fontFamily: 'SFPro',
+                                ),
                               ),
                             ],
                           ),
                         ),
                         SizedBox(height: 20.0),
-                        ElevatedButton(
+                        CupertinoButton(
                           onPressed: _isLoading
                               ? null
                               : () async {
@@ -243,21 +269,34 @@ class _LoginFormState extends State<LoginForm>
                                         context: context,
                                         builder: (context) {
                                           return AlertDialog(
-                                            title: Text('Error',
-                                                style: TextStyle(
-                                                    color: Colors.white)),
+                                            title: Text(
+                                              'Error',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 18.0 * scaleFactor,
+                                              ),
+                                            ),
                                             backgroundColor: Colors.grey[800],
-                                            content: Text(errorMessage,
-                                                style: TextStyle(
-                                                    color: Colors.white)),
+                                            content: Text(
+                                              errorMessage,
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 16.0 * scaleFactor,
+                                              ),
+                                            ),
                                             actions: <Widget>[
                                               TextButton(
                                                 onPressed: () {
                                                   Navigator.of(context).pop();
                                                 },
-                                                child: Text('OK',
-                                                    style: TextStyle(
-                                                        color: Colors.white)),
+                                                child: Text(
+                                                  'OK',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize:
+                                                        14.0 * scaleFactor,
+                                                  ),
+                                                ),
                                               ),
                                             ],
                                           );
@@ -270,30 +309,20 @@ class _LoginFormState extends State<LoginForm>
                                     });
                                   }
                                 },
-                          style: buttonPrimary,
+                          color: skyBluePrimary,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               _isLoading
-                                  ? Row(
-                                      children: [
-                                        const SizedBox(
-                                          width: 23,
-                                          height: 23,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                              Colors.black,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                                  ? CupertinoActivityIndicator(
+                                      color: Colors.white,
                                     )
-                                  : Text(
+                                  : const Text(
                                       'Iniciar Sesión',
-                                      style: GoogleFonts.roboto(
+                                      style: TextStyle(
                                         fontSize: 16,
+                                        color: Colors.black,
+                                        fontFamily: 'SFPro',
                                       ),
                                     ),
                             ],
@@ -318,7 +347,11 @@ class _LoginFormState extends State<LoginForm>
                         padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: Text(
                           'O puedes',
-                          style: GoogleFonts.roboto(color: Colors.grey[500]),
+                          style: TextStyle(
+                            color: Colors.grey[500],
+                            fontSize: 14.0 * scaleFactor,
+                            fontFamily: 'SFPro',
+                          ),
                         ),
                       ),
                       Expanded(
@@ -336,79 +369,50 @@ class _LoginFormState extends State<LoginForm>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      GestureDetector(
-                        onTap: () {
-                          AuthService().signInWithGoogle(context);
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: Color.fromARGB(255, 117, 168, 184),
-                            ),
-                          ),
-                          padding: EdgeInsets.symmetric(
-                              vertical: 20, horizontal: 20),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'lib/assets/images/google.png',
-                                height: 20,
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Continuar con Google',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
+                      CupertinoButton(
+                        onPressed: _isLoading
+                            ? null
+                            : () async {
+                                setState(() {
+                                  _isLoading = true;
+                                });
+
+                                // Wait for signInWithGoogle to complete
+                                await AuthService().signInWithGoogle(context);
+
+                                setState(() {
+                                  _isLoading = false;
+                                });
+                              },
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _isLoading
+                                ? const CupertinoActivityIndicator(
+                                    color: Colors.white,
+                                  )
+                                : Row(
+                                    children: [
+                                      Image.asset(
+                                        'lib/assets/images/google.png',
+                                        height: 16 * scaleFactor,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'Continuar con Google',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 16 * scaleFactor,
+                                          fontFamily: 'SFPro',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ],
                         ),
                       ),
-                      /*
-                                      Parte de poder iniciar sesion con Apple
-                    SizedBox(height: 15),
-                
-                    ElevatedButton(
-                      onPressed: () {
-                        // Acción al presionar el botón
-                      },
-                      style: ButtonStyle(
-                        overlayColor: MaterialStateProperty.all<Color>(Colors.grey),
-                        backgroundColor: MaterialStateProperty.all<Color>(Colors.black.withOpacity(0.1)), // Color de fondo del botón con opacidad
-                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                            side: BorderSide(color: Colors.white), // Borde blanco
-                          ),
-                        ),
-                        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                          EdgeInsets.all(20), // Ajusta el padding del botón según sea necesario
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            'lib/assets/images/apple.png',
-                            height: 20,
-                          ),
-                          SizedBox(width: 8), // Espacio entre la imagen y el texto
-                          Text(
-                            'Continuar con Apple',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),*/
                     ],
                   ),
                 ),
@@ -418,7 +422,11 @@ class _LoginFormState extends State<LoginForm>
                   children: [
                     Text(
                       'No eres parte de Listify?',
-                      style: GoogleFonts.roboto(color: Colors.grey),
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14.0 * scaleFactor,
+                        fontFamily: 'SFPro',
+                      ),
                     ),
                     const SizedBox(width: 4),
                     GestureDetector(
@@ -431,11 +439,9 @@ class _LoginFormState extends State<LoginForm>
                                     RegisterPage(),
                             transitionsBuilder: (context, animation,
                                 secondaryAnimation, child) {
-                              var begin = Offset(0.0,
-                                  1.0); // Define el punto de inicio de la animación (abajo)
-                              var end = Offset
-                                  .zero; // Define el punto final de la animación (arriba)
-                              var curve = Curves.ease; // Curva de animación
+                              var begin = Offset(-1.0, 0.0);
+                              var end = Offset.zero;
+                              var curve = Curves.easeInOut;
                               var tween = Tween(begin: begin, end: end)
                                   .chain(CurveTween(curve: curve));
                               var offsetAnimation = animation.drive(tween);
@@ -449,9 +455,11 @@ class _LoginFormState extends State<LoginForm>
                       },
                       child: Text(
                         'Registrate aquí',
-                        style: GoogleFonts.roboto(
+                        style: TextStyle(
                           color: Color(0xFF74BEB8),
                           fontWeight: FontWeight.bold,
+                          fontSize: 14.0 * scaleFactor,
+                          fontFamily: 'SFPro',
                         ),
                       ),
                     ),
@@ -465,20 +473,29 @@ class _LoginFormState extends State<LoginForm>
                       'Powered by',
                       style: TextStyle(
                         color: Colors.grey,
-                        fontSize: 12, // Tamaño del texto ajustable
+                        fontSize: 14 * scaleFactor,
+                        fontFamily: 'SFPro',
                       ),
                     ),
-                    SizedBox(width: 5), // Espacio entre el texto y la imagen
+                    SizedBox(width: 5),
                     GestureDetector(
-                      onTap: () {
-                        print('Entrando a ig');
+                      onTap: () async {
+                        print('Entro al ig');
+                        /*
+                        const url = 'https://www.instagram.com/exodo_club_/';
+                        if (await canLaunchUrlString(url)) {
+                          await launchUrlString(url,
+                              mode: LaunchMode.externalApplication);
+                        } else {
+                          throw 'Could not launch $url';
+                        }*/
                       },
                       child: Image.asset(
                         'lib/assets/images/logo-exodo.png',
-                        height: 45,
-                        width: 60,
+                        height: 45 * scaleFactor,
+                        width: 70 * scaleFactor,
                       ),
-                    ),
+                    )
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -500,9 +517,9 @@ Future<UserCredential?> signIn(
       password: password,
     );
 
-    return userCredential; // Devolver el UserCredential
+    return userCredential;
   } catch (e) {
     print('Error signing in: $e');
-    return null; // Error al iniciar sesión, devuelve null
+    return null;
   }
 }

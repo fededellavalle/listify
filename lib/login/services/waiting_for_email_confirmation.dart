@@ -1,6 +1,7 @@
+import 'package:app_listas/styles/color.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../styles/button.dart';
 
 class WaitingForEmailConfirmationPage extends StatefulWidget {
   const WaitingForEmailConfirmationPage({Key? key});
@@ -45,57 +46,88 @@ class _WaitingForEmailConfirmationPageState
 
   @override
   Widget build(BuildContext context) {
+    final double scaleFactor = MediaQuery.of(context).size.width / 375.0;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: const Row(
-          children: [
-            Text(
-              'Verificación de Email',
-              style: TextStyle(color: Colors.white),
-            ),
-            // Título
-          ],
+        title: const Text(
+          'Verificación de Email',
+          style: TextStyle(
+            color: Colors.white,
+            fontFamily: 'SFPro',
+          ),
+        ),
+        leading: IconButton(
+          icon: Icon(
+            CupertinoIcons.left_chevron,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
         ),
         iconTheme: IconThemeData(
           color: Colors.white,
         ),
-        centerTitle: true,
       ),
       body: _isChecking
-          ? Center(child: CircularProgressIndicator())
+          ? Center(
+              child: CupertinoActivityIndicator(
+                color: white,
+              ),
+            )
           : Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(16.0 * scaleFactor),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.email,
-                    size: 200,
-                    color: Colors.white,
+                  Image.asset(
+                    'lib/assets/images/Verify_Email_Address.png', // Cambia esta ruta a la imagen deseada
+                    width: 300 * scaleFactor,
+                    height: 200 * scaleFactor,
                   ),
+                  SizedBox(height: 20 * scaleFactor),
                   Text(
                     'Se ha enviado un email de verificación a ${user!.email}.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                  SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _sendVerificationEmail,
-                      child: Text('Reenviar Email de Verificación'),
-                      style: buttonPrimary,
+                    style: TextStyle(
+                      fontSize: 18.0 * scaleFactor,
+                      color: Colors.white,
+                      fontFamily: 'SFPro',
                     ),
                   ),
-                  SizedBox(height: 20),
+                  SizedBox(height: 20 * scaleFactor),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
+                    child: CupertinoButton(
+                      onPressed: _sendVerificationEmail,
+                      child: Text(
+                        'Reenviar Email de Verificación',
+                        style: TextStyle(
+                          fontSize: 16.0 * scaleFactor,
+                          color: Colors.black,
+                          fontFamily: 'SFPro',
+                        ),
+                      ),
+                      color: skyBluePrimary,
+                    ),
+                  ),
+                  SizedBox(height: 20 * scaleFactor),
+                  SizedBox(
+                    width: double.infinity,
+                    child: CupertinoButton(
                       onPressed: _checkEmailVerified,
-                      child: Text('Verificar Estado de Email'),
-                      style: buttonPrimary,
+                      child: Text(
+                        'Verificar Estado de Email',
+                        style: TextStyle(
+                          fontSize: 16.0 * scaleFactor,
+                          color: Colors.black,
+                          fontFamily: 'SFPro',
+                        ),
+                      ),
+                      color: skyBluePrimary,
                     ),
                   ),
                 ],

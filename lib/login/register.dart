@@ -1,4 +1,8 @@
+import 'package:app_listas/login/login.dart';
 import 'package:app_listas/login/services/firebase_exceptions.dart';
+import 'package:app_listas/styles/color.dart';
+import 'package:app_listas/styles/inputsDecoration.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,20 +19,32 @@ class RegisterPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text(
-          'Vamos a crear una cuenta',
-          style: TextStyle(
-              color: Colors.white), // Color deseado para el texto del AppBar
-        ),
         backgroundColor: Colors.black.withOpacity(0.9),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_downward, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+        automaticallyImplyLeading: false,
+        actions: [
+          GestureDetector(
+            onTap: () {
+              Navigator.pop(context);
+            },
+            child: Row(
+              children: [
+                Text(
+                  'Ir a Inicio de Sesión',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'SFPro',
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Icon(Icons.arrow_forward_ios, color: Colors.white),
+              ],
+            ),
+          ),
+        ],
       ),
-      body: RegisterForm(),
+      body: SafeArea(
+        child: RegisterForm(),
+      ),
     );
   }
 }
@@ -38,7 +54,8 @@ class RegisterForm extends StatefulWidget {
   _RegisterFormState createState() => _RegisterFormState();
 }
 
-class _RegisterFormState extends State<RegisterForm> {
+class _RegisterFormState extends State<RegisterForm>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   late String _email;
   late String _password = '';
@@ -48,6 +65,8 @@ class _RegisterFormState extends State<RegisterForm> {
   File? _image;
   String _instagramUsername = 'Undefined';
   String? _selectedCountry;
+  bool _termsAccepted = false;
+  bool _privacyAccepted = false;
 
   bool _showPassword = false;
   bool _showConfirmPassword = false;
@@ -65,6 +84,38 @@ class _RegisterFormState extends State<RegisterForm> {
   bool _hasNumber = false;
   bool _hasSpecialChar = false;
   bool _hasMinLength = false;
+
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeIn,
+    );
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void reverseAnimationAndNavigate() {
+    _controller.reverse().then((_) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
+    });
+  }
 
   void _validateForm() {
     if (_formKey.currentState!.validate()) {
@@ -126,564 +177,746 @@ class _RegisterFormState extends State<RegisterForm> {
     return croppedFile;
   }
 
+  void _showTermsAndConditions() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Términos y Condiciones',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Text(
+              'Aquí van los términos y condiciones...',
+              style: TextStyle(
+                fontFamily: 'SFPro',
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: Text('Cerrar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showPrivacyPolicy() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Política de Privacidad',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Text(
+              'Aquí va la política de privacidad...',
+              style: TextStyle(
+                fontFamily: 'SFPro',
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: Text('Cerrar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20.0),
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              SizedBox(height: 5),
-              InkWell(
-                onTap: () async {
-                  await _getImage();
-                },
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.grey[
-                      300], // Color de fondo del avatar si la imagen no está presente
-                  foregroundColor: Colors.black, // Color del borde del avatar
-                  child: _image == null
-                      ? Icon(Icons.camera_alt,
-                          size:
-                              50) // Icono de la cámara si no se selecciona ninguna imagen
-                      : ClipOval(
-                          child: Image.file(
-                            _image!,
-                            width: 100, // Ancho de la imagen
-                            height: 100, // Alto de la imagen
-                            fit: BoxFit
-                                .cover, // Ajuste de la imagen para cubrir todo el espacio disponible
-                          ),
-                        ),
-                ),
-              ),
-              SizedBox(height: 8), // Espacio entre el círculo y el texto
-              const Center(
-                child: Text(
-                  'Seleccione su foto de perfil(opcional)',
-                  style: TextStyle(
-                    color: Colors.white,
-                  ), // Color del texto
-                  textAlign:
-                      TextAlign.center, // Centra el texto horizontalmente
-                ),
-              ),
-              SizedBox(height: 20),
+    double baseWidth =
+        375.0; // El ancho base que estás diseñando (ej. iPhone 11)
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFactor = screenWidth / baseWidth;
 
-              Row(
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                      child: TextFormField(
-                        decoration: InputDecoration(
-                          labelText: 'Nombre',
-                          labelStyle: TextStyle(
-                            color: Color.fromARGB(255, 242, 187, 29),
-                          ),
-                          prefixIcon: Icon(Icons.person, color: Colors.grey),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(
-                              color: Color.fromARGB(255, 242, 187, 29),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(
-                              color: Color.fromARGB(255, 158, 128, 36),
-                            ),
-                          ),
-                        ),
-                        style: TextStyle(color: Colors.white),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor, ingrese su Nombre';
-                          } else if (!_nameValidator.hasMatch(value)) {
-                            return 'Ingrese solo letras y espacios';
-                          }
-                          return null;
-                        },
-                        onSaved: (value) {
-                          _nombre = value!;
-                        },
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                      child: TextFormField(
-                        decoration: InputDecoration(
-                          labelText: 'Apellido',
-                          labelStyle: TextStyle(
-                            color: Color.fromARGB(255, 242, 187, 29),
-                          ),
-                          prefixIcon: Icon(Icons.person, color: Colors.grey),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(
-                              color: Color.fromARGB(255, 242, 187, 29),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(
-                              color: Color.fromARGB(255, 158, 128, 36),
-                            ),
-                          ),
-                        ),
-                        style: TextStyle(color: Colors.white),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor, ingrese su Apellido';
-                          } else if (!_surnameValidator.hasMatch(value)) {
-                            return 'Ingrese solo letras y espacios';
-                          }
-                          return null;
-                        },
-                        onSaved: (value) {
-                          _apellido = value!;
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  labelStyle: TextStyle(
-                    color: Color.fromARGB(255, 242, 187, 29),
-                  ),
-                  prefixIcon: Icon(Icons.email, color: Colors.grey),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Color.fromARGB(255, 242, 187, 29),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Color.fromARGB(255, 158, 128, 36),
-                    ),
-                  ),
-                ),
-                style: TextStyle(color: Colors.white),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingrese su email';
-                  } else if (!_emailValidator.hasMatch(value)) {
-                    return 'Ingrese un email válido';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  _email = value!;
-                },
-              ),
-              const SizedBox(height: 15),
-              TextFormField(
-                key: Key('password'),
-                decoration: InputDecoration(
-                  labelText: 'Contraseña',
-                  labelStyle: TextStyle(
-                    color: Color.fromARGB(255, 242, 187, 29),
-                  ),
-                  prefixIcon: Icon(Icons.lock_outline, color: Colors.grey),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Color.fromARGB(255, 242, 187, 29),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Color.fromARGB(255, 158, 128, 36),
-                    ),
-                  ),
-                  suffixIcon: IconButton(
-                    onPressed: () {
-                      setState(() {
-                        _showPassword = !_showPassword;
-                      });
-                    },
-                    icon: Icon(
-                      _showPassword ? Icons.visibility : Icons.visibility_off,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
-                style: TextStyle(color: Colors.white),
-                obscureText: !_showPassword,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingrese su contraseña';
-                  } else if (!_passwordValidator.hasMatch(value)) {
-                    setState(() {
-                      _hasUpperCase = value.contains(RegExp(r'[A-Z]'));
-                      _hasLowerCase = value.contains(RegExp(r'[a-z]'));
-                      _hasNumber = value.contains(RegExp(r'[0-9]'));
-                      _hasSpecialChar = value.contains(RegExp(r'[!@#$&*]'));
-                      _hasMinLength = value.length >= 8;
-                    });
-                    return null;
-                  } else if (_passwordValidator.hasMatch(value)) {
-                    setState(() {
-                      _hasUpperCase = value.contains(RegExp(r'[A-Z]'));
-                      _hasLowerCase = value.contains(RegExp(r'[a-z]'));
-                      _hasNumber = value.contains(RegExp(r'[0-9]'));
-                      _hasSpecialChar = value.contains(RegExp(r'[!@#$&*]'));
-                      _hasMinLength = value.length >= 8;
-                      _password = value;
-                    });
-                    return null;
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  _password = value!;
-                },
-                onChanged: (_) => _validateForm(),
-              ),
-              SizedBox(height: 10.0),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      _buildPasswordStrengthMessage(),
+    return FadeTransition(
+      opacity: _animation,
+      child: Container(
+        padding: const EdgeInsets.only(right: 20.0, left: 20.0, bottom: 20.0),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Row(
+                  children: [
+                    Text(
+                      'Vamos a crear una cuenta',
                       style: TextStyle(
-                        color:
-                            _areRequirementsMet() ? Colors.green : Colors.red,
+                        fontSize: 25 * scaleFactor,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontFamily: 'SFPro',
                       ),
                     ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20.0),
-              TextFormField(
-                key: Key('confirmPassword'),
-                decoration: InputDecoration(
-                  labelText: 'Confirmar Contraseña',
-                  labelStyle: TextStyle(
-                    color: Color.fromARGB(255, 242, 187, 29),
-                  ),
-                  prefixIcon: Icon(Icons.lock, color: Colors.grey),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Color.fromARGB(255, 242, 187, 29),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Color.fromARGB(255, 158, 128, 36),
-                    ),
-                  ),
-                  suffixIcon: IconButton(
-                    onPressed: () {
-                      setState(() {
-                        _showConfirmPassword = !_showConfirmPassword;
-                      });
-                    },
-                    icon: Icon(
-                      _showConfirmPassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                      color: Colors.grey,
-                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Crea una cuenta con tu email, recuerda que estos datos no van a poder ser modificados una vez ya creada, solamente la foto',
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                    fontSize: 15 * scaleFactor,
+                    color: Colors.grey.shade400,
+                    fontFamily: 'SFPro',
                   ),
                 ),
-                style: TextStyle(color: Colors.white),
-                obscureText: !_showConfirmPassword,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, confirme su contraseña';
-                  } else if (value != _password) {
-                    _passwordsMatch = false;
-                    return 'Las contraseñas no coinciden';
-                  }
-                  _passwordsMatch = true;
-                  return null;
-                },
-                onChanged: (_) => _validateForm(),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_passwordsMatch) SizedBox(height: 10),
-                  Text(
-                    _passwordsMatch ? 'Las contraseñas coinciden' : '',
+                const SizedBox(height: 10),
+                SizedBox(height: 5),
+                InkWell(
+                  onTap: () async {
+                    await _getImage();
+                  },
+                  child: CircleAvatar(
+                    radius: 50 * scaleFactor,
+                    backgroundColor: Colors.grey[300],
+                    foregroundColor: Colors.black,
+                    child: _image == null
+                        ? Icon(Icons.camera_alt, size: 50 * scaleFactor)
+                        : ClipOval(
+                            child: Image.file(
+                              _image!,
+                              width: 100 * scaleFactor,
+                              height: 100 * scaleFactor,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                  ),
+                ),
+                SizedBox(height: 8),
+                const Center(
+                  child: Text(
+                    'Seleccione su foto de perfil',
                     style: TextStyle(
-                      color: Colors.green,
-                      fontSize: 14,
+                      color: Colors.white,
+                      fontFamily: 'SFPro',
                     ),
-                  ),
-                  if (_passwordsMatch) SizedBox(height: 10),
-                ],
-              ),
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Usuario de Instagram (opcional)',
-                  labelStyle: TextStyle(
-                    color: Color.fromARGB(255, 242, 187, 29),
-                  ),
-                  prefixIcon: Icon(Icons.person, color: Colors.grey),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Color.fromARGB(255, 242, 187, 29),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Color.fromARGB(255, 158, 128, 36),
-                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
-                style: TextStyle(color: Colors.white),
-                validator: (value) {
-                  return null;
-                },
-                onSaved: (value) {
-                  _instagramUsername = value ?? 'Undefined';
-                },
-                onChanged: (_) => _validateForm(),
-              ),
-              const SizedBox(height: 20),
-              InkWell(
-                onTap: () {
-                  _selectDate(context);
-                },
-                child: InputDecorator(
+                SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 5),
+                        child: TextFormField(
+                          decoration: buildInputDecoration(
+                              labelText: 'Nombre',
+                              labelFontSize: 16 * scaleFactor,
+                              prefixIcon: CupertinoIcons.person_crop_circle,
+                              prefixIconSize: 24 * scaleFactor),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Por favor, ingrese su Nombre';
+                            } else if (!_nameValidator.hasMatch(value)) {
+                              return 'Ingrese solo letras y espacios';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            _nombre = value!;
+                          },
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 5),
+                        child: TextFormField(
+                          decoration: buildInputDecoration(
+                              labelText: 'Apellido',
+                              labelFontSize: 16 * scaleFactor,
+                              prefixIcon:
+                                  CupertinoIcons.person_crop_circle_fill,
+                              prefixIconSize: 24 * scaleFactor),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Por favor, ingrese su Apellido';
+                            } else if (!_surnameValidator.hasMatch(value)) {
+                              return 'Ingrese solo letras y espacios';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            _apellido = value!;
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+                TextFormField(
+                  decoration: buildInputDecoration(
+                    labelText: 'Email',
+                    labelFontSize: 16 * scaleFactor,
+                    prefixIcon: CupertinoIcons.mail,
+                    prefixIconSize: 24 * scaleFactor,
+                  ),
+                  style: TextStyle(color: Colors.white),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, ingrese su email';
+                    } else if (!_emailValidator.hasMatch(value)) {
+                      return 'Ingrese un email válido';
+                    }
+                    return null;
+                  },
+                  onSaved: (value) {
+                    _email = value!;
+                  },
+                ),
+                const SizedBox(height: 15),
+                TextFormField(
+                  key: Key('password'),
                   decoration: InputDecoration(
-                    labelText: 'Fecha de Nacimiento (Mayor a 14 años)',
-                    labelStyle:
-                        TextStyle(color: Color.fromARGB(255, 242, 187, 29)),
-                    prefixIcon: Icon(Icons.calendar_today, color: Colors.grey),
+                    labelText: 'Contraseña',
+                    labelStyle: TextStyle(
+                      color: white,
+                      fontSize: 16 * scaleFactor,
+                      fontFamily: 'SFPro',
+                    ),
+                    prefixIcon: Icon(
+                      CupertinoIcons.lock_circle,
+                      color: Colors.grey,
+                      size: 24 * scaleFactor,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide:
-                          BorderSide(color: Color.fromARGB(255, 242, 187, 29)),
+                      borderSide: BorderSide(
+                        color: skyBluePrimary,
+                      ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide:
-                          BorderSide(color: Color.fromARGB(255, 158, 128, 36)),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text(
-                        '${_fechaNacimiento.day}/${_fechaNacimiento.month}/${_fechaNacimiento.year}',
-                        style: TextStyle(color: Colors.white),
+                      borderSide: BorderSide(
+                        color: skyBlueSecondary,
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              GestureDetector(
-                onTap: () {
-                  showCountryPicker(
-                    context: context,
-                    showPhoneCode: false,
-                    onSelect: (Country country) {
-                      setState(() {
-                        _selectedCountry = country.name;
-                      });
-                    },
-                  );
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color:
-                          _selectedCountry != null ? Colors.white : Colors.grey,
+                    ),
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _showPassword = !_showPassword;
+                        });
+                      },
+                      icon: Icon(
+                        _showPassword
+                            ? CupertinoIcons.eye
+                            : CupertinoIcons.eye_slash,
+                        color: Colors.grey,
+                        size: 24 * scaleFactor,
+                      ),
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.flag, color: Colors.grey),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          _selectedCountry ?? 'Seleccione la nacionalidad',
-                          style: TextStyle(
-                            color: _selectedCountry != null
-                                ? Colors.white
-                                : Colors.grey,
-                          ),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'SFPro',
+                  ),
+                  obscureText: !_showPassword,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, ingrese su contraseña';
+                    } else if (!_passwordValidator.hasMatch(value)) {
+                      setState(() {
+                        _hasUpperCase = value.contains(RegExp(r'[A-Z]'));
+                        _hasLowerCase = value.contains(RegExp(r'[a-z]'));
+                        _hasNumber = value.contains(RegExp(r'[0-9]'));
+                        _hasSpecialChar = value.contains(RegExp(r'[!@#$&*]'));
+                        _hasMinLength = value.length >= 8;
+                      });
+                      return null;
+                    } else if (_passwordValidator.hasMatch(value)) {
+                      setState(() {
+                        _hasUpperCase = value.contains(RegExp(r'[A-Z]'));
+                        _hasLowerCase = value.contains(RegExp(r'[a-z]'));
+                        _hasNumber = value.contains(RegExp(r'[0-9]'));
+                        _hasSpecialChar = value.contains(RegExp(r'[!@#$&*]'));
+                        _hasMinLength = value.length >= 8;
+                        _password = value;
+                      });
+                      return null;
+                    }
+                    return null;
+                  },
+                  onSaved: (value) {
+                    _password = value!;
+                  },
+                  onChanged: (_) => _validateForm(),
+                ),
+                SizedBox(height: 10.0),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        _buildPasswordStrengthMessage(),
+                        style: TextStyle(
+                          color:
+                              _areRequirementsMet() ? Colors.green : Colors.red,
+                          fontSize: 14 * scaleFactor,
+                          fontFamily: 'SFPro',
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _isLoading
-                    ? null
-                    : () async {
-                        if (_formKey.currentState!.validate()) {
-                          _formKey.currentState!.save();
-                          setState(() {
-                            _isLoading = true;
-                          });
-
-                          List<dynamic> result = await register(
-                            _email,
-                            _password,
-                            _nombre,
-                            _apellido,
-                            _fechaNacimiento,
-                            _image,
-                            _instagramUsername,
-                            _selectedCountry,
-                          );
-                          bool success = result[0];
-                          String errorMessage = result[1];
-
-                          setState(() {
-                            _isLoading = false;
-                          });
-
-                          if (success) {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  backgroundColor: Colors.grey[800],
-                                  title: Text(
-                                    'Registro Exitoso',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                  content: Text(
-                                    'Su usuario $_nombre($_email) fue creado exitosamente',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                  actions: <Widget>[
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: Text(
-                                        'OK',
-                                        style: TextStyle(
-                                            color: Color.fromARGB(
-                                                255, 242, 187, 29)),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          } else {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: Text('Error'),
-                                  content: Text(errorMessage),
-                                  actions: <Widget>[
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: Text('Ok'),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          }
-                        }
+                SizedBox(height: 20.0),
+                TextFormField(
+                  key: Key('confirmPassword'),
+                  decoration: InputDecoration(
+                    labelText: 'Confirmar Contraseña',
+                    labelStyle: TextStyle(
+                      color: white,
+                      fontSize: 16 * scaleFactor,
+                      fontFamily: 'SFPro',
+                    ),
+                    prefixIcon: Icon(
+                      CupertinoIcons.lock_circle_fill,
+                      color: Colors.grey,
+                      size: 24 * scaleFactor,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: skyBluePrimary,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: skyBlueSecondary,
+                      ),
+                    ),
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _showConfirmPassword = !_showConfirmPassword;
+                        });
                       },
-                style: ButtonStyle(
-                  padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                    EdgeInsets.all(20),
+                      icon: Icon(
+                        _showConfirmPassword
+                            ? CupertinoIcons.eye
+                            : CupertinoIcons.eye_slash,
+                        color: Colors.grey,
+                        size: 24 * scaleFactor,
+                      ),
+                    ),
                   ),
-                  foregroundColor:
-                      MaterialStateProperty.all<Color>(Colors.black),
-                  backgroundColor: MaterialStateProperty.all<Color>(
-                    Color.fromARGB(255, 242, 187, 29),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'SFPro',
                   ),
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
+                  obscureText: !_showConfirmPassword,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, confirme su contraseña';
+                    } else if (value != _password) {
+                      _passwordsMatch = false;
+                      return 'Las contraseñas no coinciden';
+                    }
+                    _passwordsMatch = true;
+                    return null;
+                  },
+                  onChanged: (_) => _validateForm(),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_passwordsMatch) SizedBox(height: 10),
+                    Text(
+                      _passwordsMatch ? 'Las contraseñas coinciden' : '',
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontSize: 14 * scaleFactor,
+                      ),
+                    ),
+                    if (_passwordsMatch) SizedBox(height: 10),
+                  ],
+                ),
+                TextFormField(
+                  decoration: buildInputDecoration(
+                      labelText: 'Usuario de Instagram (opcional)',
+                      labelFontSize: 16 * scaleFactor,
+                      prefixIcon: CupertinoIcons.at,
+                      prefixIconSize: 24 * scaleFactor),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'SFPro',
+                  ),
+                  validator: (value) {
+                    return null;
+                  },
+                  onSaved: (value) {
+                    _instagramUsername = value ?? 'Undefined';
+                  },
+                  onChanged: (_) => _validateForm(),
+                ),
+                const SizedBox(height: 20),
+                InkWell(
+                  onTap: () {
+                    _selectDate(context);
+                  },
+                  child: InputDecorator(
+                    decoration: buildInputDecoration(
+                        labelText: 'Fecha de Nacimiento (Mayor a 14 años)',
+                        labelFontSize: 16 * scaleFactor,
+                        prefixIcon: CupertinoIcons.calendar,
+                        prefixIconSize: 24 * scaleFactor),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Text(
+                          '${_fechaNacimiento.day}/${_fechaNacimiento.month}/${_fechaNacimiento.year}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _isLoading
-                        ? const Row(
-                            children: [
-                              SizedBox(
-                                width: 23,
-                                height: 23,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.black,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 10),
-                              Text(
-                                'Registrando',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          )
-                        : Text(
-                            'Registrarse',
+                const SizedBox(height: 20),
+                GestureDetector(
+                  onTap: () {
+                    showCountryPicker(
+                      context: context,
+                      showPhoneCode: false,
+                      onSelect: (Country country) {
+                        setState(() {
+                          _selectedCountry = country.name;
+                        });
+                      },
+                    );
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: _selectedCountry != null
+                            ? Colors.white
+                            : Colors.grey,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.flag,
+                          color: Colors.grey,
+                          size: 24 * scaleFactor,
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _selectedCountry ?? 'Seleccione la nacionalidad',
                             style: TextStyle(
-                              fontSize: 16,
+                              color: _selectedCountry != null ? white : grey,
+                              fontSize: 16 * scaleFactor,
+                              fontFamily: 'SFPro',
                             ),
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _showTermsAndConditions,
+                        child: Row(
+                          children: [
+                            Text(
+                              'Acepto los ',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14 * scaleFactor,
+                                fontFamily: 'SFPro',
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                'Términos y Condiciones',
+                                style: TextStyle(
+                                  color: skyBluePrimary,
+                                  fontSize: 14 * scaleFactor,
+                                  fontFamily: 'SFPro',
+                                ),
+                              ),
+                            ),
+                            Switch(
+                              value: _termsAccepted,
+                              onChanged: (value) {
+                                setState(() {
+                                  _termsAccepted = value;
+                                });
+                              },
+                              activeColor: Colors.green,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-              ),
-            ],
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _showPrivacyPolicy,
+                        child: Row(
+                          children: [
+                            Text(
+                              'Acepto la ',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14 * scaleFactor,
+                                fontFamily: 'SFPro',
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                'Política de Privacidad',
+                                style: TextStyle(
+                                  color: skyBluePrimary,
+                                  fontSize: 14 * scaleFactor,
+                                  fontFamily: 'SFPro',
+                                ),
+                              ),
+                            ),
+                            Switch(
+                              value: _privacyAccepted,
+                              onChanged: (value) {
+                                setState(() {
+                                  _privacyAccepted = value;
+                                });
+                              },
+                              activeColor: Colors.green,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                CupertinoButton(
+                  onPressed: _isLoading
+                      ? null
+                      : () async {
+                          if (_formKey.currentState!.validate() &&
+                              _selectedCountry != null &&
+                              _termsAccepted &&
+                              _privacyAccepted) {
+                            _formKey.currentState!.save();
+                            setState(() {
+                              _isLoading = true;
+                            });
+
+                            if (!validateDateOfBirth(_fechaNacimiento)) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(
+                                  'Debe ser mayor de 14 años.',
+                                  style: TextStyle(
+                                    fontFamily: 'SFPro',
+                                  ),
+                                )),
+                              );
+                              setState(() {
+                                _isLoading = false;
+                              });
+                              return;
+                            }
+
+                            List<dynamic> result = await register(
+                              _email,
+                              _password,
+                              _nombre,
+                              _apellido,
+                              _fechaNacimiento,
+                              _image,
+                              _instagramUsername,
+                              _selectedCountry,
+                            );
+                            bool success = result[0];
+                            String errorMessage = result[1];
+
+                            setState(() {
+                              _isLoading = false;
+                            });
+
+                            if (success) {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    backgroundColor: Colors.grey[800],
+                                    title: Text(
+                                      'Registro Exitoso',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontFamily: 'SFPro',
+                                      ),
+                                    ),
+                                    content: Text(
+                                      'Su usuario $_nombre($_email) fue creado exitosamente',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontFamily: 'SFPro',
+                                      ),
+                                    ),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Text(
+                                          'OK',
+                                          style: TextStyle(
+                                            color: skyBluePrimary,
+                                            fontFamily: 'SFPro',
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            } else {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: Text('Error'),
+                                    content: Text(errorMessage),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Text('Ok'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            }
+                          } else {
+                            if (_selectedCountry == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Por favor, seleccione una nacionalidad.',
+                                    style: TextStyle(
+                                      fontFamily: 'SFPro',
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                            if (!_termsAccepted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Debes aceptar los términos y condiciones.',
+                                    style: TextStyle(
+                                      fontFamily: 'SFPro',
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                            if (!_privacyAccepted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Debes aceptar la política de privacidad.',
+                                    style: TextStyle(
+                                      fontFamily: 'SFPro',
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                            setState(() {
+                              _isLoading = false;
+                            });
+                          }
+                        },
+                  color: skyBluePrimary,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _isLoading
+                          ? const Row(
+                              children: [
+                                CupertinoActivityIndicator(
+                                  color: Colors.white,
+                                ),
+                                SizedBox(width: 10),
+                                Text(
+                                  'Registrando',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontFamily: 'SFPro',
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : const Text(
+                              'Registrarse',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: 'SFPro',
+                                color: Colors.black,
+                              ),
+                            ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -704,7 +937,13 @@ class _RegisterFormState extends State<RegisterForm> {
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Debe ser mayor de 14 años.')),
+          SnackBar(
+              content: Text(
+            'Debe ser mayor de 14 años.',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+            ),
+          )),
         );
       }
     }
@@ -758,6 +997,8 @@ class _RegisterFormState extends State<RegisterForm> {
           'imageUrl': imageUrl,
           'instagram': instagramUsername,
           'nationality': nationality,
+          'trial': false,
+          'subscription': 'basic',
         });
       } else {
         String imageUrl =
@@ -775,6 +1016,8 @@ class _RegisterFormState extends State<RegisterForm> {
           'imageUrl': imageUrl,
           'instagram': instagramUsername,
           'nationality': nationality,
+          'trial': false,
+          'subscription': 'basic',
         });
       }
 

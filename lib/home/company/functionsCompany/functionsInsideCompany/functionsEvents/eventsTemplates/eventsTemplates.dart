@@ -1,7 +1,6 @@
 import 'package:app_listas/home/company/functionsCompany/functionsInsideCompany/functionsEvents/step1AddEvent.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 class EventTemplatesPage extends StatelessWidget {
@@ -14,14 +13,20 @@ class EventTemplatesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double baseWidth = 375.0;
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFactor = screenWidth / baseWidth;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
           'Plantillas de Eventos',
-          style: GoogleFonts.roboto(
+          style: TextStyle(
             color: Colors.white,
+            fontFamily: 'SFPro',
+            fontSize: 18 * scaleFactor,
           ),
         ),
         iconTheme: IconThemeData(
@@ -40,7 +45,16 @@ class EventTemplatesPage extends StatelessWidget {
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Error al cargar plantillas'));
+            return Center(
+              child: Text(
+                'Error al cargar plantillas',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'SFPro',
+                  fontSize: 16 * scaleFactor,
+                ),
+              ),
+            );
           }
 
           final templates = snapshot.data?.docs ?? [];
@@ -55,22 +69,38 @@ class EventTemplatesPage extends StatelessWidget {
                 return ListTile(
                   title: Text(
                     template['eventName'],
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'SFPro',
+                      fontSize: 16 * scaleFactor,
+                    ),
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Valor de la Entrada: \$${template['eventTicketValue'].toStringAsFixed(2)}',
-                        style: TextStyle(color: Colors.white70),
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontFamily: 'SFPro',
+                          fontSize: 14 * scaleFactor,
+                        ),
                       ),
                       Text(
                         'Fecha de Inicio: ${template['eventStartTime'] != null ? DateFormat('dd/MM/yyyy HH:mm').format((template['eventStartTime'] as Timestamp).toDate()) : 'No especificada'}',
-                        style: TextStyle(color: Colors.white70),
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontFamily: 'SFPro',
+                          fontSize: 14 * scaleFactor,
+                        ),
                       ),
                       Text(
                         'Fecha de Fin: ${template['eventEndTime'] != null ? DateFormat('dd/MM/yyyy HH:mm').format((template['eventEndTime'] as Timestamp).toDate()) : 'No especificada'}',
-                        style: TextStyle(color: Colors.white70),
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontFamily: 'SFPro',
+                          fontSize: 14 * scaleFactor,
+                        ),
                       ),
                     ],
                   ),
@@ -90,7 +120,11 @@ class EventTemplatesPage extends StatelessWidget {
                 return ListTile(
                   title: Text(
                     'Slot vacío',
-                    style: TextStyle(color: Colors.white70),
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontFamily: 'SFPro',
+                      fontSize: 16 * scaleFactor,
+                    ),
                   ),
                 );
               }

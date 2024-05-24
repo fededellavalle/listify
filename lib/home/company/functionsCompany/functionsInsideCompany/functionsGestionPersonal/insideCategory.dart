@@ -1,6 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:unicons/unicons.dart';
 import 'functionsInsideCategory/invitePeopleToCategory.dart';
 import 'package:flutter/services.dart';
@@ -22,9 +22,10 @@ class InsideCategory extends StatefulWidget {
 }
 
 class _InsideCategoryState extends State<InsideCategory> {
-  List<dynamic> members = [];
-  List<dynamic> invitations = [];
-  List<dynamic> filteredMembers = [];
+  List<Map<String, dynamic>> memberUIDs = [];
+  List<String> invitations = [];
+  List<Map<String, dynamic>> membersInfo = [];
+  List<Map<String, dynamic>> filteredMembers = [];
   String searchQuery = '';
 
   void loadMembers() async {
@@ -45,10 +46,9 @@ class _InsideCategoryState extends State<InsideCategory> {
 
         if (membersData is List && membersData.isNotEmpty) {
           setState(() {
-            members = List.from(membersData);
-            filteredMembers = members;
-            print(members);
+            memberUIDs = List<Map<String, dynamic>>.from(membersData);
           });
+          await loadMembersInfo();
         } else {
           print('Error: membersData is not a non-empty list');
         }
@@ -58,6 +58,33 @@ class _InsideCategoryState extends State<InsideCategory> {
     } else {
       print('Error: categorySnapshot does not exist');
     }
+  }
+
+  Future<void> loadMembersInfo() async {
+    List<Map<String, dynamic>> loadedMembersInfo = [];
+
+    for (Map<String, dynamic> uidMap in memberUIDs) {
+      print(uidMap);
+      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uidMap['userUid'])
+          .get();
+
+      if (userSnapshot.exists) {
+        Map<String, dynamic>? userData =
+            userSnapshot.data() as Map<String, dynamic>?;
+
+        if (userData != null) {
+          loadedMembersInfo.add(userData);
+          print(loadedMembersInfo);
+        }
+      }
+    }
+
+    setState(() {
+      membersInfo = loadedMembersInfo;
+      filteredMembers = membersInfo;
+    });
   }
 
   void loadInvitations() async {
@@ -73,7 +100,11 @@ class _InsideCategoryState extends State<InsideCategory> {
         categorySnapshot.data() as Map<String, dynamic>?;
 
     setState(() {
-      invitations = categoryData?['invitations'] ?? [];
+      if (categoryData != null && categoryData.containsKey('invitations')) {
+        invitations = List<String>.from(categoryData['invitations']);
+      } else {
+        invitations = [];
+      }
     });
 
     print('Invitations: $invitations');
@@ -82,8 +113,8 @@ class _InsideCategoryState extends State<InsideCategory> {
   void filterMembers(String query) {
     setState(() {
       searchQuery = query;
-      filteredMembers = members.where((member) {
-        final name = member['completeName']?.toLowerCase() ?? '';
+      filteredMembers = membersInfo.where((member) {
+        final name = member['name']?.toLowerCase() ?? '';
         final email = member['email']?.toLowerCase() ?? '';
         final searchLower = query.toLowerCase();
         return name.contains(searchLower) || email.contains(searchLower);
@@ -100,59 +131,71 @@ class _InsideCategoryState extends State<InsideCategory> {
 
   @override
   Widget build(BuildContext context) {
+    double baseWidth = 375.0;
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFactor = screenWidth / baseWidth;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
           'Personas en ${widget.categoryName}',
-          style: GoogleFonts.roboto(
+          style: TextStyle(
             color: Colors.white,
+            fontFamily: 'SFPro',
+            fontSize: 18 * scaleFactor,
           ),
         ),
         iconTheme: IconThemeData(
           color: Colors.white,
         ),
+        leading: IconButton(
+          icon: Icon(
+            CupertinoIcons.left_chevron,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
         actions: [
           Container(
             margin: EdgeInsets.only(right: 10),
-            child: Stack(
-              children: [
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) =>
-                            InvitePeopleToCategory(
-                                categoryName: widget.categoryName,
-                                companyData: widget.companyData,
-                                emails: widget.emails),
-                        transitionsBuilder:
-                            (context, animation, secondaryAnimation, child) {
-                          return SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(1, 0),
-                              end: Offset.zero,
-                            ).animate(
-                              CurvedAnimation(
-                                parent: animation,
-                                curve: Curves.linearToEaseOut,
-                                reverseCurve: Curves.easeIn,
-                              ),
-                            ),
-                            child: child,
-                          );
-                        },
-                        transitionDuration: Duration(milliseconds: 500),
-                      ),
-                    );
-                  },
-                  icon: Icon(
-                    UniconsLine.plus_circle,
+            child: IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        InvitePeopleToCategory(
+                            categoryName: widget.categoryName,
+                            companyData: widget.companyData,
+                            emails: widget.emails),
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                      return SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(1, 0),
+                          end: Offset.zero,
+                        ).animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.linearToEaseOut,
+                            reverseCurve: Curves.easeIn,
+                          ),
+                        ),
+                        child: child,
+                      );
+                    },
+                    transitionDuration: Duration(milliseconds: 500),
                   ),
-                ),
-              ],
+                );
+              },
+              icon: Icon(
+                CupertinoIcons.add_circled_solid,
+                size: 20 * scaleFactor,
+              ),
             ),
           ),
         ],
@@ -160,77 +203,106 @@ class _InsideCategoryState extends State<InsideCategory> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: EdgeInsets.all(8.0 * scaleFactor),
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Buscar miembros...',
-                hintStyle: GoogleFonts.roboto(color: Colors.white54),
+                hintStyle: TextStyle(
+                  color: Colors.white54,
+                  fontFamily: 'SFPro',
+                  fontSize: 14 * scaleFactor,
+                ),
                 prefixIcon: Icon(Icons.search, color: Colors.white54),
                 filled: true,
                 fillColor: Colors.white10,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(10 * scaleFactor),
                   borderSide: BorderSide.none,
                 ),
               ),
-              style: GoogleFonts.roboto(color: Colors.white),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
-              ],
+              style: TextStyle(
+                color: Colors.white,
+                fontFamily: 'SFPro',
+                fontSize: 14 * scaleFactor,
+              ),
               onChanged: filterMembers,
             ),
           ),
           Expanded(
             child: ListView(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: EdgeInsets.symmetric(
+                  horizontal: 20 * scaleFactor, vertical: 10 * scaleFactor),
               children: [
                 Center(
                   child: Text(
                     'Miembros',
-                    style: GoogleFonts.roboto(
+                    style: TextStyle(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: 24 * scaleFactor,
+                      fontFamily: 'SFPro',
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
                 if (filteredMembers.isEmpty)
                   Center(
-                    child: Text(
-                      'No hay miembros en la categoria',
-                      style: GoogleFonts.roboto(
-                        color: Colors.white,
-                        fontSize: 16,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20 * scaleFactor),
+                      child: Text(
+                        'No hay miembros en la categoría',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16 * scaleFactor,
+                          fontFamily: 'SFPro',
+                        ),
                       ),
                     ),
                   ),
                 ...filteredMembers.map((member) {
-                  String memberName = member['completeName'] ?? '';
+                  String memberName = member['name'] ?? '';
+                  String memberApellido = member['lastname'] ?? '';
                   String memberEmail = member['email'] ?? '';
                   String memberInstagram = member['instagram'] ?? '';
 
                   return Card(
-                    margin: EdgeInsets.symmetric(vertical: 5),
-                    elevation: 3,
+                    color: Colors.grey.shade900,
+                    margin: EdgeInsets.symmetric(vertical: 5 * scaleFactor),
+                    elevation: 5,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(15 * scaleFactor),
                     ),
                     child: ListTile(
+                      contentPadding: EdgeInsets.symmetric(
+                        vertical: 10 * scaleFactor,
+                        horizontal: 15 * scaleFactor,
+                      ),
                       title: Text(
-                        memberName,
-                        style: GoogleFonts.roboto(color: Colors.black),
+                        '$memberName $memberApellido',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16 * scaleFactor,
+                          fontFamily: 'SFPro',
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Email: $memberEmail',
-                            style:
-                                GoogleFonts.roboto(color: Colors.grey.shade700),
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14 * scaleFactor,
+                              fontFamily: 'SFPro',
+                            ),
                           ),
                           Text(
                             'Instagram: $memberInstagram',
-                            style:
-                                GoogleFonts.roboto(color: Colors.grey.shade700),
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14 * scaleFactor,
+                              fontFamily: 'SFPro',
+                            ),
                           ),
                         ],
                       ),
@@ -238,50 +310,65 @@ class _InsideCategoryState extends State<InsideCategory> {
                         icon: Icon(Icons.close),
                         color: Colors.red,
                         onPressed: () {
-                          deleteMember(
-                              memberName, memberEmail, memberInstagram);
+                          deleteMember(member['uid'], scaleFactor);
                         },
                       ),
                     ),
                   );
                 }).toList(),
-                SizedBox(height: 20),
+                SizedBox(height: 20 * scaleFactor),
                 Center(
                   child: Text(
                     'Invitaciones',
-                    style: GoogleFonts.roboto(
+                    style: TextStyle(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: 24 * scaleFactor,
+                      fontFamily: 'SFPro',
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
                 if (invitations.isEmpty)
                   Center(
-                    child: Text(
-                      'No hay invitaciones hechas',
-                      style: GoogleFonts.roboto(
-                        color: Colors.white,
-                        fontSize: 16,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20 * scaleFactor),
+                      child: Text(
+                        'No hay invitaciones hechas',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16 * scaleFactor,
+                          fontFamily: 'SFPro',
+                        ),
                       ),
                     ),
                   ),
                 ...invitations.map((memberEmail) {
                   return Card(
-                    margin: EdgeInsets.symmetric(vertical: 5),
-                    elevation: 3,
+                    color: Colors.grey.shade900,
+                    margin: EdgeInsets.symmetric(vertical: 5 * scaleFactor),
+                    elevation: 5,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(15 * scaleFactor),
                     ),
                     child: ListTile(
+                      contentPadding: EdgeInsets.symmetric(
+                        vertical: 10 * scaleFactor,
+                        horizontal: 15 * scaleFactor,
+                      ),
                       title: Text(
                         memberEmail,
-                        style: GoogleFonts.roboto(color: Colors.black),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16 * scaleFactor,
+                          fontFamily: 'SFPro',
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       trailing: IconButton(
                         icon: Icon(Icons.close),
                         color: Colors.red,
                         onPressed: () {
-                          deleteInvitation(memberEmail);
+                          deleteInvitation(memberEmail, scaleFactor);
                         },
                       ),
                     ),
@@ -295,20 +382,37 @@ class _InsideCategoryState extends State<InsideCategory> {
     );
   }
 
-  void deleteInvitation(String email) {
+  void deleteInvitation(String email, double scaleFactor) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirmar eliminación'),
-          content:
-              Text('¿Estás seguro de que quieres eliminar esta invitación?'),
+          title: Text(
+            'Confirmar eliminación',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+              fontSize: 18 * scaleFactor,
+            ),
+          ),
+          content: Text(
+            '¿Estás seguro de que quieres eliminar esta invitación?',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+              fontSize: 16 * scaleFactor,
+            ),
+          ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Cerrar el diálogo
               },
-              child: Text('Cancelar'),
+              child: Text(
+                'Cancelar',
+                style: TextStyle(
+                  fontFamily: 'SFPro',
+                  fontSize: 14 * scaleFactor,
+                ),
+              ),
             ),
             TextButton(
               onPressed: () {
@@ -336,7 +440,13 @@ class _InsideCategoryState extends State<InsideCategory> {
                 Navigator.of(context)
                     .pop(); // Cerrar el diálogo después de eliminar
               },
-              child: Text('Aceptar'),
+              child: Text(
+                'Aceptar',
+                style: TextStyle(
+                  fontFamily: 'SFPro',
+                  fontSize: 14 * scaleFactor,
+                ),
+              ),
             ),
           ],
         );
@@ -344,25 +454,42 @@ class _InsideCategoryState extends State<InsideCategory> {
     );
   }
 
-  void deleteMember(String name, String email, String instagram) {
+  void deleteMember(String uid, double scaleFactor) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirmar eliminación'),
+          title: Text(
+            'Confirmar eliminación',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+              fontSize: 18 * scaleFactor,
+            ),
+          ),
           content: Text(
-              '¿Estás seguro de que quieres eliminar a $name de ${widget.categoryName}?'),
+            '¿Estás seguro de que quieres eliminar a este miembro de ${widget.categoryName}?',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+              fontSize: 16 * scaleFactor,
+            ),
+          ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Cerrar el diálogo
               },
-              child: Text('Cancelar'),
+              child: Text(
+                'Cancelar',
+                style: TextStyle(
+                  fontFamily: 'SFPro',
+                  fontSize: 14 * scaleFactor,
+                ),
+              ),
             ),
             TextButton(
               onPressed: () {
                 setState(() {
-                  members.removeWhere((member) => member['email'] == email);
+                  membersInfo.removeWhere((member) => member['uid'] == uid);
                 });
 
                 FirebaseFirestore.instance
@@ -371,57 +498,43 @@ class _InsideCategoryState extends State<InsideCategory> {
                     .collection('personalCategories')
                     .doc(widget.categoryName)
                     .update({
-                  'members': FieldValue.arrayRemove([
-                    {
-                      'completeName': name,
-                      'email': email,
-                      'instagram': instagram,
-                    }
-                  ]),
+                  'members': FieldValue.arrayRemove([uid]),
                 }).then((value) {
-                  print('Invitación eliminada de la base de datos');
+                  print('Miembro eliminado de la base de datos');
                 }).catchError((error) {
-                  print('Error al eliminar la invitación: $error');
+                  print('Error al eliminar el miembro: $error');
 
                   setState(() {
-                    members.add({
-                      'completeName': name,
-                      'email': email,
-                      'instagram': instagram,
-                    });
+                    loadMembersInfo();
                   });
                 });
 
-                FirebaseFirestore.instance
-                    .collection('users')
-                    .where('email', isEqualTo: email)
-                    .get()
-                    .then((querySnapshot) {
-                  querySnapshot.docs.forEach((doc) {
-                    doc.reference.update({
-                      'companyRelationship': FieldValue.arrayRemove([
-                        {
-                          'category': widget.categoryName,
-                          'companyUsername': widget.companyData['username'],
-                        }
-                      ]),
-                    }).then((value) {
-                      print('Invitación eliminada de la base de datos');
-                    }).catchError((error) {
-                      print('Error al eliminar la invitación: $error');
-                      setState(() {
-                        invitations.add(email);
-                      });
-                    });
-                  });
+                FirebaseFirestore.instance.collection('users').doc(uid).update({
+                  'companyRelationship': FieldValue.arrayRemove([
+                    {
+                      'category': widget.categoryName,
+                      'companyUsername': widget.companyData['username'],
+                    }
+                  ]),
+                }).then((value) {
+                  print('Relación de miembro eliminada de la base de datos');
                 }).catchError((error) {
-                  print('Error al obtener el usuario: $error');
+                  print('Error al eliminar la relación: $error');
+                  setState(() {
+                    loadMembersInfo();
+                  });
                 });
 
                 Navigator.of(context)
                     .pop(); // Cerrar el diálogo después de eliminar
               },
-              child: Text('Aceptar'),
+              child: Text(
+                'Aceptar',
+                style: TextStyle(
+                  fontFamily: 'SFPro',
+                  fontSize: 14 * scaleFactor,
+                ),
+              ),
             ),
           ],
         );

@@ -1,8 +1,9 @@
+import 'package:app_listas/styles/color.dart';
 import 'package:app_listas/styles/loading.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:unicons/unicons.dart';
 import '../login/services/auth_google.dart';
 import '../login/login.dart';
 import 'homePage/home.dart';
@@ -25,6 +26,8 @@ class _NavigationPageState extends State<NavigationPage>
   late List<Widget> _widgetOptions;
   String? _profileImageUrl;
   String _firstName = '';
+  String? _lastName = '';
+  String _email = '';
   late String uid;
   bool _isLoading = true;
   late AnimationController _controller;
@@ -43,8 +46,7 @@ class _NavigationPageState extends State<NavigationPage>
   Future<void> _loadData() async {
     await _getCurrentUserId();
     currentUser = FirebaseAuth.instance.currentUser;
-    await _getProfileImageUrl();
-    await _getFirstName(uid);
+    await _getUserData();
     _widgetOptions = <Widget>[
       HomePage(uid: uid),
       EventsPage(uid: uid),
@@ -63,60 +65,23 @@ class _NavigationPageState extends State<NavigationPage>
     }
   }
 
-  Future<void> _getProfileImageUrl() async {
+  Future<void> _getUserData() async {
     try {
-      String? imageUrl = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get()
-          .then((doc) => doc.data()?['imageUrl']);
-
-      if (imageUrl != null) {
-        _profileImageUrl = imageUrl;
-      }
-    } catch (error) {
-      print('Error obteniendo la URL de la foto de perfil: $error');
-    }
-  }
-
-  Future<void> _getFirstName(String? uid) async {
-    try {
-      DocumentSnapshot userSnapshot =
+      DocumentSnapshot userDoc =
           await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      if (userSnapshot.exists) {
-        String firstname = userSnapshot.get('name');
-        _firstName = firstname;
+      if (userDoc.exists) {
+        Map<String, dynamic>? userData =
+            userDoc.data() as Map<String, dynamic>?;
+        if (userData != null) {
+          _profileImageUrl = userData['imageUrl'] ?? '';
+          _firstName = userData['name'] ?? '';
+          _lastName = userData['lastname'] ?? '';
+          _email = FirebaseAuth.instance.currentUser?.email ?? '';
+        }
       }
     } catch (error) {
-      print('Error obteniendo el nombre del usuario: $error');
+      print('Error obteniendo los datos del usuario: $error');
     }
-  }
-
-  Future<String> _getLastName(String? uid) async {
-    String lastName = '';
-    try {
-      DocumentSnapshot userSnapshot =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      if (userSnapshot.exists) {
-        lastName = userSnapshot.get('lastname');
-      }
-    } catch (error) {
-      print('Error obteniendo el apellido del usuario: $error');
-    }
-    return lastName;
-  }
-
-  Future<String> _getEmail() async {
-    String email = '';
-    try {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        email = user.email ?? '';
-      }
-    } catch (error) {
-      print('Error obteniendo el correo electrónico del usuario: $error');
-    }
-    return email;
   }
 
   Stream<List<Map<String, dynamic>>> _getNotifications() async* {
@@ -222,65 +187,28 @@ class _NavigationPageState extends State<NavigationPage>
   }
 
   Widget _buildMainContent(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      drawer: Drawer(
-        backgroundColor: Colors.black.withOpacity(0.9),
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            UserAccountsDrawerHeader(
-              accountName: FutureBuilder<String>(
-                future: _getLastName(uid),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Text('Cargando...');
-                  }
-                  if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  }
-                  String lastName = snapshot.data ?? '';
-                  return Text(
-                      lastName.isEmpty ? _firstName : '$_firstName $lastName');
-                },
-              ),
-              accountEmail: FutureBuilder<String>(
-                future: _getEmail(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Text('Cargando...');
-                  }
-                  if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  }
-                  String email = snapshot.data ?? '';
-                  return Text(email);
-                },
-              ),
-              currentAccountPicture: _profileImageUrl != null
-                  ? GestureDetector(
-                      onTap: () async {
-                        final updatedProfileImageUrl = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ProfilePage(uid: uid),
-                          ),
-                        );
+    final double scaleFactor = MediaQuery.of(context).size.width / 375.0;
 
-                        if (updatedProfileImageUrl != null) {
-                          setState(() {
-                            _profileImageUrl = updatedProfileImageUrl;
-                          });
-                        }
-                      },
-                      child: CircleAvatar(
-                        backgroundImage: NetworkImage(_profileImageUrl!),
-                      ),
-                    )
-                  : CircleAvatar(
-                      child: IconButton(
-                        icon: Icon(Icons.question_mark),
-                        onPressed: () async {
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        drawer: Drawer(
+          backgroundColor: Colors.black.withOpacity(0.9),
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              UserAccountsDrawerHeader(
+                accountName: Text(
+                  _lastName == null ? _firstName : '$_firstName $_lastName',
+                  style: TextStyle(fontFamily: 'SFPro'),
+                ),
+                accountEmail: Text(
+                  _email,
+                  style: TextStyle(fontFamily: 'SFPro'),
+                ),
+                currentAccountPicture: _profileImageUrl != null
+                    ? GestureDetector(
+                        onTap: () async {
                           final updatedProfileImageUrl = await Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -294,290 +222,338 @@ class _NavigationPageState extends State<NavigationPage>
                             });
                           }
                         },
-                      ),
-                    ),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.9),
-              ),
-            ),
-            ListTile(
-              title: const Text(
-                'Home',
-                style: TextStyle(color: Colors.white),
-              ),
-              leading: const Icon(
-                Icons.home,
-                color: Color.fromARGB(255, 242, 187, 29),
-              ),
-              onTap: () {
-                setState(() {
-                  _selectedIndex = 0;
-                  Navigator.pop(context);
-                });
-              },
-            ),
-            ListTile(
-              title: const Text(
-                'Eventos',
-                style: TextStyle(color: Colors.white),
-              ),
-              leading: const Icon(
-                Icons.event,
-                color: Color.fromARGB(255, 242, 187, 29),
-              ),
-              onTap: () {
-                setState(() {
-                  _selectedIndex = 1;
-                  Navigator.pop(context);
-                });
-              },
-            ),
-            ListTile(
-              title: Text(
-                'Empresas',
-                style: TextStyle(color: Colors.white),
-              ),
-              leading: Icon(
-                Icons.business,
-                color: Color.fromARGB(255, 242, 187, 29),
-              ),
-              onTap: () {
-                setState(() {
-                  _selectedIndex = 2;
-                  Navigator.pop(context);
-                });
-              },
-            ),
-            StreamBuilder<int>(
-              stream: _getInvitationCount(),
-              builder: (context, snapshot) {
-                int invitationCount = snapshot.data ?? 0;
-                return ListTile(
-                  title: Text(
-                    'Invitaciones',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  leading: Stack(
-                    children: [
-                      Icon(
-                        UniconsLine.envelope_alt,
-                        color: Color.fromARGB(255, 242, 187, 29),
-                      ),
-                      if (invitationCount > 0)
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: Container(
-                            padding: EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            constraints: BoxConstraints(
-                              minWidth: 14,
-                              minHeight: 14,
-                            ),
-                            child: Text(
-                              '$invitationCount',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 8,
+                        child: CircleAvatar(
+                          backgroundImage: NetworkImage(_profileImageUrl!),
+                        ),
+                      )
+                    : CircleAvatar(
+                        child: IconButton(
+                          icon: Icon(Icons.question_mark),
+                          onPressed: () async {
+                            final updatedProfileImageUrl = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProfilePage(uid: uid),
                               ),
-                              textAlign: TextAlign.center,
+                            );
+
+                            if (updatedProfileImageUrl != null) {
+                              setState(() {
+                                _profileImageUrl = updatedProfileImageUrl;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.9),
+                ),
+              ),
+              ListTile(
+                title: const Text(
+                  'Home',
+                  style: TextStyle(color: Colors.white, fontFamily: 'SFPro'),
+                ),
+                leading: Icon(
+                  CupertinoIcons.home,
+                  color: skyBluePrimary,
+                ),
+                onTap: () {
+                  setState(() {
+                    _selectedIndex = 0;
+                    Navigator.pop(context);
+                  });
+                },
+              ),
+              ListTile(
+                title: const Text(
+                  'Eventos',
+                  style: TextStyle(color: Colors.white, fontFamily: 'SFPro'),
+                ),
+                leading: Icon(
+                  CupertinoIcons.calendar,
+                  color: skyBluePrimary,
+                ),
+                onTap: () {
+                  setState(() {
+                    _selectedIndex = 1;
+                    Navigator.pop(context);
+                  });
+                },
+              ),
+              ListTile(
+                title: Text(
+                  'Empresas',
+                  style: TextStyle(color: Colors.white, fontFamily: 'SFPro'),
+                ),
+                leading: Icon(
+                  CupertinoIcons.building_2_fill,
+                  color: skyBluePrimary,
+                ),
+                onTap: () {
+                  setState(() {
+                    _selectedIndex = 2;
+                    Navigator.pop(context);
+                  });
+                },
+              ),
+              StreamBuilder<int>(
+                stream: _getInvitationCount(),
+                builder: (context, snapshot) {
+                  int invitationCount = snapshot.data ?? 0;
+                  return ListTile(
+                    title: Text(
+                      'Invitaciones',
+                      style:
+                          TextStyle(color: Colors.white, fontFamily: 'SFPro'),
+                    ),
+                    leading: Stack(
+                      children: [
+                        Icon(
+                          CupertinoIcons.mail,
+                          color: skyBluePrimary,
+                        ),
+                        if (invitationCount > 0)
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: Container(
+                              padding: EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              constraints: BoxConstraints(
+                                minWidth: 14,
+                                minHeight: 14,
+                              ),
+                              child: Text(
+                                '$invitationCount',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 8,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => InvitationsPage(),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-            ListTile(
-              title: const Text(
-                'Cerrar Sesión',
-                style: TextStyle(color: Colors.white),
-              ),
-              leading: const Icon(
-                Icons.logout,
-                color: Color.fromARGB(255, 242, 187, 29),
-              ),
-              onTap: () async {
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Text('Cerrando sesión'),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 16),
-                          Text('Por favor, espere...'),
-                        ],
-                      ),
-                    );
-                  },
-                );
-
-                await AuthService().signOut();
-                await AuthService().signOutGoogle();
-
-                Navigator.of(context).pop();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => LoginPage(),
-                  ),
-                );
-              },
-            ),
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Colors.grey,
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Powered by',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
+                      ],
                     ),
-                  ),
-                  SizedBox(width: 5),
-                  GestureDetector(
                     onTap: () {
-                      print('Entrando a ig');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => InvitationsPage(),
+                        ),
+                      );
                     },
-                    child: Image.asset(
-                      'lib/assets/images/logo-exodo.png',
-                      height: 45,
-                      width: 60,
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
-            ),
-          ],
-        ),
-      ),
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        centerTitle: true,
-        title: Stack(
-          children: [
-            Align(
-              alignment: Alignment.center,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    'lib/assets/images/listifyIconRecortada.png',
-                    height: 30.0, // Ajusta el tamaño según tus necesidades
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Listify',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          PopupMenuButton(
-            icon: Icon(Icons.notifications),
-            itemBuilder: (context) {
-              return [
-                PopupMenuItem(
-                  child: StreamBuilder<List<Map<String, dynamic>>>(
-                    stream: _getNotifications(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator());
-                      }
-
-                      if (snapshot.hasError) {
-                        return ListTile(
-                          leading: Icon(Icons.error, color: Colors.red),
-                          title: Text('Error al cargar notificaciones'),
-                        );
-                      }
-
-                      List<Map<String, dynamic>> notifications =
-                          snapshot.data ?? [];
-
-                      if (notifications.isEmpty) {
-                        return ListTile(
-                          leading: Icon(Icons.notifications_off),
-                          title: Text('No hay notificaciones'),
-                        );
-                      } else {
-                        return Column(
+              ListTile(
+                title: const Text(
+                  'Cerrar Sesión',
+                  style: TextStyle(color: Colors.white, fontFamily: 'SFPro'),
+                ),
+                leading: Icon(
+                  CupertinoIcons.square_arrow_right,
+                  color: skyBluePrimary,
+                ),
+                onTap: () async {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text(
+                          'Cerrando sesión',
+                          style: TextStyle(fontFamily: 'SFPro'),
+                        ),
+                        content: Column(
                           mainAxisSize: MainAxisSize.min,
-                          children: notifications.map((notification) {
-                            return ListTile(
-                              leading: Icon(Icons.notifications),
-                              title: Text(notification['title']),
-                              subtitle: Text(notification['body']),
-                              onTap: () {
-                                // Handle notification tap
-                              },
-                            );
-                          }).toList(),
-                        );
-                      }
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 16),
+                            Text(
+                              'Por favor, espere...',
+                              style: TextStyle(fontFamily: 'SFPro'),
+                            ),
+                          ],
+                        ),
+                      );
                     },
+                  );
+
+                  await AuthService().signOut();
+                  await AuthService().signOutGoogle();
+
+                  Navigator.of(context).pop();
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => LoginPage(),
+                    ),
+                  );
+                },
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: Colors.grey,
+                      width: 1,
+                    ),
                   ),
                 ),
-              ];
-            },
-            offset: Offset(0, kToolbarHeight),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Powered by',
+                      style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                          fontFamily: 'SFPro'),
+                    ),
+                    SizedBox(width: 5),
+                    GestureDetector(
+                      onTap: () {
+                        print('Entrando a ig');
+                      },
+                      child: Image.asset(
+                        'lib/assets/images/logo-exodo.png',
+                        height: 45,
+                        width: 75,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-        iconTheme: IconThemeData(color: Colors.white),
-      ),
-      body: _widgetOptions.elementAt(_selectedIndex),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.black,
-        unselectedItemColor: Colors.grey,
-        selectedItemColor: Color(0xFF74BEB8),
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+        ),
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          centerTitle: true,
+          title: Stack(
+            children: [
+              Align(
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'lib/assets/images/listifyIconRecortada.png',
+                      height: 30.0, // Ajusta el tamaño según tus necesidades
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Listify',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'SFPro'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month),
-            label: 'Mis Eventos',
+          actions: [
+            PopupMenuButton(
+              icon: Icon(Icons.notifications),
+              itemBuilder: (context) {
+                return [
+                  PopupMenuItem(
+                    child: StreamBuilder<List<Map<String, dynamic>>>(
+                      stream: _getNotifications(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(child: CircularProgressIndicator());
+                        }
+
+                        if (snapshot.hasError) {
+                          return ListTile(
+                            leading: Icon(Icons.error, color: Colors.red),
+                            title: Text('Error al cargar notificaciones'),
+                          );
+                        }
+
+                        List<Map<String, dynamic>> notifications =
+                            snapshot.data ?? [];
+
+                        if (notifications.isEmpty) {
+                          return ListTile(
+                            leading: Icon(CupertinoIcons.bell_slash_fill),
+                            title: Text(
+                              'No hay notificaciones',
+                              style: TextStyle(fontFamily: 'SFPro'),
+                            ),
+                          );
+                        } else {
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: notifications.map((notification) {
+                              return ListTile(
+                                leading: Icon(CupertinoIcons.bell_fill),
+                                title: Text(
+                                  notification['title'],
+                                  style: TextStyle(fontFamily: 'SFPro'),
+                                ),
+                                subtitle: Text(
+                                  notification['body'],
+                                  style: TextStyle(fontFamily: 'SFPro'),
+                                ),
+                                onTap: () {
+                                  // Handle notification tap
+                                },
+                              );
+                            }).toList(),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ];
+              },
+              offset: Offset(0, kToolbarHeight),
+            ),
+          ],
+          iconTheme: IconThemeData(color: Colors.white),
+        ),
+        body: _widgetOptions.elementAt(_selectedIndex),
+        bottomNavigationBar: BottomNavigationBar(
+          backgroundColor: Colors.black,
+          unselectedItemColor: Colors.grey,
+          selectedItemColor: Color(0xFF74BEB8),
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          selectedLabelStyle: TextStyle(
+            fontFamily: 'SFPro',
+            fontSize: 12 * scaleFactor,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(UniconsLine.building),
-            label: 'Mis Empresas',
+          unselectedLabelStyle: TextStyle(
+            fontFamily: 'SFPro',
+            fontSize: 12 * scaleFactor,
           ),
-        ],
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.home, size: 24 * scaleFactor),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.calendar, size: 24 * scaleFactor),
+              label: 'Mis Eventos',
+            ),
+            BottomNavigationBarItem(
+              icon:
+                  Icon(CupertinoIcons.building_2_fill, size: 24 * scaleFactor),
+              label: 'Mis Empresas',
+            ),
+          ],
+        ),
       ),
     );
   }

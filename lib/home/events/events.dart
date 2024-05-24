@@ -8,9 +8,7 @@ import 'functionEvents/insideEvent.dart';
 class EventsPage extends StatefulWidget {
   final String? uid;
 
-  EventsPage({
-    this.uid,
-  });
+  EventsPage({this.uid});
 
   @override
   State<EventsPage> createState() => _EventsPageState();
@@ -136,11 +134,15 @@ class _EventsPageState extends State<EventsPage>
 
   @override
   Widget build(BuildContext context) {
+    double baseWidth = 375.0; // Base design width
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFactor = screenWidth / baseWidth;
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          _buildMainContent(context),
+          _buildMainContent(context, scaleFactor),
           if (_isLoading)
             Center(
               child: LoadingScreen(),
@@ -150,41 +152,43 @@ class _EventsPageState extends State<EventsPage>
     );
   }
 
-  Widget _buildMainContent(BuildContext context) {
+  Widget _buildMainContent(BuildContext context, double scaleFactor) {
     return Stack(
       children: [
         SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildFirstEventList(),
-              _buildSecondEventList(),
+              _buildFirstEventList(scaleFactor),
+              _buildSecondEventList(scaleFactor),
             ],
           ),
         ),
-        _buildNoEventsMessage(),
+        _buildNoEventsMessage(scaleFactor),
       ],
     );
   }
 
-  Widget _buildFirstEventList() {
+  Widget _buildFirstEventList(double scaleFactor) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('companies')
           .where('ownerUid', isEqualTo: widget.uid)
           .snapshots(),
-      builder: (context, companySnapshot) {
-        if (companySnapshot.hasError) {
-          return Text('Error al cargar los eventos');
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Text(
+            'Error al cargar los eventos',
+            style: TextStyle(fontFamily: 'SFPro', fontSize: 14 * scaleFactor),
+          );
         }
 
-        if (companySnapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
         }
 
         List<String> companyIds =
-            companySnapshot.data!.docs.map((doc) => doc.id).toList();
-
+            snapshot.data!.docs.map((doc) => doc.id).toList();
         return Column(
           children: companyIds.map((companyId) {
             return StreamBuilder<QuerySnapshot>(
@@ -196,7 +200,11 @@ class _EventsPageState extends State<EventsPage>
                       whereIn: ['Active', 'Live', 'Desactive']).snapshots(),
               builder: (context, eventSnapshot) {
                 if (eventSnapshot.hasError) {
-                  return Text('Error al cargar los eventos');
+                  return Text(
+                    'Error al cargar los eventos',
+                    style: TextStyle(
+                        fontFamily: 'SFPro', fontSize: 14 * scaleFactor),
+                  );
                 }
 
                 if (eventSnapshot.connectionState == ConnectionState.waiting) {
@@ -238,6 +246,7 @@ class _EventsPageState extends State<EventsPage>
                       companyRelationship: 'Owner',
                       isOwner: true,
                       eventState: event['eventState'],
+                      scaleFactor: scaleFactor,
                     );
                   },
                 );
@@ -249,12 +258,15 @@ class _EventsPageState extends State<EventsPage>
     );
   }
 
-  Widget _buildSecondEventList() {
+  Widget _buildSecondEventList(double scaleFactor) {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: _fetchUserEventsCompanyRelationships(widget.uid),
       builder: (context, relationshipSnapshot) {
         if (relationshipSnapshot.hasError) {
-          return Text('Error al cargar las relaciones de compañía');
+          return Text(
+            'Error al cargar las relaciones de compañía',
+            style: TextStyle(fontFamily: 'SFPro', fontSize: 14 * scaleFactor),
+          );
         } else if (relationshipSnapshot.connectionState ==
             ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
@@ -275,7 +287,10 @@ class _EventsPageState extends State<EventsPage>
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return Text(
-                        'Error al cargar los eventos de la compañía $companyUsername');
+                      'Error al cargar los eventos de la compañía $companyUsername',
+                      style: TextStyle(
+                          fontFamily: 'SFPro', fontSize: 14 * scaleFactor),
+                    );
                   }
 
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -296,7 +311,12 @@ class _EventsPageState extends State<EventsPage>
                                 whereIn: ['Active', 'Live']).snapshots(),
                         builder: (context, eventSnapshot) {
                           if (eventSnapshot.hasError) {
-                            return Text('Error al cargar los eventos');
+                            return Text(
+                              'Error al cargar los eventos',
+                              style: TextStyle(
+                                  fontFamily: 'SFPro',
+                                  fontSize: 14 * scaleFactor),
+                            );
                           }
 
                           if (eventSnapshot.connectionState ==
@@ -344,6 +364,7 @@ class _EventsPageState extends State<EventsPage>
                                 companyRelationship: companyCategory,
                                 isOwner: false,
                                 eventState: eventState,
+                                scaleFactor: scaleFactor,
                               );
                             },
                           );
@@ -383,7 +404,7 @@ class _EventsPageState extends State<EventsPage>
     }
   }
 
-  Widget _buildNoEventsMessage() {
+  Widget _buildNoEventsMessage(double scaleFactor) {
     return Visibility(
       visible: !hasEventsInFirstStream && !hasEventsInSecondStream,
       child: Center(
@@ -393,7 +414,11 @@ class _EventsPageState extends State<EventsPage>
           alignment: Alignment.center,
           child: Text(
             'No hay eventos activos en este momento',
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(
+              color: Colors.white,
+              fontFamily: 'SFPro',
+              fontSize: 16 * scaleFactor,
+            ),
           ),
         ),
       ),
@@ -411,6 +436,7 @@ class EventButton extends StatelessWidget {
   final String companyRelationship;
   final bool isOwner;
   final String? eventState;
+  final double scaleFactor;
 
   EventButton({
     required this.eventId,
@@ -422,6 +448,7 @@ class EventButton extends StatelessWidget {
     required this.companyRelationship,
     required this.isOwner,
     required this.eventState,
+    required this.scaleFactor,
   });
 
   @override
@@ -450,64 +477,82 @@ class EventButton extends StatelessWidget {
           },
           child: AnimatedContainer(
             duration: Duration(milliseconds: 300),
-            padding: EdgeInsets.all(16),
-            margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            padding: EdgeInsets.all(16 * scaleFactor),
+            margin: EdgeInsets.symmetric(
+                vertical: 8 * scaleFactor, horizontal: 16 * scaleFactor),
             decoration: BoxDecoration(
               color: Colors.blueGrey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(12 * scaleFactor),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black26,
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
+                  blurRadius: 4 * scaleFactor,
+                  offset: Offset(0, 2 * scaleFactor),
                 ),
               ],
             ),
             child: Row(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12 * scaleFactor),
                   child: Image.network(
                     eventImage,
-                    width: 50,
-                    height: 80,
+                    width: 50 * scaleFactor,
+                    height: 80 * scaleFactor,
                     fit: BoxFit.cover,
                   ),
                 ),
-                SizedBox(width: 16),
+                SizedBox(width: 16 * scaleFactor),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(eventName,
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white)),
-                      SizedBox(height: 4),
-                      Text('Inicio: $formattedStartTime',
-                          style: TextStyle(color: Colors.white70)),
-                      SizedBox(height: 2),
-                      Text('Fin: $formattedEndTime',
-                          style: TextStyle(color: Colors.white70)),
+                      Text(
+                        eventName,
+                        style: TextStyle(
+                          fontSize: 16 * scaleFactor,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontFamily: 'SFPro',
+                        ),
+                      ),
+                      SizedBox(height: 4 * scaleFactor),
+                      Text(
+                        'Inicio: $formattedStartTime',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontFamily: 'SFPro',
+                          fontSize: 14 * scaleFactor,
+                        ),
+                      ),
+                      SizedBox(height: 2 * scaleFactor),
+                      Text(
+                        'Fin: $formattedEndTime',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontFamily: 'SFPro',
+                          fontSize: 14 * scaleFactor,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                Icon(Icons.chevron_right, color: Colors.white),
+                Icon(Icons.chevron_right,
+                    color: Colors.white, size: 24 * scaleFactor),
               ],
             ),
           ),
         ),
         Positioned(
-          top: 15,
-          right: 25,
-          child: _buildEventStateIndicator(eventState),
+          top: 15 * scaleFactor,
+          right: 25 * scaleFactor,
+          child: _buildEventStateIndicator(eventState, scaleFactor),
         ),
       ],
     );
   }
 
-  Widget _buildEventStateIndicator(String? eventState) {
+  Widget _buildEventStateIndicator(String? eventState, double scaleFactor) {
     Color color;
     String text;
 
@@ -527,13 +572,15 @@ class EventButton extends StatelessWidget {
 
     return Row(
       children: [
-        _BlinkingCircle(color: color),
-        SizedBox(width: 4),
+        _BlinkingCircle(color: color, scaleFactor: scaleFactor),
+        SizedBox(width: 4 * scaleFactor),
         Text(
           text,
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.bold,
+            fontFamily: 'SFPro',
+            fontSize: 14 * scaleFactor,
           ),
         ),
       ],
@@ -543,7 +590,7 @@ class EventButton extends StatelessWidget {
   Future<bool> _checkPermission(String companyId, String category,
       String eventState, bool isOwner) async {
     try {
-      if (isOwner == true) {
+      if (isOwner) {
         return true;
       } else {
         DocumentSnapshot categorySnapshot = await FirebaseFirestore.instance
@@ -559,11 +606,9 @@ class EventButton extends StatelessWidget {
 
           if (categoryData['permissions'].contains('Escribir') &&
               eventState == 'Active') {
-            print('Podes escribir');
             return true;
           } else if (categoryData['permissions'].contains('Leer') &&
               eventState == 'Live') {
-            print('Podes Leer');
             return true;
           } else {
             return false;
@@ -581,8 +626,9 @@ class EventButton extends StatelessWidget {
 
 class _BlinkingCircle extends StatefulWidget {
   final Color color;
+  final double scaleFactor;
 
-  _BlinkingCircle({required this.color});
+  _BlinkingCircle({required this.color, required this.scaleFactor});
 
   @override
   __BlinkingCircleState createState() => __BlinkingCircleState();
@@ -612,8 +658,8 @@ class __BlinkingCircleState extends State<_BlinkingCircle>
     return FadeTransition(
       opacity: _controller,
       child: Container(
-        width: 12,
-        height: 12,
+        width: 12 * widget.scaleFactor,
+        height: 12 * widget.scaleFactor,
         decoration: BoxDecoration(
           color: widget.color,
           shape: BoxShape.circle,

@@ -1,6 +1,5 @@
 import 'package:app_listas/home/company/functionsCompany/functionsInsideCompany/functionsEvents/eventsTemplates/eventsTemplates.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../../../styles/button.dart';
 import 'package:unicons/unicons.dart';
 import 'functionsEvents/step1AddEvent.dart';
@@ -20,14 +19,20 @@ class EventosPage extends StatefulWidget {
 class _EventosPageState extends State<EventosPage> {
   @override
   Widget build(BuildContext context) {
+    double baseWidth = 375.0;
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFactor = screenWidth / baseWidth;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
           'Eventos de ${widget.companyData['name']}',
-          style: GoogleFonts.roboto(
+          style: TextStyle(
             color: Colors.white,
+            fontFamily: 'SFPro',
+            fontSize: 18 * scaleFactor,
           ),
         ),
         iconTheme: IconThemeData(
@@ -40,12 +45,11 @@ class _EventosPageState extends State<EventosPage> {
             children: [
               // Botones de acciones dentro de la empresa
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                padding: EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade700
-                        .withOpacity(0.4), // Color de fondo del Container
-                    borderRadius: BorderRadius.circular(10), // Radio de borde
+                    color: Colors.grey.shade700.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
                   ),
                   child: Column(
                     children: [
@@ -82,39 +86,36 @@ class _EventosPageState extends State<EventosPage> {
                         },
                         style: buttonCompany,
                         child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.start, // Alineación al inicio
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color: Colors
-                                    .green, // Color de fondo del contenedor
-                                borderRadius: BorderRadius.circular(
-                                    8), // Opcional: radio de borde para el contenedor
+                                color: Colors.green,
+                                borderRadius:
+                                    BorderRadius.circular(8 * scaleFactor),
                               ),
-                              child: const Padding(
-                                padding: EdgeInsets.all(8.0),
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0 * scaleFactor),
                                 child: Icon(
                                   UniconsLine.calendar_alt,
-                                  size: 20, // Tamaño grande
+                                  size: 20 * scaleFactor,
                                   color: Colors.white,
                                 ),
                               ),
                             ),
-                            SizedBox(
-                              width: 15,
-                            ),
+                            SizedBox(width: 15 * scaleFactor),
                             Text(
                               'Crear nuevo evento',
-                              style: GoogleFonts.roboto(
+                              style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
+                                fontSize: 18 * scaleFactor,
+                                fontFamily: 'SFPro',
                               ),
                             ),
                             Spacer(),
                             Icon(
                               Icons.add,
-                              size: 20, // Tamaño grande
+                              size: 20 * scaleFactor,
                               color: Colors.grey.shade600,
                             ),
                           ],
@@ -126,83 +127,77 @@ class _EventosPageState extends State<EventosPage> {
                         onPressed: () {},
                         style: buttonCompany,
                         child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.start, // Alineación al inicio
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color: Colors
-                                    .blue, // Color de fondo del contenedor
-                                borderRadius: BorderRadius.circular(
-                                    8), // Opcional: radio de borde para el contenedor
+                                color: Colors.blue,
+                                borderRadius:
+                                    BorderRadius.circular(8 * scaleFactor),
                               ),
-                              child: const Padding(
-                                padding: EdgeInsets.all(8.0),
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0 * scaleFactor),
                                 child: Icon(
                                   Icons.event_repeat,
-                                  size: 20, // Tamaño grande
+                                  size: 20 * scaleFactor,
                                   color: Colors.white,
                                 ),
                               ),
                             ),
-                            SizedBox(
-                              width: 15,
-                            ),
+                            SizedBox(width: 15 * scaleFactor),
                             Text(
                               'Gestionar Eventos creados',
-                              style: GoogleFonts.roboto(
+                              style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
+                                fontSize: 18 * scaleFactor,
+                                fontFamily: 'SFPro',
                               ),
                             ),
                             Spacer(),
                             Icon(
                               UniconsLine.angle_right_b,
-                              size: 20, // Tamaño grande
+                              size: 20 * scaleFactor,
                               color: Colors.grey.shade600,
                             ),
                           ],
                         ),
                       ),
 
-                      //
+                      // Editar Personal
                       ElevatedButton(
                         onPressed: () {},
                         style: buttonCompany,
                         child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.start, // Alineación al inicio
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color: Colors
-                                    .blue, // Color de fondo del contenedor
-                                borderRadius: BorderRadius.circular(
-                                    8), // Opcional: radio de borde para el contenedor
+                                color: Colors.blue,
+                                borderRadius:
+                                    BorderRadius.circular(8 * scaleFactor),
                               ),
-                              child: const Padding(
-                                padding: EdgeInsets.all(8.0),
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0 * scaleFactor),
                                 child: Icon(
                                   UniconsSolid.user_arrows,
-                                  size: 20, // Tamaño grande
+                                  size: 20 * scaleFactor,
                                   color: Colors.white,
                                 ),
                               ),
                             ),
-                            SizedBox(
-                              width: 15,
-                            ),
+                            SizedBox(width: 15 * scaleFactor),
                             Text(
                               'Editar Personal',
-                              style: GoogleFonts.roboto(
+                              style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
+                                fontSize: 18 * scaleFactor,
+                                fontFamily: 'SFPro',
                               ),
                             ),
                             Spacer(),
                             Icon(
                               UniconsLine.angle_right_b,
-                              size: 20, // Tamaño grande
+                              size: 20 * scaleFactor,
                               color: Colors.grey.shade600,
                             ),
                           ],
@@ -213,61 +208,58 @@ class _EventosPageState extends State<EventosPage> {
                 ),
               ),
 
-              SizedBox(height: 20),
+              SizedBox(height: 20 * scaleFactor),
 
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                padding: EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade700
-                        .withOpacity(0.4), // Color de fondo del Container
-                    borderRadius: BorderRadius.circular(10), // Radio de borde
+                    color: Colors.grey.shade700.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
                   ),
                   child: Column(
                     children: [
-                      //
+                      // Historial de Eventos
                       ElevatedButton(
                         onPressed: () {},
                         style: buttonCompany,
                         child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.start, // Alineación al inicio
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color: Colors
-                                    .blue, // Color de fondo del contenedor
-                                borderRadius: BorderRadius.circular(
-                                    8), // Opcional: radio de borde para el contenedor
+                                color: Colors.blue,
+                                borderRadius:
+                                    BorderRadius.circular(8 * scaleFactor),
                               ),
-                              child: const Padding(
-                                padding: EdgeInsets.all(8.0),
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0 * scaleFactor),
                                 child: Icon(
                                   Icons.event_note,
-                                  size: 20, // Tamaño grande
+                                  size: 20 * scaleFactor,
                                   color: Colors.white,
                                 ),
                               ),
                             ),
-                            SizedBox(
-                              width: 15,
-                            ),
+                            SizedBox(width: 15 * scaleFactor),
                             Text(
                               'Historial de Eventos',
-                              style: GoogleFonts.roboto(
+                              style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
+                                fontSize: 18 * scaleFactor,
+                                fontFamily: 'SFPro',
                               ),
                             ),
                             Spacer(),
                             Icon(
                               UniconsLine.angle_right_b,
-                              size: 20, // Tamaño grande
+                              size: 20 * scaleFactor,
                               color: Colors.grey.shade600,
                             ),
                           ],
                         ),
                       ),
+                      // Plantillas de Eventos
                       ElevatedButton(
                         onPressed: () {
                           Navigator.push(
@@ -281,39 +273,36 @@ class _EventosPageState extends State<EventosPage> {
                         },
                         style: buttonCompany,
                         child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.start, // Alineación al inicio
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color: Colors
-                                    .blue, // Color de fondo del contenedor
-                                borderRadius: BorderRadius.circular(
-                                    8), // Opcional: radio de borde para el contenedor
+                                color: Colors.blue,
+                                borderRadius:
+                                    BorderRadius.circular(8 * scaleFactor),
                               ),
-                              child: const Padding(
-                                padding: EdgeInsets.all(8.0),
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0 * scaleFactor),
                                 child: Icon(
                                   UniconsSolid.user_arrows,
-                                  size: 20, // Tamaño grande
+                                  size: 20 * scaleFactor,
                                   color: Colors.white,
                                 ),
                               ),
                             ),
-                            SizedBox(
-                              width: 15,
-                            ),
+                            SizedBox(width: 15 * scaleFactor),
                             Text(
                               'Plantillas de Eventos',
-                              style: GoogleFonts.roboto(
+                              style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
+                                fontSize: 18 * scaleFactor,
+                                fontFamily: 'SFPro',
                               ),
                             ),
                             Spacer(),
                             Icon(
                               UniconsLine.angle_right_b,
-                              size: 20, // Tamaño grande
+                              size: 20 * scaleFactor,
                               color: Colors.grey.shade600,
                             ),
                           ],
@@ -323,9 +312,7 @@ class _EventosPageState extends State<EventosPage> {
                   ),
                 ),
               ),
-              SizedBox(
-                height: 20,
-              ),
+              SizedBox(height: 20 * scaleFactor),
             ],
           ),
         ),

@@ -1,3 +1,5 @@
+import 'package:app_listas/styles/color.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -66,9 +68,21 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('Profile'),
+        title: Text(
+          'Profile',
+          style: TextStyle(fontFamily: 'SFPro', color: Colors.white),
+        ),
         backgroundColor: Colors.black,
         centerTitle: true,
+        leading: IconButton(
+          icon: Icon(
+            CupertinoIcons.left_chevron,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
@@ -89,6 +103,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       color: Colors.white,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      fontFamily: 'SFPro',
                     ),
                   ),
                   SizedBox(height: 8),
@@ -97,29 +112,30 @@ class _ProfilePageState extends State<ProfilePage> {
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 16,
+                      fontFamily: 'SFPro',
                     ),
                   ),
                   SizedBox(height: 16),
-                  ElevatedButton(
+                  CupertinoButton(
                     onPressed: _navigateToEditProfile,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.yellow, // background color
-                      foregroundColor: Colors.black, // text color
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    color: skyBluePrimary,
+                    child: Text(
+                      'Editar Perfil',
+                      style:
+                          TextStyle(fontFamily: 'SFPro', color: Colors.black),
                     ),
-                    child: Text('Edit Profile'),
                   ),
                   SizedBox(height: 16),
                   Divider(color: Colors.grey),
-                  _buildListTile(Icons.settings, 'Settings', context),
-                  _buildListTile(Icons.credit_card, 'Billing Details', context),
-                  _buildListTile(Icons.group, 'User Management', context),
-                  _buildListTile(Icons.info, 'Information', context),
-                  _buildListTile(Icons.logout, 'Logout', context),
+                  _buildListTile(CupertinoIcons.settings, 'Settings', context),
+                  _buildListTile(
+                      CupertinoIcons.creditcard, 'Billing Details', context),
+                  _buildListTile(
+                      CupertinoIcons.group, 'User Management', context),
+                  _buildListTile(
+                      CupertinoIcons.info_circle_fill, 'Information', context),
+                  _buildListTile(CupertinoIcons.square_arrow_right,
+                      'Cerrar Sesion', context),
                 ],
               ),
             ),
@@ -128,10 +144,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildListTile(IconData icon, String title, BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: Colors.yellow),
+      leading: Icon(icon, color: skyBluePrimary),
       title: Text(
         title,
-        style: TextStyle(color: Colors.white),
+        style: TextStyle(
+          color: Colors.white,
+          fontFamily: 'SFPro',
+        ),
       ),
       trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
       onTap: () {

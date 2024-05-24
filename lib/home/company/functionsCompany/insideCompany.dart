@@ -1,7 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:unicons/unicons.dart';
 import '../../../styles/button.dart';
 import 'functionsInsideCompany/gestionPersonal.dart';
@@ -17,6 +15,10 @@ class CompanyWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double baseWidth = 375.0; // Base design width
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFactor = screenWidth / baseWidth;
+
     String companyName = companyData['name'] ?? '';
     String companyImageUrl = companyData['imageUrl'] ?? '';
 
@@ -28,48 +30,60 @@ class CompanyWidget extends StatelessWidget {
           companyName,
           style: TextStyle(
             color: Colors.white,
+            fontFamily: 'SFPro',
+            fontSize: 18 * scaleFactor,
           ),
         ),
         iconTheme: IconThemeData(
-          color: Colors.white, // Color blanco para los iconos
+          color: Colors.white,
+        ),
+        leading: IconButton(
+          icon: Icon(
+            CupertinoIcons.left_chevron,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
         ),
       ),
       body: SingleChildScrollView(
         child: Center(
           child: Column(
             children: [
-              SizedBox(height: 20),
+              SizedBox(height: 20 * scaleFactor),
               if (companyImageUrl.isNotEmpty)
                 CircleAvatar(
                   backgroundImage: NetworkImage(companyImageUrl),
-                  radius: 80,
+                  radius: 80 * scaleFactor,
                 ),
-              SizedBox(height: 20),
+              SizedBox(height: 20 * scaleFactor),
               Text(
                 '$companyName',
                 style: TextStyle(
-                  fontSize: 25,
+                  fontSize: 25 * scaleFactor,
                   color: Colors.white,
+                  fontFamily: 'SFPro',
                 ),
               ),
-              SizedBox(height: 10),
+              SizedBox(height: 10 * scaleFactor),
               Text(
                 '@${companyData['username'] ?? ''}',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 16 * scaleFactor,
                   color: Colors.white,
+                  fontFamily: 'SFPro',
                 ),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 20 * scaleFactor),
 
               // Botones de acciones dentro de la empresa
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                padding: EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade700
-                        .withOpacity(0.4), // Color de fondo del Container
-                    borderRadius: BorderRadius.circular(10), // Radio de borde
+                    color: Colors.grey.shade700.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
                   ),
                   child: Column(
                     children: [
@@ -88,10 +102,8 @@ class CompanyWidget extends StatelessWidget {
                                   secondaryAnimation, child) {
                                 return SlideTransition(
                                   position: Tween<Offset>(
-                                    begin: const Offset(1,
-                                        0), // Posición inicial (fuera de la pantalla a la derecha)
-                                    end: Offset
-                                        .zero, // Posición final (centro de la pantalla)
+                                    begin: const Offset(1, 0),
+                                    end: Offset.zero,
                                   ).animate(animation),
                                   child: child,
                                 );
@@ -101,39 +113,38 @@ class CompanyWidget extends StatelessWidget {
                         },
                         style: buttonCompany,
                         child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.start, // Alineación al inicio
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color: Colors
-                                    .green, // Color de fondo del contenedor
-                                borderRadius: BorderRadius.circular(
-                                    8), // Opcional: radio de borde para el contenedor
+                                color: Colors.green,
+                                borderRadius:
+                                    BorderRadius.circular(8 * scaleFactor),
                               ),
-                              child: const Padding(
-                                padding: EdgeInsets.all(8.0),
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0 * scaleFactor),
                                 child: Icon(
                                   UniconsSolid.calender,
-                                  size: 20, // Tamaño grande
+                                  size: 20 * scaleFactor,
                                   color: Colors.white,
                                 ),
                               ),
                             ),
                             SizedBox(
-                              width: 15,
+                              width: 15 * scaleFactor,
                             ),
                             Text(
-                              'Eventos de ${companyData['name'] ?? ''}',
-                              style: GoogleFonts.roboto(
+                              'Gestionar Eventos',
+                              style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
+                                fontSize: 18 * scaleFactor,
+                                fontFamily: 'SFPro',
                               ),
                             ),
                             Spacer(),
                             Icon(
                               UniconsLine.angle_right_b,
-                              size: 20, // Tamaño grande
+                              size: 20 * scaleFactor,
                               color: Colors.grey.shade600,
                             ),
                           ],
@@ -155,10 +166,8 @@ class CompanyWidget extends StatelessWidget {
                                   secondaryAnimation, child) {
                                 return SlideTransition(
                                   position: Tween<Offset>(
-                                    begin: const Offset(1,
-                                        0), // Posición inicial (fuera de la pantalla a la derecha)
-                                    end: Offset
-                                        .zero, // Posición final (centro de la pantalla)
+                                    begin: const Offset(1, 0),
+                                    end: Offset.zero,
                                   ).animate(animation),
                                   child: child,
                                 );
@@ -168,83 +177,81 @@ class CompanyWidget extends StatelessWidget {
                         },
                         style: buttonCompany,
                         child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.start, // Alineación al inicio
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color: Colors
-                                    .blue, // Color de fondo del contenedor
-                                borderRadius: BorderRadius.circular(
-                                    8), // Opcional: radio de borde para el contenedor
+                                color: Colors.blue,
+                                borderRadius:
+                                    BorderRadius.circular(8 * scaleFactor),
                               ),
-                              child: const Padding(
-                                padding: EdgeInsets.all(8.0),
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0 * scaleFactor),
                                 child: Icon(
                                   UniconsSolid.user_arrows,
-                                  size: 20, // Tamaño grande
+                                  size: 20 * scaleFactor,
                                   color: Colors.white,
                                 ),
                               ),
                             ),
                             SizedBox(
-                              width: 15,
+                              width: 15 * scaleFactor,
                             ),
                             Text(
                               'Gestionar Personal',
-                              style: GoogleFonts.roboto(
+                              style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
+                                fontSize: 18 * scaleFactor,
+                                fontFamily: 'SFPro',
                               ),
                             ),
                             Spacer(),
                             Icon(
                               UniconsLine.angle_right_b,
-                              size: 20, // Tamaño grande
+                              size: 20 * scaleFactor,
                               color: Colors.grey.shade600,
                             ),
                           ],
                         ),
                       ),
 
-                      //
+                      // Editar Personal
                       ElevatedButton(
                         onPressed: () {},
                         style: buttonCompany,
                         child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.start, // Alineación al inicio
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color: Colors
-                                    .blue, // Color de fondo del contenedor
-                                borderRadius: BorderRadius.circular(
-                                    8), // Opcional: radio de borde para el contenedor
+                                color: Colors.blue,
+                                borderRadius:
+                                    BorderRadius.circular(8 * scaleFactor),
                               ),
-                              child: const Padding(
-                                padding: EdgeInsets.all(8.0),
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0 * scaleFactor),
                                 child: Icon(
                                   UniconsSolid.user_arrows,
-                                  size: 20, // Tamaño grande
+                                  size: 20 * scaleFactor,
                                   color: Colors.white,
                                 ),
                               ),
                             ),
                             SizedBox(
-                              width: 15,
+                              width: 15 * scaleFactor,
                             ),
                             Text(
                               'Editar Personal',
-                              style: GoogleFonts.roboto(
+                              style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
+                                fontSize: 18 * scaleFactor,
+                                fontFamily: 'SFPro',
                               ),
                             ),
                             Spacer(),
                             Icon(
                               UniconsLine.angle_right_b,
-                              size: 20, // Tamaño grande
+                              size: 20 * scaleFactor,
                               color: Colors.grey.shade600,
                             ),
                           ],
@@ -255,56 +262,95 @@ class CompanyWidget extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(height: 20),
+              SizedBox(height: 20 * scaleFactor),
 
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                padding: EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade700
-                        .withOpacity(0.4), // Color de fondo del Container
-                    borderRadius: BorderRadius.circular(10), // Radio de borde
+                    color: Colors.grey.shade700.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
                   ),
                   child: Column(
                     children: [
-                      //
                       ElevatedButton(
                         onPressed: () {},
                         style: buttonCompany,
                         child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.start, // Alineación al inicio
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color:
-                                    Colors.red, // Color de fondo del contenedor
-                                borderRadius: BorderRadius.circular(
-                                    8), // Opcional: radio de borde para el contenedor
+                                color: Colors.yellow,
+                                borderRadius:
+                                    BorderRadius.circular(8 * scaleFactor),
                               ),
-                              child: const Padding(
-                                padding: EdgeInsets.all(8.0),
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0 * scaleFactor),
+                                child: Icon(
+                                  CupertinoIcons.pen,
+                                  size: 20 * scaleFactor,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 15 * scaleFactor,
+                            ),
+                            Text(
+                              'Editar Empresa',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18 * scaleFactor,
+                                fontFamily: 'SFPro',
+                              ),
+                            ),
+                            Spacer(),
+                            Icon(
+                              UniconsLine.angle_right_b,
+                              size: 20 * scaleFactor,
+                              color: Colors.grey.shade600,
+                            ),
+                          ],
+                        ),
+                      ),
+                      //Eliminar compania
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: buttonCompany,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius:
+                                    BorderRadius.circular(8 * scaleFactor),
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0 * scaleFactor),
                                 child: Icon(
                                   UniconsLine.trash,
-                                  size: 20, // Tamaño grande
+                                  size: 20 * scaleFactor,
                                   color: Colors.white,
                                 ),
                               ),
                             ),
                             SizedBox(
-                              width: 15,
+                              width: 15 * scaleFactor,
                             ),
                             Text(
-                              'Eliminar Compañia',
-                              style: GoogleFonts.roboto(
+                              'Eliminar Empresa',
+                              style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
+                                fontSize: 18 * scaleFactor,
+                                fontFamily: 'SFPro',
                               ),
                             ),
                             Spacer(),
                             Icon(
                               UniconsLine.angle_right_b,
-                              size: 20, // Tamaño grande
+                              size: 20 * scaleFactor,
                               color: Colors.grey.shade600,
                             ),
                           ],
@@ -314,9 +360,7 @@ class CompanyWidget extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(
-                height: 20,
-              ),
+              SizedBox(height: 20 * scaleFactor),
             ],
           ),
         ),

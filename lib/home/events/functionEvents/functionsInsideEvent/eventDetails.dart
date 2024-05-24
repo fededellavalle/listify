@@ -1,3 +1,5 @@
+import 'package:app_listas/home/events/functionEvents/functionsInsideEvent/statisticsPage.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -44,26 +46,60 @@ class _EventDetailsState extends State<EventDetails> {
 
   String formatTimestamp(Timestamp timestamp) {
     var date = timestamp.toDate();
-    var formattedDate = DateFormat('dd-MM-yyyy hh:mm').format(date);
+    var formattedDate = DateFormat('dd-MM-yyyy HH:mm').format(date);
     return formattedDate;
   }
 
   @override
   Widget build(BuildContext context) {
+    double baseWidth = 375.0; // Base design width
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFactor = screenWidth / baseWidth;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
           '${widget.list['listName']}',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+            color: Colors.white,
+            fontFamily: 'SFPro',
+            fontSize: 18 * scaleFactor,
+          ),
         ),
         iconTheme: IconThemeData(
           color: Colors.white,
         ),
+        leading: IconButton(
+          icon: Icon(
+            CupertinoIcons.left_chevron,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.bar_chart),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => StatisticsPage(
+                    eventId: widget.eventId,
+                    companyId: widget.companyId,
+                    list: widget.list,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+      body: Padding(
+        padding: EdgeInsets.all(16 * scaleFactor),
         child: Column(
           children: [
             Row(
@@ -71,154 +107,178 @@ class _EventDetailsState extends State<EventDetails> {
                 Icon(
                   Icons.person,
                   color: Colors.grey,
-                  size: 20,
+                  size: 20 * scaleFactor,
                 ),
-                SizedBox(width: 5),
+                SizedBox(width: 5 * scaleFactor),
                 Text(
                   'Listas de ${widget.list['listName']}',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: 16 * scaleFactor,
+                    fontFamily: 'SFPro',
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('companies')
-                  .doc(widget.companyId)
-                  .collection('myEvents')
-                  .doc(widget.eventId)
-                  .collection('eventLists')
-                  .doc(widget.list['listName'])
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
+            Expanded(
+              child: StreamBuilder<DocumentSnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('companies')
+                    .doc(widget.companyId)
+                    .collection('myEvents')
+                    .doc(widget.eventId)
+                    .collection('eventLists')
+                    .doc(widget.list['listName'])
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
 
-                var eventListData =
-                    snapshot.data!.data() as Map<String, dynamic>?;
-                if (eventListData == null ||
-                    !eventListData.containsKey('membersList')) {
-                  return Text(
-                    'No hay miembros en esta lista.',
-                    style: TextStyle(color: Colors.white),
-                  );
-                }
+                  var eventListData =
+                      snapshot.data!.data() as Map<String, dynamic>?;
+                  if (eventListData == null ||
+                      !eventListData.containsKey('membersList')) {
+                    return Text(
+                      'No hay miembros en esta lista.',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'SFPro',
+                        fontSize: 16 * scaleFactor,
+                      ),
+                    );
+                  }
 
-                var membersList =
-                    eventListData['membersList'] as Map<String, dynamic>;
+                  var membersList = eventListData['membersList'];
 
-                // Collect all member IDs to fetch their names
-                List<String> memberIds = membersList.keys.toList();
+                  if (membersList is List) {
+                    return Text(
+                      'No hay miembros en esta lista.',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'SFPro',
+                        fontSize: 16 * scaleFactor,
+                      ),
+                    );
+                  }
 
-                // Calculate statistics
-                num localTotalMembers = 0;
-                num localTotalAssisted = 0;
+                  // Ensure membersList is a Map
+                  membersList = membersList as Map<String, dynamic>;
 
-                for (var memberGroup in membersList.values) {
-                  var members = memberGroup['members'];
-                  localTotalMembers += members.length;
-                  localTotalAssisted += members
-                      .where((member) => member['assisted'] == true)
-                      .length;
-                }
+                  // Collect all member IDs to fetch their names
+                  List<String> memberIds = membersList.keys.toList();
 
-                return FutureBuilder<Map<String, String>>(
-                  future: fetchMemberNames(memberIds),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    }
+                  return FutureBuilder<Map<String, String>>(
+                    future: fetchMemberNames(memberIds),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
 
-                    Map<String, String> memberNames = snapshot.data!;
+                      Map<String, String> memberNames = snapshot.data!;
 
-                    return Column(
-                      children: [
-                        ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: membersList.length,
-                          itemBuilder: (context, index) {
-                            String memberId = membersList.keys.elementAt(index);
-                            var memberGroup = membersList[memberId];
-                            var members = memberGroup['members'];
+                      return ListView.builder(
+                        itemCount: membersList.length,
+                        itemBuilder: (context, index) {
+                          String memberId = membersList.keys.elementAt(index);
+                          var memberGroup = membersList[memberId];
+                          var members = memberGroup['members'];
 
-                            String memberName =
-                                memberNames[memberId] ?? 'Usuario: $memberId';
+                          String memberName =
+                              memberNames[memberId] ?? 'Usuario: $memberId';
 
-                            return ExpansionTile(
-                              title: Text(
-                                'Lista de $memberName',
-                                style: TextStyle(color: Colors.white),
-                              ),
+                          int registeredCount = members.length;
+                          int assistedCount = members
+                              .where((member) => member['assisted'] == true)
+                              .length;
+
+                          return ExpansionTile(
+                            title: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                for (var member in members)
-                                  ListTile(
-                                    title: Text(
-                                      '${member['name']}',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                    subtitle: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          member['assisted']
-                                              ? 'Asistió'
-                                              : 'No asistió',
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                        if (member['assisted'])
-                                          Text(
-                                            'Hora de asistencia: ${formatTimestamp(member['assistedAt'])}',
-                                            style:
-                                                TextStyle(color: Colors.white),
-                                          ),
-                                      ],
-                                    ),
-                                    trailing: IconButton(
-                                      icon: Icon(
-                                        Icons.clear,
-                                        color: Colors.red,
-                                      ),
-                                      onPressed: () {
-                                        setState(() {
-                                          members.remove(member);
-                                          if (members.isEmpty) {
-                                            membersList.remove(memberId);
-                                          }
-                                        });
-                                      },
+                                Text(
+                                  'Lista de $memberName',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontFamily: 'SFPro',
+                                    fontSize: 16 * scaleFactor,
+                                  ),
+                                ),
+                                Text(
+                                  'Registrados: $registeredCount, Asistidos: $assistedCount',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontFamily: 'SFPro',
+                                    fontSize: 14 * scaleFactor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            children: [
+                              for (var member in members)
+                                ListTile(
+                                  title: Text(
+                                    '${member['name']}',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontFamily: 'SFPro',
+                                      fontSize: 14 * scaleFactor,
                                     ),
                                   ),
-                              ],
-                            );
-                          },
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'Estadísticas:',
-                          style: TextStyle(color: Colors.white, fontSize: 16),
-                        ),
-                        Text(
-                          'Total de personas registradas: $localTotalMembers',
-                          style: TextStyle(color: Colors.white, fontSize: 16),
-                        ),
-                        Text(
-                          'Total de personas asistidas: $localTotalAssisted',
-                          style: TextStyle(color: Colors.white, fontSize: 16),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        member['assisted']
+                                            ? 'Asistió'
+                                            : 'No asistió',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontFamily: 'SFPro',
+                                          fontSize: 12 * scaleFactor,
+                                        ),
+                                      ),
+                                      if (member['assisted'])
+                                        Text(
+                                          'Hora de asistencia: ${formatTimestamp(member['assistedAt'])}',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontFamily: 'SFPro',
+                                            fontSize: 12 * scaleFactor,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  trailing: IconButton(
+                                    icon: Icon(
+                                      Icons.clear,
+                                      color: Colors.red,
+                                      size: 20 * scaleFactor,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        members.remove(member);
+                                        if (members.isEmpty) {
+                                          membersList.remove(memberId);
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),

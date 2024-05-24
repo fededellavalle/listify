@@ -1,4 +1,6 @@
 import 'package:app_listas/styles/button.dart';
+import 'package:app_listas/styles/color.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
@@ -6,7 +8,6 @@ import 'step3AddEvent.dart';
 import 'list_item.dart';
 import 'dart:io';
 
-// ignore: must_be_immutable
 class Step2AddEvent extends StatefulWidget {
   final String name;
   final double ticketValue;
@@ -110,27 +111,6 @@ class _Step2AddEventState extends State<Step2AddEvent> {
     _eventStartDate = widget.startDateTime ?? DateTime.now();
     _eventEndDate = widget.endDateTime ?? DateTime.now();
 
-    // Separar fecha y hora del inicio del evento
-    int startYear = _eventStartDate.year;
-    int startMonth = _eventStartDate.month;
-    int startDay = _eventStartDate.day;
-    int startHour = _eventStartDate.hour;
-    int startMinute = _eventStartDate.minute;
-    int startSecond = _eventStartDate.second;
-
-    // Separar fecha y hora del final del evento
-    int endYear = _eventEndDate.year;
-    int endMonth = _eventEndDate.month;
-    int endDay = _eventEndDate.day;
-    int endHour = _eventEndDate.hour;
-    int endMinute = _eventEndDate.minute;
-    int endSecond = _eventEndDate.second;
-
-    print(
-        'Inicio del evento: $startYear-$startMonth-$startDay $startHour:$startMinute:$startSecond');
-    print(
-        'Fin del evento: $endYear-$endMonth-$endDay $endHour:$endMinute:$endSecond');
-
     _availableDates = _generateAvailableTimeSlots();
   }
 
@@ -138,7 +118,6 @@ class _Step2AddEventState extends State<Step2AddEvent> {
     List<DateTime> timeSlots = [];
     int bandera = 0;
 
-    // Obtener la hora de inicio y la hora de finalización del evento
     int startHour = _eventStartDate.hour;
     int startMinute = _eventStartDate.minute;
     int endHour = _eventEndDate.hour;
@@ -172,21 +151,20 @@ class _Step2AddEventState extends State<Step2AddEvent> {
     } else if (endMinute > 45 && endMinute <= 59) {
       endMinute = 45;
     }
-    // Calcular el número de intervalos de 15 minutos entre la hora de inicio y la hora de finalización
+
     int totalMinutes =
         (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
     int numSlots = (totalMinutes / 15).ceil();
 
     startMinute += 15;
 
-    // Generar los intervalos de tiempo de 15 minutos
     for (int i = 0; i < numSlots; i++) {
       int minutesToAdd = i * 15;
       int slotHour = startHour + (startMinute + minutesToAdd) ~/ 60;
       int slotMinute = (startMinute + minutesToAdd) % 60;
 
       if (_eventStartDate.day != _eventEndDate.day) {
-        if (slotHour == 00) {
+        if (slotHour == 0) {
           bandera = 1;
         }
         if (bandera == 1) {
@@ -243,23 +221,28 @@ class _Step2AddEventState extends State<Step2AddEvent> {
 
   @override
   Widget build(BuildContext context) {
+    double baseWidth = 375.0;
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFactor = screenWidth / baseWidth;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
-          "Paso 2: Configuracion de Listas",
+          "Paso 2: Configuración de Listas",
           style: TextStyle(
             color: Colors.white,
-            fontSize: 20,
+            fontSize: 20 * scaleFactor,
+            fontFamily: 'SFPro',
           ),
         ),
         iconTheme: IconThemeData(
-          color: Colors.white, // Color blanco para los iconos
+          color: Colors.white,
         ),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(16 * scaleFactor),
         child: Form(
           key: _formKey,
           child: Column(
@@ -270,27 +253,28 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                 decoration: InputDecoration(
                   labelText: 'Nombre de la Lista',
                   labelStyle: TextStyle(
-                    color: Color.fromARGB(255, 242, 187, 29),
+                    color: white,
+                    fontFamily: 'SFPro',
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
                     borderSide: BorderSide(
-                      color: Color.fromARGB(255, 242, 187, 29),
+                      color: skyBluePrimary,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
                     borderSide: BorderSide(
-                      color: Color.fromARGB(255, 158, 128, 36),
+                      color: skyBlueSecondary,
                     ),
                   ),
                 ),
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: Colors.white, fontFamily: 'SFPro'),
               ),
-              SizedBox(height: 16),
+              SizedBox(height: 16 * scaleFactor),
               DropdownButtonFormField<String>(
                 value: _selectedListType,
                 items: _listTypes.map((String type) {
@@ -300,6 +284,7 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                       type,
                       style: TextStyle(
                         color: Colors.white,
+                        fontFamily: 'SFPro',
                       ),
                     ),
                   );
@@ -316,90 +301,98 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                 decoration: InputDecoration(
                   labelText: 'Tipo de Lista',
                   labelStyle: TextStyle(
-                    color: Color.fromARGB(255, 242, 187, 29),
+                    color: white,
+                    fontFamily: 'SFPro',
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
                     borderSide: BorderSide(
-                      color: Color.fromARGB(255, 242, 187, 29),
+                      color: skyBluePrimary,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
                     borderSide: BorderSide(
-                      color: Color.fromARGB(255, 158, 128, 36),
+                      color: skyBlueSecondary,
                     ),
                   ),
                 ),
               ),
-              SizedBox(height: 8),
+              SizedBox(height: 8 * scaleFactor),
               Row(
                 children: [
                   Icon(
-                    Icons.info_outline, // El icono que deseas usar
+                    Icons.info_outline,
                     color: Colors.blue,
-                    size: 20,
+                    size: 20 * scaleFactor,
                   ),
-                  SizedBox(width: 5), // Espacio entre el icono y el texto
+                  SizedBox(width: 5 * scaleFactor),
                   Text(
                     _listTypeSummary,
                     style: TextStyle(
                       color: Colors.grey,
-                      fontSize: 14,
+                      fontSize: 14 * scaleFactor,
+                      fontFamily: 'SFPro',
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 8),
-              ElevatedButton(
+              SizedBox(height: 8 * scaleFactor),
+              CupertinoButton(
                 onPressed: () {
-                  _createList(_selectedListType, _listNameController.text);
+                  _createList(
+                      _selectedListType, _listNameController.text, scaleFactor);
                 },
-                style: buttonPrimary,
+                color: skyBluePrimary,
                 child: Text(
                   'Crear Lista',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 16 * scaleFactor,
+                    fontFamily: 'SFPro',
+                    color: Colors.black,
                   ),
                 ),
               ),
-              SizedBox(height: 8),
-              ElevatedButton(
+              SizedBox(height: 8 * scaleFactor),
+              CupertinoButton(
                 onPressed: () {
                   _goToStep3(context);
                 },
-                style: buttonPrimary,
+                color: skyBluePrimary,
                 child: Text(
                   'Siguiente paso',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 16 * scaleFactor,
+                    fontFamily: 'SFPro',
+                    color: Colors.black,
                   ),
                 ),
               ),
-              SizedBox(height: 8),
+              SizedBox(height: 8 * scaleFactor),
               Row(
                 children: [
                   Icon(
-                    Icons.info, // El icono que deseas usar
+                    Icons.info,
                     color: Colors.grey,
-                    size: 20,
+                    size: 20 * scaleFactor,
                   ),
-                  SizedBox(width: 5), // Espacio entre el icono y el texto
+                  SizedBox(width: 5 * scaleFactor),
                   Expanded(
                     child: Text(
                       'El evento al crearse va a estar deshabilitado, al momento de habilitarlo se van a poder empezar a escribir en las listas.',
                       style: TextStyle(
                         color: Colors.grey,
-                        fontSize: 14,
+                        fontSize: 14 * scaleFactor,
+                        fontFamily: 'SFPro',
                       ),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 8),
+              SizedBox(height: 8 * scaleFactor),
               const Row(
                 children: [
                   Icon(
@@ -433,9 +426,13 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                   return ListTile(
                     title: Text(
                       _lists[index].name,
-                      style: TextStyle(color: Colors.white),
+                      style:
+                          TextStyle(color: Colors.white, fontFamily: 'SFPro'),
                     ),
-                    subtitle: Text(_lists[index].type),
+                    subtitle: Text(
+                      _lists[index].type,
+                      style: TextStyle(color: Colors.grey, fontFamily: 'SFPro'),
+                    ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -443,6 +440,7 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                           icon: Icon(
                             Icons.edit,
                             color: Colors.yellow,
+                            size: 20 * scaleFactor,
                           ),
                           onPressed: () {
                             _editList(index);
@@ -452,6 +450,7 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                           icon: Icon(
                             Icons.settings,
                             color: Colors.blue,
+                            size: 20 * scaleFactor,
                           ),
                           onPressed: () {
                             _configureList(index);
@@ -461,6 +460,7 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                           icon: Icon(
                             Icons.delete,
                             color: Colors.red,
+                            size: 20 * scaleFactor,
                           ),
                           onPressed: () {
                             _deleteList(index);
@@ -491,20 +491,39 @@ class _Step2AddEventState extends State<Step2AddEvent> {
 
   int _maxLists = 8;
 
-  void _createList(String listType, String listName) {
+  void _createList(String listType, String listName, double scaleFactor) {
     if (_lists.length >= _maxLists) {
       showDialog(
         context: context,
         builder: (BuildContext context) {
+          double scaleFactor = MediaQuery.of(context).size.width / 375.0;
           return AlertDialog(
-            title: Text('Error al Crear Lista'),
-            content: Text('Se ha alcanzado el máximo de listas permitidas.'),
+            title: Text(
+              'Error al Crear Lista',
+              style: TextStyle(
+                fontFamily: 'SFPro',
+                fontSize: 18 * scaleFactor,
+              ),
+            ),
+            content: Text(
+              'Se ha alcanzado el máximo de listas permitidas.',
+              style: TextStyle(
+                fontFamily: 'SFPro',
+                fontSize: 16 * scaleFactor,
+              ),
+            ),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                child: Text('Aceptar'),
+                child: Text(
+                  'Aceptar',
+                  style: TextStyle(
+                    fontFamily: 'SFPro',
+                    fontSize: 14 * scaleFactor,
+                  ),
+                ),
               ),
             ],
           );
@@ -512,7 +531,6 @@ class _Step2AddEventState extends State<Step2AddEvent> {
       );
     } else {
       if (listName.isNotEmpty) {
-        // Verifica que el campo no esté vacío
         setState(() {
           _lists.add(ListItem(
             name: listName,
@@ -530,22 +548,38 @@ class _Step2AddEventState extends State<Step2AddEvent> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Se ha creado la lista: $listName'),
+            content: Text(
+              'Se ha creado la lista: $listName',
+              style: TextStyle(
+                fontFamily: 'SFPro',
+                fontSize: 14 * scaleFactor,
+              ),
+            ),
             duration: Duration(seconds: 3),
             action: SnackBarAction(
               label: 'Aceptar',
               onPressed: () {},
+              textColor: Colors.white,
+              disabledTextColor: Colors.grey,
             ),
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Tienes que ponerle nombre a la lista'),
+            content: Text(
+              'Tienes que ponerle nombre a la lista',
+              style: TextStyle(
+                fontFamily: 'SFPro',
+                fontSize: 14 * scaleFactor,
+              ),
+            ),
             duration: Duration(seconds: 3),
             action: SnackBarAction(
               label: 'Aceptar',
               onPressed: () {},
+              textColor: Colors.white,
+              disabledTextColor: Colors.grey,
             ),
           ),
         );
@@ -557,14 +591,25 @@ class _Step2AddEventState extends State<Step2AddEvent> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        double scaleFactor = MediaQuery.of(context).size.width / 375.0;
         String newName = _lists[index].name;
         return AlertDialog(
-          title: Text('Editar Lista'),
+          title: Text(
+            'Editar Lista',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+              fontSize: 18 * scaleFactor,
+            ),
+          ),
           content: TextFormField(
             initialValue: newName,
             onChanged: (value) {
               newName = value;
             },
+            style: TextStyle(
+              fontFamily: 'SFPro',
+              fontSize: 16 * scaleFactor,
+            ),
           ),
           actions: [
             TextButton(
@@ -575,7 +620,13 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                 });
                 Navigator.pop(context);
               },
-              child: Text('Guardar'),
+              child: Text(
+                'Guardar',
+                style: TextStyle(
+                  fontFamily: 'SFPro',
+                  fontSize: 14 * scaleFactor,
+                ),
+              ),
             ),
           ],
         );
@@ -590,13 +641,12 @@ class _Step2AddEventState extends State<Step2AddEvent> {
     FocusNode _focusNode = FocusNode();
 
     showModalBottomSheet(
-      backgroundColor: Colors.grey
-          .shade900, // Fondo transparente para mostrar el Scaffold correctamente
+      backgroundColor: Colors.grey.shade900,
       context: context,
       builder: (BuildContext context) {
+        double scaleFactor = MediaQuery.of(context).size.width / 375.0;
         return Scaffold(
-          backgroundColor: Colors
-              .transparent, // Fondo transparente para mostrar el BottomSheet correctamente
+          backgroundColor: Colors.transparent,
           body: StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
               return GestureDetector(
@@ -621,23 +671,25 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                           children: [
                             Text(
                               'Configuración de la lista ${_lists[index].name}',
-                              style: const TextStyle(
-                                fontSize: 16,
+                              style: TextStyle(
+                                fontSize: 16 * scaleFactor,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
+                                fontFamily: 'SFPro',
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            SizedBox(height: 8),
+                            SizedBox(height: 8 * scaleFactor),
                             Text(
                               'Asigne los horarios donde va a funcionar la lista',
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 12 * scaleFactor,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
+                                fontFamily: 'SFPro',
                               ),
                             ),
-                            SizedBox(height: 8),
+                            SizedBox(height: 8 * scaleFactor),
                             Container(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -648,10 +700,14 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                         flex: 1,
                                         child: Text(
                                           'Desde',
-                                          style: TextStyle(color: Colors.white),
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontFamily: 'SFPro',
+                                            fontSize: 14 * scaleFactor,
+                                          ),
                                         ),
                                       ),
-                                      SizedBox(width: 10),
+                                      SizedBox(width: 10 * scaleFactor),
                                       Expanded(
                                         flex: 2,
                                         child:
@@ -667,6 +723,8 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                                     .format(date),
                                                 style: TextStyle(
                                                   color: Colors.white,
+                                                  fontFamily: 'SFPro',
+                                                  fontSize: 14 * scaleFactor,
                                                 ),
                                               ),
                                             );
@@ -682,19 +740,27 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                           },
                                           dropdownColor: Colors.grey.shade800,
                                           decoration: InputDecoration(
-                                            border: OutlineInputBorder(),
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                      10 * scaleFactor),
+                                            ),
                                           ),
                                         ),
                                       ),
-                                      SizedBox(width: 20),
+                                      SizedBox(width: 20 * scaleFactor),
                                       Expanded(
                                         flex: 1,
                                         child: Text(
                                           'Hasta',
-                                          style: TextStyle(color: Colors.white),
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontFamily: 'SFPro',
+                                            fontSize: 14 * scaleFactor,
+                                          ),
                                         ),
                                       ),
-                                      SizedBox(width: 10),
+                                      SizedBox(width: 10 * scaleFactor),
                                       Expanded(
                                         flex: 2,
                                         child:
@@ -709,6 +775,8 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                                     .format(date),
                                                 style: TextStyle(
                                                   color: Colors.white,
+                                                  fontFamily: 'SFPro',
+                                                  fontSize: 14 * scaleFactor,
                                                 ),
                                               ),
                                             );
@@ -723,31 +791,48 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                           },
                                           dropdownColor: Colors.grey.shade800,
                                           decoration: InputDecoration(
-                                            border: OutlineInputBorder(),
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                      10 * scaleFactor),
+                                            ),
                                           ),
                                         ),
                                       ),
                                     ],
                                   ),
-                                  SizedBox(height: 5),
+                                  SizedBox(height: 5 * scaleFactor),
                                   Row(
                                     children: [
                                       Text(
                                         'con el valor de la entrada:',
-                                        style: TextStyle(color: Colors.white),
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontFamily: 'SFPro',
+                                          fontSize: 14 * scaleFactor,
+                                        ),
                                       ),
-                                      SizedBox(width: 10),
+                                      SizedBox(width: 10 * scaleFactor),
                                       Expanded(
                                         child: TextField(
                                           controller: _ticketPriceController,
                                           decoration: InputDecoration(
-                                            border: OutlineInputBorder(),
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                      10 * scaleFactor),
+                                            ),
                                             hintText: 'Ingrese el valor aquí',
-                                            hintStyle:
-                                                TextStyle(color: Colors.white),
+                                            hintStyle: TextStyle(
+                                              color: Colors.white,
+                                              fontFamily: 'SFPro',
+                                              fontSize: 14 * scaleFactor,
+                                            ),
                                           ),
                                           style: TextStyle(
                                             color: Colors.white,
+                                            fontFamily: 'SFPro',
+                                            fontSize: 14 * scaleFactor,
                                           ),
                                           keyboardType:
                                               TextInputType.numberWithOptions(
@@ -774,7 +859,7 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                 ],
                               ),
                             ),
-                            SizedBox(height: 16),
+                            SizedBox(height: 16 * scaleFactor),
                             Container(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -797,10 +882,15 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                                   child: Text(
                                                     'Desde',
                                                     style: TextStyle(
-                                                        color: Colors.white),
+                                                      color: Colors.white,
+                                                      fontFamily: 'SFPro',
+                                                      fontSize:
+                                                          14 * scaleFactor,
+                                                    ),
                                                   ),
                                                 ),
-                                                SizedBox(width: 10),
+                                                SizedBox(
+                                                    width: 10 * scaleFactor),
                                                 Expanded(
                                                   flex: 2,
                                                   child:
@@ -817,8 +907,11 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                                           DateFormat('HH:mm')
                                                               .format(date),
                                                           style: TextStyle(
-                                                              color:
-                                                                  Colors.white),
+                                                            color: Colors.white,
+                                                            fontFamily: 'SFPro',
+                                                            fontSize: 14 *
+                                                                scaleFactor,
+                                                          ),
                                                         ),
                                                       );
                                                     }).toList(),
@@ -839,20 +932,31 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                                         Colors.grey.shade800,
                                                     decoration: InputDecoration(
                                                       border:
-                                                          OutlineInputBorder(),
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10 *
+                                                                    scaleFactor),
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
-                                                SizedBox(width: 20),
+                                                SizedBox(
+                                                    width: 20 * scaleFactor),
                                                 Expanded(
                                                   flex: 1,
                                                   child: Text(
                                                     'Hasta',
                                                     style: TextStyle(
-                                                        color: Colors.white),
+                                                      color: Colors.white,
+                                                      fontFamily: 'SFPro',
+                                                      fontSize:
+                                                          14 * scaleFactor,
+                                                    ),
                                                   ),
                                                 ),
-                                                SizedBox(width: 10),
+                                                SizedBox(
+                                                    width: 10 * scaleFactor),
                                                 Expanded(
                                                   flex: 2,
                                                   child:
@@ -869,8 +973,11 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                                           DateFormat('HH:mm')
                                                               .format(date),
                                                           style: TextStyle(
-                                                              color:
-                                                                  Colors.white),
+                                                            color: Colors.white,
+                                                            fontFamily: 'SFPro',
+                                                            fontSize: 14 *
+                                                                scaleFactor,
+                                                          ),
                                                         ),
                                                       );
                                                     }).toList(),
@@ -891,14 +998,19 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                                         Colors.grey.shade800,
                                                     decoration: InputDecoration(
                                                       border:
-                                                          OutlineInputBorder(),
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10 *
+                                                                    scaleFactor),
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
                                               ],
                                             ),
                                           ),
-                                          SizedBox(height: 5),
+                                          SizedBox(height: 5 * scaleFactor),
                                           IgnorePointer(
                                             ignoring:
                                                 !_lists[index].addExtraTime,
@@ -907,23 +1019,39 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                                 Text(
                                                   'con el valor de la entrada:',
                                                   style: TextStyle(
-                                                      color: Colors.white),
+                                                    color: Colors.white,
+                                                    fontFamily: 'SFPro',
+                                                    fontSize: 14 * scaleFactor,
+                                                  ),
                                                 ),
-                                                SizedBox(width: 10),
+                                                SizedBox(
+                                                    width: 10 * scaleFactor),
                                                 Expanded(
                                                   child: TextField(
                                                     controller:
                                                         _ticketExtraPriceController,
                                                     decoration: InputDecoration(
                                                       border:
-                                                          OutlineInputBorder(),
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10 *
+                                                                    scaleFactor),
+                                                      ),
                                                       hintText:
                                                           'Ingrese el valor aquí',
                                                       hintStyle: TextStyle(
-                                                          color: Colors.white),
+                                                        color: Colors.white,
+                                                        fontFamily: 'SFPro',
+                                                        fontSize:
+                                                            14 * scaleFactor,
+                                                      ),
                                                     ),
                                                     style: TextStyle(
                                                       color: Colors.white,
+                                                      fontFamily: 'SFPro',
+                                                      fontSize:
+                                                          14 * scaleFactor,
                                                     ),
                                                     keyboardType: TextInputType
                                                         .numberWithOptions(
@@ -960,7 +1088,7 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                             child: Center(
                                               child: Icon(
                                                 Icons.close,
-                                                size: 100,
+                                                size: 100 * scaleFactor,
                                                 color: Colors.white,
                                               ),
                                             ),
@@ -973,7 +1101,6 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                       setState(() {
                                         if (_lists[index].addExtraTime !=
                                             true) {
-                                          // Lógica cuando el botón se presiona para agregar un rango horario extra
                                           _lists[index].addExtraTime = true;
                                           _lists[index].selectedStartExtraDate =
                                               _lists[index].selectedEndDate;
@@ -986,7 +1113,6 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                                   .ticketExtraPrice
                                                   .toString();
                                         } else {
-                                          // Lógica cuando el botón se presiona para cancelar el rango horario extra
                                           _lists[index].addExtraTime = false;
                                           _lists[index].selectedStartExtraDate =
                                               null;
@@ -1000,22 +1126,21 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                     style: ButtonStyle(
                                       padding: MaterialStateProperty.all<
                                           EdgeInsetsGeometry>(
-                                        EdgeInsets.all(
-                                            10), // Ajusta el padding del botón según sea necesario
+                                        EdgeInsets.all(10 * scaleFactor),
                                       ),
                                       foregroundColor:
                                           MaterialStateProperty.all<Color>(
                                               _lists[index].addExtraTime != true
                                                   ? Colors.green.shade300
                                                   : Colors.red.shade300),
-                                      backgroundColor: MaterialStateProperty
-                                          .all<Color>(Colors.grey
-                                              .shade900), // Cambia el color de fondo del botón
+                                      backgroundColor:
+                                          MaterialStateProperty.all<Color>(
+                                              Colors.grey.shade900),
                                       shape: MaterialStateProperty.all<
                                           RoundedRectangleBorder>(
                                         RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10.0),
+                                          borderRadius: BorderRadius.circular(
+                                              10 * scaleFactor),
                                         ),
                                       ),
                                     ),
@@ -1026,14 +1151,17 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                           _lists[index].addExtraTime != true
                                               ? Icons.add
                                               : Icons.delete,
-                                        ), // Icono de suma
-                                        SizedBox(
-                                            width:
-                                                5), // Espacio entre el icono y el texto
+                                          size: 20 * scaleFactor,
+                                        ),
+                                        SizedBox(width: 5 * scaleFactor),
                                         Text(
                                           _lists[index].addExtraTime != true
                                               ? 'Agregar nuevo rango horario'
                                               : 'Cancelar rango horario extra',
+                                          style: TextStyle(
+                                            fontFamily: 'SFPro',
+                                            fontSize: 14 * scaleFactor,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -1048,12 +1176,10 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                         });
                                       }
                                     },
-                                    activeColor: Colors
-                                        .blue, // Color cuando el Checkbox está seleccionado
-                                    checkColor: Colors
-                                        .white, // Color del check dentro del Checkbox
-                                    controlAffinity: ListTileControlAffinity
-                                        .leading, // Coloca el Checkbox a la izquierda del texto
+                                    activeColor: Colors.blue,
+                                    checkColor: Colors.white,
+                                    controlAffinity:
+                                        ListTileControlAffinity.leading,
                                     title: Row(
                                       children: [
                                         Expanded(
@@ -1061,14 +1187,15 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                             'Permitir Sublistas dentro de la Lista',
                                             style: TextStyle(
                                               color: Colors.white,
-                                              fontSize:
-                                                  16, // Tamaño de fuente del texto del Checkbox
+                                              fontFamily: 'SFPro',
+                                              fontSize: 14 * scaleFactor,
                                             ),
                                           ),
                                         ),
                                         Icon(
                                           Icons.star,
                                           color: Colors.yellow,
+                                          size: 20 * scaleFactor,
                                         ),
                                       ],
                                     ),
@@ -1085,7 +1212,13 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                   }
                                 },
                                 style: buttonPrimary,
-                                child: Text('Confirmar Configuracion'),
+                                child: Text(
+                                  'Confirmar Configuración',
+                                  style: TextStyle(
+                                    fontFamily: 'SFPro',
+                                    fontSize: 16 * scaleFactor,
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -1106,24 +1239,49 @@ class _Step2AddEventState extends State<Step2AddEvent> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        double scaleFactor = MediaQuery.of(context).size.width / 375.0;
         return AlertDialog(
-          title: Text('Confirmación'),
-          content: Text('¿Estás seguro de que deseas eliminar esta lista?'),
+          title: Text(
+            'Confirmación',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+              fontSize: 18 * scaleFactor,
+            ),
+          ),
+          content: Text(
+            '¿Estás seguro de que deseas eliminar esta lista?',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+              fontSize: 16 * scaleFactor,
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Cierra el AlertDialog
+                Navigator.pop(context);
               },
-              child: Text('Cancelar'),
+              child: Text(
+                'Cancelar',
+                style: TextStyle(
+                  fontFamily: 'SFPro',
+                  fontSize: 14 * scaleFactor,
+                ),
+              ),
             ),
             TextButton(
               onPressed: () {
                 setState(() {
-                  _lists.removeAt(index); // Elimina la lista
+                  _lists.removeAt(index);
                 });
-                Navigator.pop(context); // Cierra el AlertDialog
+                Navigator.pop(context);
               },
-              child: Text('Eliminar'),
+              child: Text(
+                'Eliminar',
+                style: TextStyle(
+                  fontFamily: 'SFPro',
+                  fontSize: 14 * scaleFactor,
+                ),
+              ),
             ),
           ],
         );
@@ -1132,7 +1290,7 @@ class _Step2AddEventState extends State<Step2AddEvent> {
   }
 
   void _goToStep3(BuildContext context) {
-    if (_lists.length != 0) {
+    if (_lists.isNotEmpty) {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -1149,10 +1307,15 @@ class _Step2AddEventState extends State<Step2AddEvent> {
         ),
       );
     } else {
+      double scaleFactor = MediaQuery.of(context).size.width / 375.0;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Por favor, ingrese alguna lista.',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+              fontSize: 14 * scaleFactor,
+            ),
           ),
         ),
       );

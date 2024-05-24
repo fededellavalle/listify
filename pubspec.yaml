@@ -46,7 +46,10 @@ dependencies:
   flutter_datetime_picker:
   intl:
   country_picker:
+  flutter_spinkit:
+  url_launcher:
   liquid_pull_to_refresh:
+  pie_chart:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
@@ -72,9 +75,14 @@ flutter:
     - lib/assets/images/
 
   fonts:
-    - family: SanFrancisco
+    - family: SFPro
       fonts:
-        - asset: lib/assets/fonts/SF-Pro.ttf
+        - asset: lib/assets/fonts/SF-Pro/SF-Pro-Text-Regular.otf
+        - asset: lib/assets/fonts/SF-Pro/SF-Pro-Text-Bold.otf
+          weight: 700
+        - asset: lib/assets/fonts/SF-Pro/SF-Pro-Text-Medium.otf
+          weight: 500
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

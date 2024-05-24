@@ -1,13 +1,13 @@
 import 'dart:io';
+import 'package:app_listas/styles/color.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:country_picker/country_picker.dart';
-import '../../../styles/button.dart';
 
 class CreateCompany extends StatefulWidget {
   final String? uid;
@@ -71,13 +71,21 @@ class _CreateCompanyState extends State<CreateCompany> {
 
   @override
   Widget build(BuildContext context) {
+    double baseWidth = 375.0;
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFactor = screenWidth / baseWidth;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
           'Agregar una nueva empresa',
-          style: GoogleFonts.roboto(color: Colors.white),
+          style: TextStyle(
+            color: Colors.white,
+            fontFamily: 'SFPro',
+            fontSize: 18 * scaleFactor,
+          ),
         ),
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.white),
@@ -87,7 +95,7 @@ class _CreateCompanyState extends State<CreateCompany> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(16 * scaleFactor),
         child: Form(
           key: _formKey,
           child: Column(
@@ -98,40 +106,52 @@ class _CreateCompanyState extends State<CreateCompany> {
                   await _getImage();
                 },
                 child: CircleAvatar(
-                  radius: 50,
+                  radius: 50 * scaleFactor,
                   backgroundColor: Colors.grey[300],
                   foregroundColor: Colors.black,
                   child: _image == null
-                      ? Icon(Icons.camera_alt, size: 50)
+                      ? Icon(Icons.camera_alt, size: 50 * scaleFactor)
                       : ClipOval(
                           child: Image.file(
                             _image!,
-                            width: 120,
-                            height: 120,
+                            width: 120 * scaleFactor,
+                            height: 120 * scaleFactor,
                             fit: BoxFit.cover,
                           ),
                         ),
                 ),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 20 * scaleFactor),
               TextFormField(
                 controller: nameController,
-                style: GoogleFonts.roboto(color: Colors.white),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'SFPro',
+                  fontSize: 14 * scaleFactor,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Nombre de la empresa',
-                  labelStyle: GoogleFonts.roboto(color: Colors.white),
-                  prefixIcon: Icon(Icons.business, color: Colors.grey),
+                  labelStyle: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'SFPro',
+                    fontSize: 14 * scaleFactor,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.business,
+                    color: Colors.grey,
+                    size: 20 * scaleFactor,
+                  ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
                     borderSide: BorderSide(
                       color: Color.fromARGB(255, 242, 187, 29),
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
                     borderSide: BorderSide(
                       color: Color.fromARGB(255, 158, 128, 36),
                     ),
@@ -144,25 +164,37 @@ class _CreateCompanyState extends State<CreateCompany> {
                 validator: _validateName,
                 maxLength: 25,
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 20 * scaleFactor),
               TextFormField(
-                style: GoogleFonts.roboto(color: Colors.white),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'SFPro',
+                  fontSize: 14 * scaleFactor,
+                ),
                 controller: userController,
                 decoration: InputDecoration(
                   labelText: 'Username de la empresa',
-                  labelStyle: GoogleFonts.roboto(color: Colors.white),
-                  prefixIcon: Icon(Icons.alternate_email, color: Colors.grey),
+                  labelStyle: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'SFPro',
+                    fontSize: 14 * scaleFactor,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.alternate_email,
+                    color: Colors.grey,
+                    size: 20 * scaleFactor,
+                  ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
                     borderSide: BorderSide(
                       color: Color.fromARGB(255, 242, 187, 29),
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
                     borderSide: BorderSide(
                       color: Color.fromARGB(255, 158, 128, 36),
                     ),
@@ -176,7 +208,7 @@ class _CreateCompanyState extends State<CreateCompany> {
                 validator: _validateUsername,
                 maxLength: 15,
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 20 * scaleFactor),
               GestureDetector(
                 onTap: () {
                   showCountryPicker(
@@ -190,10 +222,13 @@ class _CreateCompanyState extends State<CreateCompany> {
                   );
                 },
                 child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                  padding: EdgeInsets.symmetric(
+                    vertical: 20 * scaleFactor,
+                    horizontal: 20 * scaleFactor,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
                     border: Border.all(
                       color:
                           _selectedCountry != null ? Colors.white : Colors.grey,
@@ -201,15 +236,21 @@ class _CreateCompanyState extends State<CreateCompany> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.flag, color: Colors.grey),
-                      SizedBox(width: 10),
+                      Icon(
+                        Icons.flag,
+                        color: Colors.grey,
+                        size: 20 * scaleFactor,
+                      ),
+                      SizedBox(width: 10 * scaleFactor),
                       Expanded(
                         child: Text(
                           _selectedCountry ?? 'Seleccione la nacionalidad',
-                          style: GoogleFonts.roboto(
+                          style: TextStyle(
                             color: _selectedCountry != null
                                 ? Colors.white
                                 : Colors.grey,
+                            fontFamily: 'SFPro',
+                            fontSize: 14 * scaleFactor,
                           ),
                         ),
                       ),
@@ -217,8 +258,8 @@ class _CreateCompanyState extends State<CreateCompany> {
                   ),
                 ),
               ),
-              SizedBox(height: 20),
-              ElevatedButton(
+              SizedBox(height: 20 * scaleFactor),
+              CupertinoButton(
                 onPressed: _isLoading
                     ? null
                     : () async {
@@ -283,19 +324,39 @@ class _CreateCompanyState extends State<CreateCompany> {
                                 setState(() {
                                   _isLoading = false;
                                 });
-                                print('El username ya está en uso');
+                                SnackBar(
+                                    content: Text(
+                                  'El username ya está en uso',
+                                  style: TextStyle(
+                                    fontFamily: 'SFPro',
+                                  ),
+                                ));
                               }
                             } catch (e) {
                               setState(() {
                                 _isLoading = false;
                               });
-                              print('Error adding company: $e');
+                              SnackBar(
+                                  content: Text(
+                                'Error agregando la empresa: $e',
+                                style: TextStyle(
+                                  fontFamily: 'SFPro',
+                                ),
+                              ));
                             }
                           } else {
                             setState(() {
                               _isLoading = false;
                             });
-                            print('Todos los campos son obligatorios');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text(
+                                'Debes completar todos los datos.',
+                                style: TextStyle(
+                                  fontFamily: 'SFPro',
+                                ),
+                              )),
+                            );
                           }
                         } else {
                           setState(() {
@@ -303,25 +364,20 @@ class _CreateCompanyState extends State<CreateCompany> {
                           });
                         }
                       },
-                style: buttonPrimary,
+                color: skyBluePrimary,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     _isLoading
-                        ? SizedBox(
-                            width: 23,
-                            height: 23,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.black,
-                              ),
-                            ),
+                        ? CupertinoActivityIndicator(
+                            color: Colors.white,
                           )
                         : Text(
                             'Agregar',
-                            style: GoogleFonts.roboto(
-                              fontSize: 16,
+                            style: TextStyle(
+                              fontSize: 16 * scaleFactor,
+                              fontFamily: 'SFPro',
+                              color: Colors.black,
                             ),
                           ),
                   ],

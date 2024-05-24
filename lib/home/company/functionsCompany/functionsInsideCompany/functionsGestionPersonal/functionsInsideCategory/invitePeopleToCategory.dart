@@ -1,8 +1,7 @@
+import 'package:app_listas/styles/color.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../../../../styles/button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-//import 'package:unicons/unicons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class InvitePeopleToCategory extends StatefulWidget {
@@ -24,6 +23,146 @@ class InvitePeopleToCategory extends StatefulWidget {
 class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
   TextEditingController userController = TextEditingController();
 
+  @override
+  Widget build(BuildContext context) {
+    double baseWidth = 375.0;
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFactor = screenWidth / baseWidth;
+
+    bool isLoading = false;
+
+    return Scaffold(
+      backgroundColor: Colors.black.withOpacity(0.9),
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        iconTheme: IconThemeData(
+          color: Colors.white,
+        ),
+        leading: IconButton(
+          icon: Icon(
+            CupertinoIcons.left_chevron,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 25.0 * scaleFactor),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Row(
+              children: [
+                Text(
+                  'Invitemos a gente',
+                  style: TextStyle(
+                    fontSize: 25 * scaleFactor,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontFamily: 'SFPro',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Ingresa un email de alguna persona que quieras que se una a tu empresa.',
+              textAlign: TextAlign.left,
+              style: TextStyle(
+                fontSize: 15 * scaleFactor,
+                color: Colors.grey.shade400,
+                fontFamily: 'SFPro',
+              ),
+            ),
+            SizedBox(
+              height: 10 * scaleFactor,
+            ),
+            TextFormField(
+              controller: userController,
+              decoration: InputDecoration(
+                hintText: 'Email del usuario al cual quieres invitar',
+                hintStyle: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'SFPro',
+                  fontSize: 14 * scaleFactor,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: skyBluePrimary),
+                  borderRadius: BorderRadius.circular(10.0 * scaleFactor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: skyBlueSecondary),
+                  borderRadius: BorderRadius.circular(10.0 * scaleFactor),
+                ),
+              ),
+              style: TextStyle(
+                color: Colors.white,
+                fontFamily: 'SFPro',
+                fontSize: 14 * scaleFactor,
+              ),
+            ),
+            SizedBox(height: 20 * scaleFactor),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: CupertinoButton(
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            setState(() {
+                              isLoading = true;
+                            });
+                            await handleInvitation(scaleFactor);
+                            setState(() {
+                              isLoading = false;
+                            });
+                          },
+                    color: skyBluePrimary,
+                    child: isLoading
+                        ? CupertinoActivityIndicator(
+                            color: Colors.white,
+                          )
+                        : Text(
+                            'Invitar a unirse',
+                            style: TextStyle(
+                                fontFamily: 'SFPro',
+                                fontSize: 16 * scaleFactor,
+                                color: Colors.black),
+                          ),
+                  ),
+                ),
+                SizedBox(
+                  height: 20 * scaleFactor,
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  child: CupertinoButton(
+                    onPressed: () {
+                      userController.clear();
+                      Navigator.pop(context);
+                    },
+                    color: Colors.red,
+                    child: Text(
+                      'Cancelar',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'SFPro',
+                        fontSize: 16 * scaleFactor,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
   Future<void> sendInvitation(String inviteEmail, User? user) async {
     // Obtener una referencia a la colección de invitaciones para el destinatario
     CollectionReference invitationsCollection =
@@ -44,306 +183,321 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
     print('Invitacion enviada a $inviteEmail');
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.9),
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: Text(
-          "Invitar personas a ${widget.categoryName}",
-          style: GoogleFonts.roboto(
-            color: Colors.white,
-          ),
-        ),
-        iconTheme: IconThemeData(
-          color: Colors.white, // Color blanco para los iconos
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25.0),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            SizedBox(
-              height: 20,
-            ),
-            TextFormField(
-              controller: userController,
-              decoration: InputDecoration(
-                hintText: 'Email del usuario al cual quieres invitar',
-                hintStyle: TextStyle(
-                    color: Colors
-                        .grey), // Color del hint text (texto de sugerencia)
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: Colors
-                          .white), // Color del borde cuando está habilitado
-                  borderRadius: BorderRadius.circular(10.0), // Radio del borde
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color:
-                          Colors.white), // Color del borde cuando está enfocado
-                  borderRadius: BorderRadius.circular(10.0), // Radio del borde
-                ),
-              ),
-              style: TextStyle(
-                  color:
-                      Colors.white), // Color del texto ingresado por el usuario
-            ),
-            SizedBox(height: 20),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: () async {
-                    // Obtener el nombre de la categoría y el email del usuario a invitar
-                    String categoryName = widget.categoryName;
-                    String inviteEmail = userController.text;
+  Future<void> handleInvitation(double scaleFactor) async {
+    // Obtener el nombre de la categoría y el email del usuario a invitar
+    String categoryName = widget.categoryName;
+    String inviteEmail = userController.text;
 
-                    DocumentReference ownerRef = FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(widget.companyData['ownerUid']);
-                    DocumentSnapshot ownerSnapshot = await ownerRef.get();
-                    Map<String, dynamic>? ownerData =
-                        ownerSnapshot.data() as Map<String, dynamic>?;
+    DocumentReference ownerRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.companyData['ownerUid']);
+    DocumentSnapshot ownerSnapshot = await ownerRef.get();
+    Map<String, dynamic>? ownerData =
+        ownerSnapshot.data() as Map<String, dynamic>?;
 
-                    String ownerEmail =
-                        ownerData?['email'] ?? 'No se encontro email';
+    String ownerEmail = ownerData?['email'] ?? 'No se encontro email';
 
-                    // Verificar que se haya ingresado un nombre de categoría válido y un email de invitación
-                    if (categoryName.isNotEmpty && inviteEmail.isNotEmpty) {
-                      // Obtener la referencia a la categoría personal dentro de la empresa
-                      DocumentReference categoryRef = FirebaseFirestore.instance
-                          .collection('companies')
-                          .doc(widget.companyData['companyId'])
-                          .collection('personalCategories')
-                          .doc(categoryName);
+    // Verificar que se haya ingresado un nombre de categoría válido y un email de invitación
+    if (categoryName.isNotEmpty && inviteEmail.isNotEmpty) {
+      // Obtener la referencia a la categoría personal dentro de la empresa
+      DocumentReference categoryRef = FirebaseFirestore.instance
+          .collection('companies')
+          .doc(widget.companyData['companyId'])
+          .collection('personalCategories')
+          .doc(categoryName);
 
-                      User? user = FirebaseAuth.instance.currentUser;
-                      if (user?.email != inviteEmail) {
-                        // Obtener el documento de la categoría personal
-                        DocumentSnapshot categorySnapshot =
-                            await categoryRef.get();
-                        Map<String, dynamic>? categoryData =
-                            categorySnapshot.data() as Map<String, dynamic>?;
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user?.email != inviteEmail) {
+        // Obtener el documento de la categoría personal
+        DocumentSnapshot categorySnapshot = await categoryRef.get();
+        Map<String, dynamic>? categoryData =
+            categorySnapshot.data() as Map<String, dynamic>?;
 
-                        List<dynamic> members = categoryData?['members'] ?? [];
-                        if (ownerEmail != inviteEmail) {
-                          //Verifico que sea diferente del owner
-                          if (!members.contains(inviteEmail)) {
-                            // Verificar si la categoría existe
-                            if (categorySnapshot.exists) {
-                              // Verificar que los datos no sean nulos y obtener la lista de invitaciones
-                              List<dynamic> invitations =
-                                  categoryData?['invitations'] ?? [];
+        List<dynamic> members = categoryData?['members'] ?? [];
+        if (ownerEmail != inviteEmail) {
+          //Verifico que sea diferente del owner
+          if (!members.contains(inviteEmail)) {
+            // Verificar si la categoría existe
+            if (categorySnapshot.exists) {
+              // Verificar que los datos no sean nulos y obtener la lista de invitaciones
+              List<dynamic> invitations = categoryData?['invitations'] ?? [];
 
-                              // Verificar si el email de invitación ya está en la lista
-                              if (invitations.contains(inviteEmail)) {
-                                // Mostrar mensaje de error si el email ya fue invitado anteriormente
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: Text('Error'),
-                                      content: Text(
-                                          'El email ya fue invitado anteriormente.'),
-                                      actions: <Widget>[
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.of(context)
-                                                .pop(); // Cerrar el AlertDialog
-                                          },
-                                          child: Text('Ok'),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              } else {
-                                await sendInvitation(inviteEmail, user);
-
-                                invitations.add(inviteEmail);
-
-                                // Actualizar el documento de la categoría con la nueva lista de invitaciones
-                                await categoryRef
-                                    .update({'invitations': invitations});
-
-                                userController.clear();
-
-                                // Mostrar mensaje de éxito al enviar la invitación
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: Text('Invitación Enviada'),
-                                      content: Text(
-                                          'La invitación fue enviada exitosamente.'),
-                                      actions: <Widget>[
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.of(context)
-                                                .pop(); // Cerrar el AlertDialog
-                                            Navigator.of(context)
-                                                .pop(); // Volver a la pantalla anterior
-                                            Navigator.of(context)
-                                                .pop(); // Volver a la pantalla anterior
-                                          },
-                                          child: Text('OK'),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              }
-                            } else {
-                              // Mostrar mensaje de error si la categoría no existe
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: Text('Error'),
-                                    content: Text('La categoría no existe.'),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context)
-                                              .pop(); // Cerrar el AlertDialog
-                                        },
-                                        child: Text('Ok'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            }
-                          } else {
-                            // Mostrar mensaje de error si no se ingresó el nombre de la categoría o el email de invitación
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: Text('Error'),
-                                  content: Text(
-                                      'El usuario al que esta invitando ya pertenece a la categoria'),
-                                  actions: <Widget>[
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context)
-                                            .pop(); // Cerrar el AlertDialog
-                                      },
-                                      child: Text('Ok'),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          }
-                        } else {
-                          // Mostrar mensaje de error si no se ingresó el nombre de la categoría o el email de invitación
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: Text('Error'),
-                                content: Text(
-                                  'No puedes invitarte a ti mismo',
-                                ),
-                                actions: <Widget>[
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context)
-                                          .pop(); // Cerrar el AlertDialog
-                                    },
-                                    child: Text('Ok'),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        }
-                      } else {
-                        // Mostrar mensaje de error si no se ingresó el nombre de la categoría o el email de invitación
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: Text('Error'),
-                              content: Text(
-                                'No puedes invitar al owner de la compania',
-                              ),
-                              actions: <Widget>[
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context)
-                                        .pop(); // Cerrar el AlertDialog
-                                  },
-                                  child: Text('Ok'),
-                                ),
-                              ],
-                            );
+              // Verificar si el email de invitación ya está en la lista
+              if (invitations.contains(inviteEmail)) {
+                // Mostrar mensaje de error si el email ya fue invitado anteriormente
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: Text(
+                        'Error',
+                        style: TextStyle(
+                          fontFamily: 'SFPro',
+                          fontSize: 18 * scaleFactor,
+                        ),
+                      ),
+                      content: Text(
+                        'El email ya fue invitado anteriormente.',
+                        style: TextStyle(
+                          fontFamily: 'SFPro',
+                          fontSize: 16 * scaleFactor,
+                        ),
+                      ),
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
                           },
-                        );
-                      }
-                    } else {
-                      // Mostrar mensaje de error si no se ingresó el nombre de la categoría o el email de invitación
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: Text('Error'),
-                            content: Text(
-                              'Por favor, ingrese el nombre de la categoría y el email del usuario a invitar.',
+                          child: Text(
+                            'Ok',
+                            style: TextStyle(
+                              fontFamily: 'SFPro',
+                              fontSize: 14 * scaleFactor,
                             ),
-                            actions: <Widget>[
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context)
-                                      .pop(); // Cerrar el AlertDialog
-                                },
-                                child: Text('Ok'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    }
+                          ),
+                        ),
+                      ],
+                    );
                   },
-                  style: buttonPrimary,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('Invitar a unirse'),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  height: 20,
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    userController.clear();
+                );
+              } else {
+                await sendInvitation(inviteEmail, user);
 
-                    Navigator.pop(context);
+                invitations.add(inviteEmail);
+
+                // Actualizar el documento de la categoría con la nueva lista de invitaciones
+                await categoryRef.update({'invitations': invitations});
+
+                userController.clear();
+
+                // Mostrar mensaje de éxito al enviar la invitación
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: Text(
+                        'Invitación Enviada',
+                        style: TextStyle(
+                          fontFamily: 'SFPro',
+                          fontSize: 18 * scaleFactor,
+                        ),
+                      ),
+                      content: Text(
+                        'La invitación fue enviada exitosamente.',
+                        style: TextStyle(
+                          fontFamily: 'SFPro',
+                          fontSize: 16 * scaleFactor,
+                        ),
+                      ),
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            Navigator.of(context).pop();
+                            Navigator.of(context).pop();
+                          },
+                          child: Text(
+                            'OK',
+                            style: TextStyle(
+                              fontFamily: 'SFPro',
+                              fontSize: 14 * scaleFactor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
                   },
-                  style: buttonSecondary,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Cancelar',
-                        style: GoogleFonts.roboto(
-                          color: Colors.white,
+                );
+              }
+            } else {
+              // Mostrar mensaje de error si la categoría no existe
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text(
+                      'Error',
+                      style: TextStyle(
+                        fontFamily: 'SFPro',
+                        fontSize: 18 * scaleFactor,
+                      ),
+                    ),
+                    content: Text(
+                      'La categoría no existe.',
+                      style: TextStyle(
+                        fontFamily: 'SFPro',
+                        fontSize: 16 * scaleFactor,
+                      ),
+                    ),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: Text(
+                          'Ok',
+                          style: TextStyle(
+                            fontFamily: 'SFPro',
+                            fontSize: 14 * scaleFactor,
+                          ),
                         ),
                       ),
                     ],
+                  );
+                },
+              );
+            }
+          } else {
+            // Mostrar mensaje de error si el usuario ya pertenece a la categoría
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text(
+                    'Error',
+                    style: TextStyle(
+                      fontFamily: 'SFPro',
+                      fontSize: 18 * scaleFactor,
+                    ),
+                  ),
+                  content: Text(
+                    'El usuario al que está invitando ya pertenece a la categoría',
+                    style: TextStyle(
+                      fontFamily: 'SFPro',
+                      fontSize: 16 * scaleFactor,
+                    ),
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Text(
+                        'Ok',
+                        style: TextStyle(
+                          fontFamily: 'SFPro',
+                          fontSize: 14 * scaleFactor,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+        } else {
+          // Mostrar mensaje de error si el usuario intenta invitarse a sí mismo
+          showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: Text(
+                  'Error',
+                  style: TextStyle(
+                    fontFamily: 'SFPro',
+                    fontSize: 18 * scaleFactor,
+                  ),
+                ),
+                content: Text(
+                  'No puedes invitarte a ti mismo',
+                  style: TextStyle(
+                    fontFamily: 'SFPro',
+                    fontSize: 16 * scaleFactor,
+                  ),
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                      'Ok',
+                      style: TextStyle(
+                        fontFamily: 'SFPro',
+                        fontSize: 14 * scaleFactor,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      } else {
+        // Mostrar mensaje de error si el usuario intenta invitar al propietario de la empresa
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text(
+                'Error',
+                style: TextStyle(
+                  fontFamily: 'SFPro',
+                  fontSize: 18 * scaleFactor,
+                ),
+              ),
+              content: Text(
+                'No puedes invitar al owner de la compania',
+                style: TextStyle(
+                  fontFamily: 'SFPro',
+                  fontSize: 16 * scaleFactor,
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(
+                    'Ok',
+                    style: TextStyle(
+                      fontFamily: 'SFPro',
+                      fontSize: 14 * scaleFactor,
+                    ),
                   ),
                 ),
               ],
+            );
+          },
+        );
+      }
+    } else {
+      // Mostrar mensaje de error si no se ingresó el nombre de la categoría o el email de invitación
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(
+              'Error',
+              style: TextStyle(
+                fontFamily: 'SFPro',
+                fontSize: 18 * scaleFactor,
+              ),
             ),
-          ]),
-        ),
-      ),
-    );
+            content: Text(
+              'Por favor, ingrese el nombre de la categoría y el email del usuario a invitar.',
+              style: TextStyle(
+                fontFamily: 'SFPro',
+                fontSize: 16 * scaleFactor,
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text(
+                  'Ok',
+                  style: TextStyle(
+                    fontFamily: 'SFPro',
+                    fontSize: 14 * scaleFactor,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -98,16 +99,28 @@ class _ReadTheListState extends State<ReadTheList> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirmar'),
-          content: Text('¿Estás seguro de que quieres quitar la asistencia?'),
+          title: Text(
+            'Confirmar',
+            style: TextStyle(fontFamily: 'SFPro'),
+          ),
+          content: Text(
+            '¿Estás seguro de que quieres quitar la asistencia?',
+            style: TextStyle(fontFamily: 'SFPro'),
+          ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text('Cancelar'),
+              child: Text(
+                'Cancelar',
+                style: TextStyle(fontFamily: 'SFPro'),
+              ),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: Text('Confirmar'),
+              child: Text(
+                'Confirmar',
+                style: TextStyle(fontFamily: 'SFPro'),
+              ),
             ),
           ],
         );
@@ -117,6 +130,10 @@ class _ReadTheListState extends State<ReadTheList> {
 
   @override
   Widget build(BuildContext context) {
+    double baseWidth = 375.0; // Base design width
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFactor = screenWidth / baseWidth;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -125,16 +142,27 @@ class _ReadTheListState extends State<ReadTheList> {
           'Lista ${widget.list['listName']}',
           style: TextStyle(
             color: Colors.white,
+            fontFamily: 'SFPro',
+            fontSize: 18 * scaleFactor,
           ),
         ),
         iconTheme: IconThemeData(
           color: Colors.white, // Color blanco para los iconos
         ),
+        leading: IconButton(
+          icon: Icon(
+            CupertinoIcons.left_chevron,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: EdgeInsets.all(8.0 * scaleFactor),
             child: TextField(
               controller: _searchController,
               onChanged: (value) {
@@ -143,19 +171,31 @@ class _ReadTheListState extends State<ReadTheList> {
                 });
               },
               decoration: InputDecoration(
-                prefixIcon:
-                    Icon(Icons.person_search_rounded, color: Colors.white),
+                prefixIcon: Icon(
+                  Icons.person_search_rounded,
+                  color: Colors.white,
+                  size: 20 * scaleFactor,
+                ),
                 hintText: 'Buscar Persona',
-                hintStyle: TextStyle(color: Colors.white54),
+                hintStyle: TextStyle(
+                  color: Colors.white54,
+                  fontFamily: 'SFPro',
+                  fontSize: 14 * scaleFactor,
+                ),
                 filled: true,
                 fillColor: Colors.grey[800],
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(10 * scaleFactor),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: EdgeInsets.symmetric(vertical: 15),
+                contentPadding:
+                    EdgeInsets.symmetric(vertical: 15 * scaleFactor),
               ),
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(
+                color: Colors.white,
+                fontFamily: 'SFPro',
+                fontSize: 14 * scaleFactor,
+              ),
             ),
           ),
           Expanded(
@@ -179,7 +219,11 @@ class _ReadTheListState extends State<ReadTheList> {
                   return Center(
                     child: Text(
                       'El evento ya ha finalizado.',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'SFPro',
+                        fontSize: 16 * scaleFactor,
+                      ),
                     ),
                   );
                 }
@@ -205,8 +249,14 @@ class _ReadTheListState extends State<ReadTheList> {
 
                     if (eventListData == null) {
                       return Center(
-                        child: Text('No hay miembros en esta lista.',
-                            style: TextStyle(color: Colors.white)),
+                        child: Text(
+                          'No hay miembros en esta lista.',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                            fontSize: 16 * scaleFactor,
+                          ),
+                        ),
                       );
                     }
 
@@ -227,7 +277,11 @@ class _ReadTheListState extends State<ReadTheList> {
                       return Center(
                         child: Text(
                           'La lista se cerró.',
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                            fontSize: 16 * scaleFactor,
+                          ),
                         ),
                       );
                     }
@@ -242,15 +296,25 @@ class _ReadTheListState extends State<ReadTheList> {
                       return Center(
                         child: Text(
                           'La lista no está abierta aún.',
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                            fontSize: 16 * scaleFactor,
+                          ),
                         ),
                       );
                     }
 
                     if (!eventListData.containsKey('membersList')) {
                       return Center(
-                        child: Text('No hay miembros en esta lista.',
-                            style: TextStyle(color: Colors.white)),
+                        child: Text(
+                          'No hay miembros en esta lista.',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                            fontSize: 16 * scaleFactor,
+                          ),
+                        ),
                       );
                     }
 
@@ -283,7 +347,11 @@ class _ReadTheListState extends State<ReadTheList> {
                         return ListTile(
                           title: Text(
                             member['name'],
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontFamily: 'SFPro',
+                              fontSize: 16 * scaleFactor,
+                            ),
                           ),
                           trailing: Switch(
                             activeColor: Colors.green.shade600,

@@ -1,7 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../styles/loading.dart';
 
 class InvitationsPage extends StatefulWidget {
@@ -13,6 +13,9 @@ class InvitationsPage extends StatefulWidget {
 
 class _InvitationsPageState extends State<InvitationsPage> {
   late User? currentUser; // Usuario actual
+  bool _isLoadingAccept = false;
+  bool _isLoadingReject = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -21,6 +24,13 @@ class _InvitationsPageState extends State<InvitationsPage> {
   }
 
   Future<void> acceptInvitation(String companyUser, String category) async {
+    setState(() {
+      _isLoading = true;
+    });
+    setState(() {
+      _isLoadingAccept = true;
+    });
+
     try {
       // Agregar la relación de compañía al usuario actual
       await FirebaseFirestore.instance
@@ -32,58 +42,39 @@ class _InvitationsPageState extends State<InvitationsPage> {
         ])
       });
 
-      // Obtener información adicional del usuario
-      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser!.uid)
-          .get();
+      await FirebaseFirestore.instance
+          .collection('companies')
+          .doc(companyUser)
+          .collection('personalCategories')
+          .doc(category)
+          .update({
+        'invitations': FieldValue.arrayRemove([currentUser!.email]),
+        'members': FieldValue.arrayUnion([
+          {
+            'userUid': currentUser!.uid,
+          }
+        ])
+      });
 
-      if (userSnapshot.exists) {
-        var userData = userSnapshot.data() as Map<String, dynamic>;
-        String userName = userData['name'] ?? 'Nombre no encontrado';
-        String lastName = userData['lastname'] ?? '';
-        String completeName =
-            lastName.isNotEmpty ? '$userName $lastName' : userName;
-        String userInstagram = userData['instagram'] ?? '-';
-
-        await FirebaseFirestore.instance
-            .collection('companies')
-            .doc(companyUser)
-            .collection('personalCategories')
-            .doc(category)
-            .update({
-          'invitations': FieldValue.arrayRemove([currentUser!.email]),
-          'members': FieldValue.arrayUnion([
-            {
-              'completeName': completeName,
-              'email': currentUser!.email,
-              'instagram': userInstagram
-            }
-          ])
+      await FirebaseFirestore.instance
+          .collection('invitations')
+          .doc(currentUser!.email)
+          .collection('receivedInvitations')
+          .where('company', isEqualTo: companyUser)
+          .get()
+          .then((querySnapshot) {
+        querySnapshot.docs.forEach((doc) {
+          doc.reference.delete();
         });
+      });
 
-        await FirebaseFirestore.instance
-            .collection('invitations')
-            .doc(currentUser!.email)
-            .collection('receivedInvitations')
-            .where('company', isEqualTo: companyUser)
-            .get()
-            .then((querySnapshot) {
-          querySnapshot.docs.forEach((doc) {
-            doc.reference.delete();
-          });
-        });
-
-        // Notificar al usuario que la invitación ha sido aceptada
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Invitación aceptada'),
-            duration: Duration(seconds: 3),
-          ),
-        );
-      } else {
-        throw Exception('Error al obtener los datos del usuario');
-      }
+      // Notificar al usuario que la invitación ha sido aceptada
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Invitación aceptada'),
+          duration: Duration(seconds: 3),
+        ),
+      );
     } catch (e) {
       print('Error al aceptar la invitación: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -92,56 +83,100 @@ class _InvitationsPageState extends State<InvitationsPage> {
           duration: Duration(seconds: 3),
         ),
       );
+    } finally {
+      setState(() {
+        _isLoadingAccept = false;
+      });
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   Future<void> cancelInvitation(String companyId, String category) async {
-    await FirebaseFirestore.instance
-        .collection('invitations')
-        .doc(currentUser!.email)
-        .collection('receivedInvitations')
-        .where('company', isEqualTo: companyId)
-        .get()
-        .then((querySnapshot) {
-      querySnapshot.docs.forEach((doc) {
-        doc.reference.delete();
+    setState(() {
+      _isLoadingReject = true;
+    });
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('invitations')
+          .doc(currentUser!.email)
+          .collection('receivedInvitations')
+          .where('company', isEqualTo: companyId)
+          .get()
+          .then((querySnapshot) {
+        querySnapshot.docs.forEach((doc) {
+          doc.reference.delete();
+        });
       });
-    });
 
-    await FirebaseFirestore.instance
-        .collection('companies')
-        .doc(companyId)
-        .collection('personalCategories')
-        .doc(category)
-        .update({
-      'invitations': FieldValue.arrayRemove([
-        currentUser!.email
-      ]), // Remove directly the email without wrapping it in an array
-    });
+      await FirebaseFirestore.instance
+          .collection('companies')
+          .doc(companyId)
+          .collection('personalCategories')
+          .doc(category)
+          .update({
+        'invitations': FieldValue.arrayRemove([
+          currentUser!.email
+        ]), // Remove directly the email without wrapping it in an array
+      });
 
-    // Notify the user that the invitation has been canceled
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Invitación rechazada'),
-        duration: Duration(seconds: 3),
-      ),
-    );
+      // Notify the user that the invitation has been canceled
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Invitación rechazada'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      print('Error al rechazar la invitación: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al rechazar la invitación'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoadingReject = false;
+      });
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final double scaleFactor = MediaQuery.of(context).size.width / 375.0;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
           "Mis Invitaciones",
-          style: GoogleFonts.roboto(
+          style: TextStyle(
             color: Colors.white,
+            fontFamily: 'SFPro',
+            fontSize: 20 * scaleFactor,
           ),
         ),
         iconTheme: IconThemeData(
           color: Colors.white, // Color blanco para los iconos
+        ),
+        leading: IconButton(
+          icon: Icon(
+            CupertinoIcons.left_chevron,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
         ),
       ),
       body: SingleChildScrollView(
@@ -153,19 +188,29 @@ class _InvitationsPageState extends State<InvitationsPage> {
                 stream: currentUser != null
                     ? FirebaseFirestore.instance
                         .collection('invitations')
-                        .doc(currentUser!
-                            .email) // Uso del email del usuario actual
-                        .collection(
-                            'receivedInvitations') // Subcolección de invitaciones recibidas
+                        .doc(currentUser!.email)
+                        .collection('receivedInvitations')
                         .snapshots()
-                    : null, // No se muestra nada si el usuario no está autenticado
+                    : null,
                 builder: (context, AsyncSnapshot<QuerySnapshot>? snapshot) {
                   if (snapshot == null) {
-                    return Text('Usuario no autenticado');
+                    return Text(
+                      'Usuario no autenticado',
+                      style: TextStyle(
+                        fontFamily: 'SFPro',
+                        fontSize: 16 * scaleFactor,
+                      ),
+                    );
                   }
 
                   if (snapshot.hasError) {
-                    return Text('Error al cargar las invitaciones');
+                    return Text(
+                      'Error al cargar las invitaciones',
+                      style: TextStyle(
+                        fontFamily: 'SFPro',
+                        fontSize: 16 * scaleFactor,
+                      ),
+                    );
                   }
 
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -177,9 +222,10 @@ class _InvitationsPageState extends State<InvitationsPage> {
                       child: Text(
                         'No tienes invitaciones',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.roboto(
+                        style: TextStyle(
                           color: Colors.white,
-                          fontSize: 20, // Tamaño de fuente deseado
+                          fontSize: 20 * scaleFactor,
+                          fontFamily: 'SFPro',
                         ),
                       ),
                     );
@@ -210,7 +256,12 @@ class _InvitationsPageState extends State<InvitationsPage> {
                             AsyncSnapshot<QuerySnapshot> userSnapshot) {
                           if (userSnapshot.hasError) {
                             return Text(
-                                'Error al obtener el nombre del remitente');
+                              'Error al obtener el nombre del remitente',
+                              style: TextStyle(
+                                fontFamily: 'SFPro',
+                                fontSize: 16 * scaleFactor,
+                              ),
+                            );
                           }
 
                           if (userSnapshot.connectionState ==
@@ -221,8 +272,10 @@ class _InvitationsPageState extends State<InvitationsPage> {
                           if (userSnapshot.data!.docs.isEmpty) {
                             return Text(
                               'Remitente no encontrado',
-                              style: GoogleFonts.roboto(
+                              style: TextStyle(
                                 color: Colors.white,
+                                fontFamily: 'SFPro',
+                                fontSize: 16 * scaleFactor,
                               ),
                             );
                           }
@@ -231,8 +284,8 @@ class _InvitationsPageState extends State<InvitationsPage> {
                               as Map<String, dynamic>;
                           String senderName = userData['name'] ??
                               'Nombre no encontrado'; // Nombre del remitente
-                          //String senderImage = userData['imageUrl'] ??
-                          'Imagen no encontrada'; // Imagen del remitente
+                          String senderImage = userData['imageUrl'] ??
+                              'Imagen no encontrada'; // Imagen del remitente
 
                           // Construir el widget de la invitación con el nombre del remitente
                           return FutureBuilder(
@@ -245,7 +298,12 @@ class _InvitationsPageState extends State<InvitationsPage> {
                                     companySnapshot) {
                               if (companySnapshot.hasError) {
                                 return Text(
-                                    'Error al obtener el nombre de la compañía');
+                                  'Error al obtener el nombre de la compañía',
+                                  style: TextStyle(
+                                    fontFamily: 'SFPro',
+                                    fontSize: 16 * scaleFactor,
+                                  ),
+                                );
                               }
 
                               if (companySnapshot.connectionState ==
@@ -263,25 +321,47 @@ class _InvitationsPageState extends State<InvitationsPage> {
 
                               // Construir el ListTile para mostrar la invitación
                               return ListTile(
-                                leading: companyImageUrl.isNotEmpty
-                                    ? ClipOval(
-                                        child: Image.network(
-                                          companyImageUrl,
-                                          width: 52,
-                                          height: 52,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      )
-                                    : ClipOval(
-                                        child: Icon(
-                                          Icons.business,
-                                          size: 62,
-                                        ),
+                                leading: Stack(
+                                  children: [
+                                    ClipOval(
+                                      child: companyImageUrl.isNotEmpty
+                                          ? Image.network(
+                                              companyImageUrl,
+                                              width: 52 * scaleFactor,
+                                              height: 52 * scaleFactor,
+                                              fit: BoxFit.cover,
+                                            )
+                                          : Icon(
+                                              Icons.business,
+                                              size: 26 * scaleFactor,
+                                            ),
+                                    ),
+                                    Positioned(
+                                      right: 0,
+                                      bottom: 0,
+                                      child: ClipOval(
+                                        child: senderImage.isNotEmpty
+                                            ? Image.network(
+                                                senderImage,
+                                                width: 26 * scaleFactor,
+                                                height: 26 * scaleFactor,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : Icon(
+                                                Icons.person,
+                                                size: 52 * scaleFactor,
+                                                color: Colors.grey,
+                                              ),
                                       ),
+                                    ),
+                                  ],
+                                ),
                                 title: Text(
                                   '$senderName te invita a unirte a $companyName como $category',
-                                  style: GoogleFonts.roboto(
+                                  style: TextStyle(
                                     color: Colors.white,
+                                    fontFamily: 'SFPro',
+                                    fontSize: 16 * scaleFactor,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -290,19 +370,21 @@ class _InvitationsPageState extends State<InvitationsPage> {
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    SizedBox(height: 4),
+                                    SizedBox(height: 4 * scaleFactor),
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         ElevatedButton(
-                                          onPressed: () {
-                                            acceptInvitation(
-                                                companyId, category);
-                                          },
+                                          onPressed: _isLoading
+                                              ? null
+                                              : () async {
+                                                  await acceptInvitation(
+                                                      companyId, category);
+                                                },
                                           style: ButtonStyle(
                                             padding: MaterialStateProperty.all<
                                                 EdgeInsetsGeometry>(
-                                              EdgeInsets.all(10),
+                                              EdgeInsets.all(10 * scaleFactor),
                                             ),
                                             foregroundColor:
                                                 MaterialStateProperty.all<
@@ -317,30 +399,39 @@ class _InvitationsPageState extends State<InvitationsPage> {
                                                 RoundedRectangleBorder>(
                                               RoundedRectangleBorder(
                                                 borderRadius:
-                                                    BorderRadius.circular(10.0),
+                                                    BorderRadius.circular(
+                                                        10.0 * scaleFactor),
                                               ),
                                             ),
                                           ),
-                                          child: Text(
-                                            'Aceptar',
-                                            style: GoogleFonts.roboto(
-                                              color: Colors.black,
-                                            ),
-                                          ),
+                                          child: _isLoadingAccept
+                                              ? CupertinoActivityIndicator(
+                                                  color: Colors.black,
+                                                )
+                                              : Text(
+                                                  'Aceptar',
+                                                  style: TextStyle(
+                                                    color: Colors.black,
+                                                    fontFamily: 'SFPro',
+                                                    fontSize: 14 * scaleFactor,
+                                                  ),
+                                                ),
                                         ),
                                         SizedBox(
-                                          width: 13,
+                                          width: 13 * scaleFactor,
                                         ),
                                         ElevatedButton(
-                                          onPressed: () {
-                                            cancelInvitation(
-                                                companyId, category);
-                                          },
+                                          onPressed: _isLoadingReject
+                                              ? null
+                                              : () async {
+                                                  await cancelInvitation(
+                                                      companyId, category);
+                                                },
                                           style: ButtonStyle(
                                             padding: MaterialStateProperty.all<
                                                 EdgeInsetsGeometry>(
-                                              EdgeInsets.all(
-                                                  10), // Ajusta el padding del botón según sea necesario
+                                              EdgeInsets.all(10 *
+                                                  scaleFactor), // Ajusta el padding del botón según sea necesario
                                             ),
                                             overlayColor: MaterialStateProperty
                                                 .all<Color>(Colors.red
@@ -354,19 +445,26 @@ class _InvitationsPageState extends State<InvitationsPage> {
                                                 RoundedRectangleBorder>(
                                               RoundedRectangleBorder(
                                                 borderRadius:
-                                                    BorderRadius.circular(10.0),
+                                                    BorderRadius.circular(
+                                                        10.0 * scaleFactor),
                                                 side: BorderSide(
                                                     color: Colors
                                                         .red), // Borde blanco
                                               ),
                                             ),
                                           ),
-                                          child: Text(
-                                            'Rechazar',
-                                            style: GoogleFonts.roboto(
-                                              color: Colors.red,
-                                            ),
-                                          ),
+                                          child: _isLoadingReject
+                                              ? CupertinoActivityIndicator(
+                                                  color: Colors.red,
+                                                )
+                                              : Text(
+                                                  'Rechazar',
+                                                  style: TextStyle(
+                                                    color: Colors.red,
+                                                    fontFamily: 'SFPro',
+                                                    fontSize: 14 * scaleFactor,
+                                                  ),
+                                                ),
                                         ),
                                       ],
                                     ),

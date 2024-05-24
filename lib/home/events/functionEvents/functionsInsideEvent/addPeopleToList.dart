@@ -1,7 +1,8 @@
+import 'package:app_listas/styles/color.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../../styles/button.dart';
 import 'package:flutter/services.dart';
 
 class AddPeopleToList extends StatefulWidget {
@@ -24,6 +25,8 @@ class _AddPeopleToListState extends State<AddPeopleToList> {
   late TextEditingController _nameController;
   late String userId;
 
+  bool isLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +44,10 @@ class _AddPeopleToListState extends State<AddPeopleToList> {
   }
 
   void _addPerson() async {
+    setState(() {
+      isLoading = true;
+    });
+    FocusScope.of(context).unfocus();
     final name = _nameController.text.trim();
     if (name.isNotEmpty) {
       // Verificar si el nombre ya existe en la lista del usuario actual
@@ -56,56 +63,80 @@ class _AddPeopleToListState extends State<AddPeopleToList> {
       var userEventListData = userEventListSnapshot.data();
 
       if (userEventListData != null &&
-          userEventListData.containsKey('membersList') &&
-          userEventListData['membersList'].containsKey(userId) &&
-          userEventListData['membersList'][userId]['members'] != null) {
-        var members = userEventListData['membersList'][userId]['members'];
-        if (members.any((member) => member['name'] == name)) {
-          // El nombre ya existe en la lista del usuario actual
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text('Error'),
-                content: Text('El nombre ya está en tu lista.'),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text('OK'),
-                  ),
-                ],
-              );
-            },
-          );
-          return; // Salir de la función si el nombre ya está en la lista
-        }
-      }
-
-      if (userEventListData != null &&
           userEventListData.containsKey('membersList')) {
-        var membersList =
-            userEventListData['membersList'] as Map<String, dynamic>;
-        for (var key in membersList.keys) {
-          var members = membersList[key]['members'];
+        var membersList = userEventListData['membersList'];
+
+        if (membersList is Map<String, dynamic> &&
+            membersList.containsKey(userId) &&
+            membersList[userId]['members'] != null) {
+          var members = membersList[userId]['members'];
           if (members.any((member) => member['name'] == name)) {
-            // El nombre existe en la lista de otro usuario
+            // El nombre ya existe en la lista del usuario actual
             showDialog(
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: Text('Error'),
-                  content:
-                      Text('El nombre ya está en la lista de otro usuario.'),
+                  title: Text(
+                    'Error',
+                    style: TextStyle(fontFamily: 'SFPro'),
+                  ),
+                  content: Text(
+                    'El nombre ya está en tu lista.',
+                    style: TextStyle(fontFamily: 'SFPro'),
+                  ),
                   actions: <Widget>[
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: Text('OK'),
+                      child: Text(
+                        'OK',
+                        style: TextStyle(fontFamily: 'SFPro'),
+                      ),
                     ),
                   ],
                 );
               },
             );
-            return; // Salir de la función si el nombre ya está en otra lista
+            setState(() {
+              isLoading = false;
+            });
+            return; // Salir de la función si el nombre ya está en la lista
+          }
+        }
+
+        if (membersList is Map<String, dynamic>) {
+          for (var key in membersList.keys) {
+            var members = membersList[key]['members'];
+            if (members.any((member) => member['name'] == name)) {
+              // El nombre existe en la lista de otro usuario
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(
+                      'Error',
+                      style: TextStyle(fontFamily: 'SFPro'),
+                    ),
+                    content: Text(
+                      'El nombre ya está en la lista de otro usuario.',
+                      style: TextStyle(fontFamily: 'SFPro'),
+                    ),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(
+                          'OK',
+                          style: TextStyle(fontFamily: 'SFPro'),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+              setState(() {
+                isLoading = false;
+              });
+              return; // Salir de la función si el nombre ya está en otra lista
+            }
           }
         }
       }
@@ -130,7 +161,24 @@ class _AddPeopleToListState extends State<AddPeopleToList> {
         _nameController.clear();
       } catch (e) {
         print('Error updating membersList: $e');
+      } finally {
+        setState(() {
+          isLoading = false;
+        });
       }
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+          'Debe ingresar un nombre.',
+          style: TextStyle(
+            fontFamily: 'SFPro',
+          ),
+        )),
+      );
     }
   }
 
@@ -141,19 +189,30 @@ class _AddPeopleToListState extends State<AddPeopleToList> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('Confirmar Eliminación'),
+            title: Text(
+              'Confirmar Eliminación',
+              style: TextStyle(fontFamily: 'SFPro'),
+            ),
             content: Text(
-                '¿Estás seguro de que quieres eliminar a $name de la lista?'),
+              '¿Estás seguro de que quieres eliminar a $name de la lista?',
+              style: TextStyle(fontFamily: 'SFPro'),
+            ),
             actions: <Widget>[
               TextButton(
                 onPressed: () =>
                     Navigator.of(context).pop(false), // No eliminar
-                child: Text('Cancelar'),
+                child: Text(
+                  'Cancelar',
+                  style: TextStyle(fontFamily: 'SFPro'),
+                ),
               ),
               TextButton(
                 onPressed: () =>
                     Navigator.of(context).pop(true), // Confirmar eliminar
-                child: Text('Eliminar'),
+                child: Text(
+                  'Eliminar',
+                  style: TextStyle(fontFamily: 'SFPro'),
+                ),
               ),
             ],
           );
@@ -189,20 +248,37 @@ class _AddPeopleToListState extends State<AddPeopleToList> {
 
   @override
   Widget build(BuildContext context) {
+    double baseWidth = 375.0; // Base design width
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFactor = screenWidth / baseWidth;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
           'Lista de ${widget.list['listName']}',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+            color: Colors.white,
+            fontFamily: 'SFPro',
+            fontSize: 18 * scaleFactor,
+          ),
         ),
         iconTheme: IconThemeData(
           color: Colors.white,
         ),
+        leading: IconButton(
+          icon: Icon(
+            CupertinoIcons.left_chevron,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+      body: Padding(
+        padding: EdgeInsets.all(16 * scaleFactor),
         child: Column(
           children: [
             StreamBuilder<DocumentSnapshot>(
@@ -225,170 +301,219 @@ class _AddPeopleToListState extends State<AddPeopleToList> {
                   return Center(
                     child: Text(
                       'El evento no está activo. No se pueden agregar personas.',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'SFPro',
+                        fontSize: 16 * scaleFactor,
+                      ),
                     ),
                   );
                 }
 
-                return Column(
-                  children: [
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(
-                          Icons.list_alt_outlined,
-                          color: Colors.grey,
-                        ),
-                        hintText: 'Escribir el nombre de la persona',
-                        hintStyle: TextStyle(
-                          color: Colors.white,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(
-                            color: Colors.white,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(
+                return Expanded(
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: InputDecoration(
+                          prefixIcon: Icon(
+                            Icons.list_alt_outlined,
                             color: Colors.grey,
+                            size: 20 * scaleFactor,
                           ),
+                          hintText: 'Escribir el nombre de la persona',
+                          hintStyle: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                            fontSize: 14 * scaleFactor,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(10 * scaleFactor),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(10 * scaleFactor),
+                            borderSide: BorderSide(
+                              color: Colors.white,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(10 * scaleFactor),
+                            borderSide: BorderSide(
+                              color: Colors.grey,
+                            ),
+                          ),
+                          counterText: '',
+                        ),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'SFPro',
+                          fontSize: 14 * scaleFactor,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^[a-zA-Z\s]+$')),
+                        ],
+                        maxLength: 25,
+                      ),
+                      SizedBox(height: 10 * scaleFactor),
+                      SizedBox(
+                        width: double.infinity,
+                        child: CupertinoButton(
+                          onPressed: isLoading ? null : _addPerson,
+                          color: skyBluePrimary,
+                          child: isLoading
+                              ? CupertinoActivityIndicator(
+                                  color: Colors.white,
+                                )
+                              : Text(
+                                  'Añadir nombre a lista',
+                                  style: TextStyle(
+                                    fontSize: 16 * scaleFactor,
+                                    fontFamily: 'SFPro',
+                                    color: Colors.black,
+                                  ),
+                                ),
                         ),
                       ),
-                      style: TextStyle(color: Colors.white),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                            RegExp(r'^[a-zA-Z\s]+$')),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _addPerson,
-                        style: buttonPrimary,
-                        child: Text(
-                          'Añadir nombre a lista',
-                          style: TextStyle(
-                            fontSize: 16,
+                      SizedBox(height: 10 * scaleFactor),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.person,
+                            color: Colors.grey,
+                            size: 20 * scaleFactor,
                           ),
-                        ),
+                          SizedBox(width: 5 * scaleFactor),
+                          Text(
+                            'Personas en tu Lista:',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16 * scaleFactor,
+                              fontFamily: 'SFPro',
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    SizedBox(height: 10),
-                    const Row(
-                      children: [
-                        Icon(
-                          Icons.person,
-                          color: Colors.grey,
-                          size: 20,
-                        ),
-                        SizedBox(width: 5),
-                        Text(
-                          'Personas en tu Lista:',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
+                      SizedBox(height: 3 * scaleFactor),
+                      Row(
+                        children: [
+                          Text(
+                            'Puedes añadir hasta 150 personas',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14 * scaleFactor,
+                              fontFamily: 'SFPro',
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    const Row(
-                      children: [
-                        Text(
-                          'Puedes añadir hasta 150 personas',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    StreamBuilder<DocumentSnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection('companies')
-                          .doc(widget.companyId)
-                          .collection('myEvents')
-                          .doc(widget.eventId)
-                          .collection('eventLists')
-                          .doc(widget.list['listName'])
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) {
-                          return Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
+                        ],
+                      ),
+                      SizedBox(height: 8 * scaleFactor),
+                      Expanded(
+                        child: StreamBuilder<DocumentSnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('companies')
+                              .doc(widget.companyId)
+                              .collection('myEvents')
+                              .doc(widget.eventId)
+                              .collection('eventLists')
+                              .doc(widget.list['listName'])
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
 
-                        var eventListData =
-                            snapshot.data!.data() as Map<String, dynamic>?;
-                        if (eventListData == null ||
-                            !eventListData.containsKey('membersList')) {
-                          return Text(
-                            'No hay miembros en esta lista.',
-                            style: TextStyle(color: Colors.white),
-                          );
-                        }
+                            var eventListData =
+                                snapshot.data!.data() as Map<String, dynamic>?;
 
-                        var membersList = eventListData['membersList']
-                            as Map<String, dynamic>;
-
-                        return membersList.containsKey(userId)
-                            ? ListView.builder(
-                                shrinkWrap: true,
-                                itemCount:
-                                    1, // Solo un elemento, ya que solo estamos mostrando la lista del usuario actual
-                                itemBuilder: (context, index) {
-                                  var memberGroup = membersList[userId];
-                                  var members = memberGroup['members'];
-
-                                  return ListView.builder(
-                                    shrinkWrap: true,
-                                    itemCount: members.length,
-                                    itemBuilder: (context, index) {
-                                      var member = members[index];
-                                      return ListTile(
-                                        title: Text(
-                                          'Persona: ${member['name']}',
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                        subtitle: Text(
-                                            'Asistencia: ${member['assisted']}'),
-                                        trailing: IconButton(
-                                          icon: Icon(
-                                            Icons.clear,
-                                            color: Colors.red,
-                                          ),
-                                          onPressed: () {
-                                            _removePerson(member['name']);
-                                            setState(() {
-                                              members.removeAt(index);
-                                              if (members.isEmpty) {
-                                                membersList.remove(userId);
-                                              }
-                                            });
-                                          },
-                                        ),
-                                      );
-                                    },
-                                  );
-                                },
-                              )
-                            : Center(
-                                child: Text(
-                                  'No hay miembros en tu lista.',
-                                  style: TextStyle(color: Colors.white),
+                            if (eventListData == null ||
+                                !eventListData.containsKey('membersList')) {
+                              return Text(
+                                'No hay miembros en esta lista.',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14 * scaleFactor,
+                                  fontFamily: 'SFPro',
                                 ),
                               );
-                      },
-                    ),
-                  ],
+                            }
+
+                            var membersList = eventListData['membersList'];
+                            if (membersList is! Map<String, dynamic>) {
+                              return Text(
+                                'No hay miembros en esta lista.',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14 * scaleFactor,
+                                  fontFamily: 'SFPro',
+                                ),
+                              );
+                            }
+
+                            return membersList.containsKey(userId)
+                                ? ListView.builder(
+                                    itemCount:
+                                        1, // Solo un elemento, ya que solo estamos mostrando la lista del usuario actual
+                                    itemBuilder: (context, index) {
+                                      var memberGroup = membersList[userId];
+                                      var members = memberGroup['members'];
+
+                                      return ListView.builder(
+                                        shrinkWrap: true,
+                                        physics: NeverScrollableScrollPhysics(),
+                                        itemCount: members.length,
+                                        itemBuilder: (context, index) {
+                                          var member = members[index];
+                                          return ListTile(
+                                            title: Text(
+                                              '${member['name']}',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 16 * scaleFactor,
+                                                fontFamily: 'SFPro',
+                                              ),
+                                            ),
+                                            trailing: IconButton(
+                                              icon: Icon(
+                                                CupertinoIcons.clear,
+                                                color: Colors.red,
+                                                size: 20 * scaleFactor,
+                                              ),
+                                              onPressed: () {
+                                                _removePerson(member['name']);
+                                                setState(() {
+                                                  members.removeAt(index);
+                                                  if (members.isEmpty) {
+                                                    membersList.remove(userId);
+                                                  }
+                                                });
+                                              },
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  )
+                                : Center(
+                                    child: Text(
+                                      'No hay miembros en tu lista.',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16 * scaleFactor,
+                                        fontFamily: 'SFPro',
+                                      ),
+                                    ),
+                                  );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               },
             ),

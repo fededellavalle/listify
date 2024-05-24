@@ -1,8 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'functionsCompany/insideCompany.dart';
 import 'package:unicons/unicons.dart';
+import 'functionsCompany/insideCompany.dart';
 import 'functionsCompany/createCompany.dart';
 import '../../styles/loading.dart';
 
@@ -33,6 +33,10 @@ class _CompanyPageState extends State<CompanyPage>
 
   @override
   Widget build(BuildContext context) {
+    double baseWidth = 375.0; // Base design width
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFactor = screenWidth / baseWidth;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: PreferredSize(
@@ -45,15 +49,28 @@ class _CompanyPageState extends State<CompanyPage>
             child: TabBar(
               controller: _tabController,
               tabs: [
-                Tab(text: 'Mis Empresas'),
-                Tab(text: 'Empresas Invitadas'),
+                Tab(
+                  child: Text(
+                    'Mis Empresas',
+                    style: TextStyle(
+                      fontFamily: 'SFPro',
+                      fontSize: 14 * scaleFactor,
+                    ),
+                  ),
+                ),
+                Tab(
+                  child: Text(
+                    'Empresas Invitadas',
+                    style: TextStyle(
+                      fontFamily: 'SFPro',
+                      fontSize: 14 * scaleFactor,
+                    ),
+                  ),
+                ),
               ],
-              indicatorColor: Color(
-                  0xFF74BEB8), // Color del indicador cuando está seleccionado
-              labelColor:
-                  Color(0xFF74BEB8), // Color del texto cuando está seleccionado
-              unselectedLabelColor:
-                  Colors.grey, // Color del texto cuando no está seleccionado
+              indicatorColor: Color(0xFF74BEB8),
+              labelColor: Color(0xFF74BEB8),
+              unselectedLabelColor: Colors.grey,
             ),
           ),
         ),
@@ -61,8 +78,8 @@ class _CompanyPageState extends State<CompanyPage>
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildUserCompanies(),
-          _buildInvitedCompanies(),
+          _buildUserCompanies(scaleFactor),
+          _buildInvitedCompanies(scaleFactor),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -94,19 +111,23 @@ class _CompanyPageState extends State<CompanyPage>
         },
         backgroundColor: Color(0xFF74BEB8),
         icon: Icon(
-          Icons.add_business,
-          size: 24,
+          CupertinoIcons.add,
+          size: 24 * scaleFactor,
           color: Colors.black,
-        ), // Icono animado de Unicons
+        ),
         label: Text(
           'Agregar empresa',
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(
+            color: Colors.black,
+            fontFamily: 'SFPro',
+            fontSize: 14 * scaleFactor,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildUserCompanies() {
+  Widget _buildUserCompanies(double scaleFactor) {
     return Column(
       children: [
         Expanded(
@@ -116,19 +137,41 @@ class _CompanyPageState extends State<CompanyPage>
               if (companySnapshot.connectionState == ConnectionState.waiting) {
                 return Center(child: LoadingScreen());
               } else if (companySnapshot.hasError) {
-                return Center(child: Text('Error fetching company data'));
+                return Center(
+                  child: Text(
+                    'Error fetching company data',
+                    style: TextStyle(
+                      fontFamily: 'SFPro',
+                      fontSize: 14 * scaleFactor,
+                      color: Colors.white,
+                    ),
+                  ),
+                );
               } else if (companySnapshot.data!.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.add_business, color: Colors.white, size: 40),
-                      SizedBox(height: 5),
-                      Text('No tienes ninguna compañía a tu nombre',
-                          style: GoogleFonts.roboto(color: Colors.white)),
-                      SizedBox(height: 5),
-                      Text('Crea una ya',
-                          style: GoogleFonts.roboto(color: Colors.white)),
+                      Icon(Icons.add_business,
+                          color: Colors.white, size: 40 * scaleFactor),
+                      SizedBox(height: 5 * scaleFactor),
+                      Text(
+                        'No tienes ninguna compañía a tu nombre',
+                        style: TextStyle(
+                          fontFamily: 'SFPro',
+                          color: Colors.white,
+                          fontSize: 14 * scaleFactor,
+                        ),
+                      ),
+                      SizedBox(height: 5 * scaleFactor),
+                      Text(
+                        'Crea una ya',
+                        style: TextStyle(
+                          fontFamily: 'SFPro',
+                          color: Colors.white,
+                          fontSize: 14 * scaleFactor,
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -138,6 +181,7 @@ class _CompanyPageState extends State<CompanyPage>
                     for (var companyData in companySnapshot.data!)
                       CompanyButton(
                         companyData: companyData,
+                        scaleFactor: scaleFactor,
                       ),
                   ],
                 );
@@ -149,7 +193,7 @@ class _CompanyPageState extends State<CompanyPage>
     );
   }
 
-  Widget _buildInvitedCompanies() {
+  Widget _buildInvitedCompanies(double scaleFactor) {
     return Column(
       children: [
         Expanded(
@@ -161,16 +205,31 @@ class _CompanyPageState extends State<CompanyPage>
                 return Center(child: LoadingScreen());
               } else if (relationshipSnapshot.hasError) {
                 return Center(
-                    child: Text('Error fetching company relationships'));
+                  child: Text(
+                    'Error fetching company relationships',
+                    style: TextStyle(
+                      fontFamily: 'SFPro',
+                      fontSize: 14 * scaleFactor,
+                      color: Colors.white,
+                    ),
+                  ),
+                );
               } else if (relationshipSnapshot.data!.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(UniconsLine.envelope, color: Colors.white, size: 40),
-                      SizedBox(height: 5),
-                      Text('No estas invitado ninguna compañía',
-                          style: GoogleFonts.roboto(color: Colors.white)),
+                      Icon(UniconsLine.envelope,
+                          color: Colors.white, size: 40 * scaleFactor),
+                      SizedBox(height: 5 * scaleFactor),
+                      Text(
+                        'No estas invitado a ninguna compañía',
+                        style: TextStyle(
+                          fontFamily: 'SFPro',
+                          color: Colors.white,
+                          fontSize: 14 * scaleFactor,
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -192,7 +251,15 @@ class _CompanyPageState extends State<CompanyPage>
                             return Center(child: CircularProgressIndicator());
                           } else if (companySnapshot.hasError) {
                             return Center(
-                                child: Text('Error fetching company data'));
+                              child: Text(
+                                'Error fetching company data',
+                                style: TextStyle(
+                                  fontFamily: 'SFPro',
+                                  fontSize: 14 * scaleFactor,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            );
                           } else {
                             Map<String, dynamic> companyInfo =
                                 companySnapshot.data!.data()
@@ -201,6 +268,7 @@ class _CompanyPageState extends State<CompanyPage>
                             return CompanyButton(
                               companyData: companyInfo,
                               category: companyData['category'],
+                              scaleFactor: scaleFactor,
                             );
                           }
                         },
@@ -268,10 +336,12 @@ class _CompanyPageState extends State<CompanyPage>
 class CompanyButton extends StatelessWidget {
   final Map<String, dynamic> companyData;
   final String? category;
+  final double scaleFactor;
 
   CompanyButton({
     required this.companyData,
     this.category,
+    required this.scaleFactor,
   });
 
   @override
@@ -289,15 +359,16 @@ class CompanyButton extends StatelessWidget {
       },
       child: AnimatedContainer(
         duration: Duration(milliseconds: 300),
-        padding: EdgeInsets.all(16),
-        margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        padding: EdgeInsets.all(16 * scaleFactor),
+        margin: EdgeInsets.symmetric(
+            vertical: 8 * scaleFactor, horizontal: 16 * scaleFactor),
         decoration: BoxDecoration(
           color: Colors.blueGrey.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(12 * scaleFactor),
           boxShadow: [
             BoxShadow(
               color: Colors.black26,
-              blurRadius: 4,
+              blurRadius: 4 * scaleFactor,
               offset: Offset(0, 2),
             ),
           ],
@@ -307,45 +378,49 @@ class CompanyButton extends StatelessWidget {
             ClipOval(
               child: Image.network(
                 companyData['imageUrl'] ?? '',
-                width: 70,
-                height: 70,
+                width: 70 * scaleFactor,
+                height: 70 * scaleFactor,
                 fit: BoxFit.cover,
               ),
             ),
-            SizedBox(width: 16),
+            SizedBox(width: 16 * scaleFactor),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     companyData['name'] ?? '',
-                    style: GoogleFonts.roboto(
-                      fontSize: 20,
+                    style: TextStyle(
+                      fontSize: 20 * scaleFactor,
                       fontWeight: FontWeight.bold,
+                      fontFamily: 'SFPro',
                       color: Colors.white,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  SizedBox(height: 2 * scaleFactor),
                   Text(
                     '@${companyData['username'] ?? ''}',
-                    style: GoogleFonts.roboto(
-                      fontSize: 16,
+                    style: TextStyle(
+                      fontSize: 16 * scaleFactor,
+                      fontFamily: 'SFPro',
                       color: Colors.white70,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  SizedBox(height: 2 * scaleFactor),
                   if (category != null)
                     Text(
                       'Eres parte de $category',
-                      style: GoogleFonts.roboto(
-                        fontSize: 14,
+                      style: TextStyle(
+                        fontSize: 14 * scaleFactor,
+                        fontFamily: 'SFPro',
                         color: Colors.white,
                       ),
                     ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: Colors.white),
+            Icon(Icons.chevron_right,
+                color: Colors.white, size: 24 * scaleFactor),
           ],
         ),
       ),

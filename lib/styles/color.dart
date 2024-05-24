@@ -8,3 +8,5 @@ Color white = Color(0xffffffff);
 Color purple = Color(0xff613FE5);
 Color softPurple = Color(0xffD0C3FF);
 Color yellowPrimary = Color.fromARGB(255, 242, 187, 29);
+Color skyBluePrimary = Color(0xFF74BEB8);
+Color skyBlueSecondary = Color.fromARGB(255, 117, 168, 184);

@@ -7,7 +7,6 @@ import 'dart:io';
 import '../../../../../styles/button.dart';
 import 'package:uuid/uuid.dart';
 
-// ignore: must_be_immutable
 class Step3AddEvent extends StatefulWidget {
   final String name;
   final double ticketValue;
@@ -40,36 +39,43 @@ class _Step3AddEventState extends State<Step3AddEvent> {
 
   @override
   Widget build(BuildContext context) {
+    double baseWidth = 375.0;
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFactor = screenWidth / baseWidth;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
           'Paso 3: Confirmar Evento',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+            color: Colors.white,
+            fontFamily: 'SFPro',
+            fontSize: 16 * scaleFactor,
+          ),
         ),
         iconTheme: IconThemeData(
-          color: Colors.white, // Color blanco para los iconos
+          color: Colors.white,
         ),
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(16.0 * scaleFactor),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   SizedBox(
-                    height: 225, // Altura deseada para la imagen
-                    width: 100, // Ancho deseado para la imagen
+                    height: 225 * scaleFactor, // Altura deseada para la imagen
+                    width: 100 * scaleFactor, // Ancho deseado para la imagen
                     child: Image.file(
                       widget.image!,
-                      fit: BoxFit
-                          .cover, // Ajusta la imagen para que cubra el espacio especificado
+                      fit: BoxFit.cover,
                     ),
                   ),
-                  SizedBox(width: 10),
+                  SizedBox(width: 10 * scaleFactor),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -78,35 +84,52 @@ class _Step3AddEventState extends State<Step3AddEvent> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
-                          fontSize: 16,
+                          fontFamily: 'SFPro',
+                          fontSize: 16 * scaleFactor,
                         ),
                       ),
-                      SizedBox(height: 10),
+                      SizedBox(height: 10 * scaleFactor),
                       Text(
                         'Valor de la Entrada: \$${widget.ticketValue.toStringAsFixed(2)}',
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'SFPro',
+                          fontSize: 14 * scaleFactor,
+                        ),
                       ),
-                      SizedBox(height: 10),
+                      SizedBox(height: 10 * scaleFactor),
                       Text(
                         'Fecha de Inicio: ${widget.startDateTime != null ? DateFormat('dd/MM/yyyy HH:mm').format(widget.startDateTime!) : 'No especificada'}',
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'SFPro',
+                          fontSize: 14 * scaleFactor,
+                        ),
                       ),
-                      SizedBox(height: 10),
+                      SizedBox(height: 10 * scaleFactor),
                       Text(
                         'Fecha de Fin: ${widget.endDateTime != null ? DateFormat('dd/MM/yyyy HH:mm').format(widget.endDateTime!) : 'No especificada'}',
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'SFPro',
+                          fontSize: 14 * scaleFactor,
+                        ),
                       ),
                     ],
                   ),
                 ],
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 20 * scaleFactor),
               Text(
                 'Listas Disponibles:',
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontFamily: 'SFPro',
+                  fontSize: 16 * scaleFactor,
+                ),
               ),
-              SizedBox(height: 10),
+              SizedBox(height: 10 * scaleFactor),
               ListView.builder(
                 shrinkWrap: true,
                 itemCount: widget.lists.length,
@@ -117,20 +140,32 @@ class _Step3AddEventState extends State<Step3AddEvent> {
                       ListTile(
                         title: Text(
                           'Nombre: ${widget.lists[index].name}',
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                            fontSize: 14 * scaleFactor,
+                          ),
                         ),
                         subtitle: Text(
                           'Tipo de lista: ${widget.lists[index].type}',
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontFamily: 'SFPro',
+                            fontSize: 12 * scaleFactor,
+                          ),
                         ),
                       ),
-                      SizedBox(height: 5), // Espacio entre los elementos
+                      SizedBox(
+                          height:
+                              5 * scaleFactor), // Espacio entre los elementos
                       Text(
                         'La lista va a funcionar desde ${DateFormat('dd-MM-yyyy HH:mm').format(widget.lists[index].selectedStartDate ?? DateTime.now())} hasta ${DateFormat('dd-MM-yyyy HH:mm').format(widget.lists[index].selectedEndDate ?? DateTime.now())}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Color.fromARGB(
                               255, 242, 187, 29), // Color del texto
+                          fontFamily: 'SFPro',
+                          fontSize: 14 * scaleFactor,
                         ),
                       ),
                       if (widget.lists[index].addExtraTime)
@@ -140,18 +175,24 @@ class _Step3AddEventState extends State<Step3AddEvent> {
                             fontWeight: FontWeight.bold,
                             color: Color.fromARGB(
                                 255, 242, 187, 29), // Color del texto
+                            fontFamily: 'SFPro',
+                            fontSize: 14 * scaleFactor,
                           ),
                         ),
                     ],
                   );
                 },
               ),
-              SizedBox(height: 10),
+              SizedBox(height: 10 * scaleFactor),
               if (widget.template != null)
                 SwitchListTile(
                   title: Text(
                     'Guardar plantilla del Evento para próximos',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'SFPro',
+                      fontSize: 14 * scaleFactor,
+                    ),
                   ),
                   value: _guardarPlantilla,
                   onChanged: (newValue) {
@@ -161,7 +202,7 @@ class _Step3AddEventState extends State<Step3AddEvent> {
                   },
                   activeColor: Color.fromARGB(255, 242, 187, 29),
                 ),
-              SizedBox(height: 10),
+              SizedBox(height: 10 * scaleFactor),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -179,10 +220,10 @@ class _Step3AddEventState extends State<Step3AddEvent> {
                     children: [
                       _isLoading
                           ? SizedBox(
-                              width: 23,
-                              height: 23,
+                              width: 23 * scaleFactor,
+                              height: 23 * scaleFactor,
                               child: CircularProgressIndicator(
-                                strokeWidth: 2,
+                                strokeWidth: 2 * scaleFactor,
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   Colors.black,
                                 ),
@@ -191,7 +232,8 @@ class _Step3AddEventState extends State<Step3AddEvent> {
                           : Text(
                               'Crear Evento',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 16 * scaleFactor,
+                                fontFamily: 'SFPro',
                               ),
                             ),
                     ],
@@ -260,10 +302,22 @@ class _Step3AddEventState extends State<Step3AddEvent> {
       showDialog(
         context: context,
         builder: (BuildContext context) {
+          double scaleFactor = MediaQuery.of(context).size.width / 375.0;
           return AlertDialog(
-            title: Text('Evento Creado'),
-            content:
-                Text('El evento ${widget.name} se ha creado correctamente.'),
+            title: Text(
+              'Evento Creado',
+              style: TextStyle(
+                fontFamily: 'SFPro',
+                fontSize: 18 * scaleFactor,
+              ),
+            ),
+            content: Text(
+              'El evento ${widget.name} se ha creado correctamente.',
+              style: TextStyle(
+                fontFamily: 'SFPro',
+                fontSize: 16 * scaleFactor,
+              ),
+            ),
             actions: <Widget>[
               TextButton(
                 onPressed: () {
@@ -272,7 +326,13 @@ class _Step3AddEventState extends State<Step3AddEvent> {
                   Navigator.of(context).pop();
                   Navigator.of(context).pop();
                 },
-                child: Text('Aceptar'),
+                child: Text(
+                  'Aceptar',
+                  style: TextStyle(
+                    fontFamily: 'SFPro',
+                    fontSize: 14 * scaleFactor,
+                  ),
+                ),
               ),
             ],
           );
@@ -281,7 +341,13 @@ class _Step3AddEventState extends State<Step3AddEvent> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error al crear el evento: $e'),
+          content: Text(
+            'Error al crear el evento: $e',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+              fontSize: 14,
+            ),
+          ),
         ),
       );
     } finally {
@@ -303,7 +369,12 @@ class _Step3AddEventState extends State<Step3AddEvent> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              'Ya tienes 3 plantillas guardadas. Elimina una para poder guardar una nueva.'),
+            'Ya tienes 3 plantillas guardadas. Elimina una para poder guardar una nueva.',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+              fontSize: 14,
+            ),
+          ),
         ),
       );
       return;
@@ -338,7 +409,13 @@ class _Step3AddEventState extends State<Step3AddEvent> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Plantilla guardada exitosamente.'),
+        content: Text(
+          'Plantilla guardada exitosamente.',
+          style: TextStyle(
+            fontFamily: 'SFPro',
+            fontSize: 14,
+          ),
+        ),
       ),
     );
   }

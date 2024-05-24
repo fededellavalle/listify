@@ -1,8 +1,10 @@
 import 'package:app_listas/home/events/functionEvents/insideEvent.dart';
 import 'package:app_listas/home/profile/profile.dart';
+import 'package:app_listas/styles/color.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 class HomePage extends StatefulWidget {
   final String? uid;
@@ -87,6 +89,10 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _handleRefresh() async {
+    await _countEvents();
+  }
+
   void _selectDate(DateTime date) {
     setState(() {
       _selectedDate = date;
@@ -95,24 +101,33 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final double scaleFactor = MediaQuery.of(context).size.width / 375.0;
+
     return Scaffold(
       backgroundColor: Colors.black,
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTopBar(),
-            _buildCalendar(),
-            _buildCategories(),
-            _buildEventSummary(),
-            _buildEventList(),
-          ],
+      body: LiquidPullToRefresh(
+        onRefresh: _handleRefresh,
+        color: skyBluePrimary,
+        height: 50 * scaleFactor,
+        backgroundColor: Colors.black,
+        showChildOpacityTransition: false,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTopBar(scaleFactor),
+              _buildCalendar(scaleFactor),
+              _buildCategories(scaleFactor),
+              _buildEventSummary(scaleFactor),
+              _buildEventList(scaleFactor),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTopBar() {
+  Widget _buildTopBar(double scaleFactor) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Row(
@@ -135,11 +150,11 @@ class _HomePageState extends State<HomePage> {
                   },
                   child: CircleAvatar(
                     backgroundImage: NetworkImage(_profileImageUrl!),
-                    radius: 24,
+                    radius: 24 * scaleFactor,
                   ),
                 )
               : CircleAvatar(
-                  radius: 24,
+                  radius: 24 * scaleFactor,
                   child: IconButton(
                     icon: Icon(Icons.question_mark, color: Colors.white),
                     onPressed: () async {
@@ -158,21 +173,26 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                 ),
-          SizedBox(width: 16),
+          SizedBox(width: 16 * scaleFactor),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Hola, $_firstName',
                 style: TextStyle(
-                  fontSize: 24.0,
+                  fontSize: 24.0 * scaleFactor,
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
+                  fontFamily: 'SFPro',
                 ),
               ),
               Text(
                 'Veamos qué está pasando hoy',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'SFPro',
+                  fontSize: 16 * scaleFactor,
+                ),
               ),
             ],
           ),
@@ -181,7 +201,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildCalendar() {
+  Widget _buildCalendar(double scaleFactor) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
@@ -201,11 +221,13 @@ class _HomePageState extends State<HomePage> {
                     color: Colors.white,
                     fontWeight:
                         isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontFamily: 'SFPro',
+                    fontSize: 16 * scaleFactor,
                   ),
                 ),
-                SizedBox(height: 4),
+                SizedBox(height: 4 * scaleFactor),
                 Container(
-                  padding: EdgeInsets.all(8),
+                  padding: EdgeInsets.all(8 * scaleFactor),
                   decoration: BoxDecoration(
                     color: isSelected ? Colors.amber : Colors.transparent,
                     shape: BoxShape.circle,
@@ -216,6 +238,8 @@ class _HomePageState extends State<HomePage> {
                       color: Colors.white,
                       fontWeight:
                           isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontFamily: 'SFPro',
+                      fontSize: 16 * scaleFactor,
                     ),
                   ),
                 ),
@@ -227,61 +251,69 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildCategories() {
+  Widget _buildCategories(double scaleFactor) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildCategoryCard('Concierto', Icons.music_note),
-          _buildCategoryCard('Deportes', Icons.sports_soccer),
-          _buildCategoryCard('Educación', Icons.school),
+          _buildCategoryCard('Concierto', Icons.music_note, scaleFactor),
+          _buildCategoryCard('Deportes', Icons.sports_soccer, scaleFactor),
+          _buildCategoryCard('Educación', Icons.school, scaleFactor),
         ],
       ),
     );
   }
 
-  Widget _buildCategoryCard(String title, IconData icon) {
+  Widget _buildCategoryCard(String title, IconData icon, double scaleFactor) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(16 * scaleFactor),
       decoration: BoxDecoration(
         color: Colors.grey.shade800,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12 * scaleFactor),
       ),
       child: Column(
         children: [
-          Icon(icon, color: Colors.white, size: 30),
-          SizedBox(height: 8),
+          Icon(icon, color: Colors.white, size: 30 * scaleFactor),
+          SizedBox(height: 8 * scaleFactor),
           Text(
             title,
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(
+              color: Colors.white,
+              fontFamily: 'SFPro',
+              fontSize: 16 * scaleFactor,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEventSummary() {
+  Widget _buildEventSummary(double scaleFactor) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
       child: Column(
         children: [
-          _buildEventCard('Eventos en Vivo', _liveEvents, Colors.redAccent),
-          SizedBox(height: 16),
-          _buildEventCard('Eventos Activos', _activeEvents, Colors.greenAccent),
-          SizedBox(height: 16),
-          _buildEventCard('Eventos Desactivos', _desactiveEvents, Colors.grey),
+          _buildEventCard(
+              'Eventos en Vivo', _liveEvents, Colors.redAccent, scaleFactor),
+          SizedBox(height: 16 * scaleFactor),
+          _buildEventCard('Eventos Activos', _activeEvents, Colors.greenAccent,
+              scaleFactor),
+          SizedBox(height: 16 * scaleFactor),
+          _buildEventCard(
+              'Eventos Desactivos', _desactiveEvents, Colors.grey, scaleFactor),
         ],
       ),
     );
   }
 
-  Widget _buildEventCard(String title, int count, Color color) {
+  Widget _buildEventCard(
+      String title, int count, Color color, double scaleFactor) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(16 * scaleFactor),
       decoration: BoxDecoration(
         color: Colors.grey.shade800,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12 * scaleFactor),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -290,22 +322,24 @@ class _HomePageState extends State<HomePage> {
             title,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 18,
+              fontSize: 18 * scaleFactor,
               fontWeight: FontWeight.bold,
+              fontFamily: 'SFPro',
             ),
           ),
           Container(
-            padding: EdgeInsets.all(8),
+            padding: EdgeInsets.all(8 * scaleFactor),
             decoration: BoxDecoration(
               color: color,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(12 * scaleFactor),
             ),
             child: Text(
               '$count',
               style: TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
+                fontSize: 16 * scaleFactor,
+                fontFamily: 'SFPro',
               ),
             ),
           ),
@@ -314,7 +348,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildEventList() {
+  Widget _buildEventList(double scaleFactor) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -324,25 +358,38 @@ class _HomePageState extends State<HomePage> {
             'Eventos Populares',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 18,
+              fontSize: 18 * scaleFactor,
               fontWeight: FontWeight.bold,
+              fontFamily: 'SFPro',
             ),
           ),
-          SizedBox(height: 16),
+          SizedBox(height: 16 * scaleFactor),
           FutureBuilder<List<DocumentSnapshot>>(
             future: _fetchEvents(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return Text('Error al cargar los eventos',
-                    style: TextStyle(color: Colors.white));
+                return Text(
+                  'Error al cargar los eventos',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'SFPro',
+                    fontSize: 16 * scaleFactor,
+                  ),
+                );
               }
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(child: CircularProgressIndicator());
               }
 
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Text('No hay eventos disponibles',
-                    style: TextStyle(color: Colors.white));
+                return Text(
+                  'No hay eventos disponibles',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'SFPro',
+                    fontSize: 16 * scaleFactor,
+                  ),
+                );
               }
 
               return Column(
@@ -352,8 +399,12 @@ class _HomePageState extends State<HomePage> {
                   var formattedStartTime =
                       DateFormat('dd/MM/yyyy HH:mm').format(startTime.toDate());
 
-                  return _buildEventItem(event['eventName'],
-                      event['eventImage'], formattedStartTime);
+                  return _buildEventItem(
+                    event['eventName'],
+                    event['eventImage'],
+                    formattedStartTime,
+                    scaleFactor,
+                  );
                 }).toList(),
               );
             },
@@ -398,26 +449,30 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildEventItem(
-      String eventName, String eventImage, String formattedStartTime) {
+    String eventName,
+    String eventImage,
+    String formattedStartTime,
+    double scaleFactor,
+  ) {
     return Container(
-      margin: EdgeInsets.only(bottom: 16),
-      padding: EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: 16 * scaleFactor),
+      padding: EdgeInsets.all(16 * scaleFactor),
       decoration: BoxDecoration(
         color: Colors.grey.shade800,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12 * scaleFactor),
       ),
       child: Row(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(12 * scaleFactor),
             child: Image.network(
               eventImage,
-              width: 80,
-              height: 80,
+              width: 80 * scaleFactor,
+              height: 80 * scaleFactor,
               fit: BoxFit.cover,
             ),
           ),
-          SizedBox(width: 16),
+          SizedBox(width: 16 * scaleFactor),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -426,14 +481,19 @@ class _HomePageState extends State<HomePage> {
                   eventName,
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: 16 * scaleFactor,
                     fontWeight: FontWeight.bold,
+                    fontFamily: 'SFPro',
                   ),
                 ),
-                SizedBox(height: 4),
+                SizedBox(height: 4 * scaleFactor),
                 Text(
                   'Inicio: $formattedStartTime',
-                  style: TextStyle(color: Colors.white70),
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontFamily: 'SFPro',
+                    fontSize: 14 * scaleFactor,
+                  ),
                 ),
               ],
             ),
@@ -469,6 +529,8 @@ class EventButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double scaleFactor = MediaQuery.of(context).size.width / 375.0;
+
     return Stack(
       children: [
         InkWell(
@@ -493,46 +555,56 @@ class EventButton extends StatelessWidget {
           },
           child: AnimatedContainer(
             duration: Duration(milliseconds: 300),
-            padding: EdgeInsets.all(16),
-            margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            padding: EdgeInsets.all(16 * scaleFactor),
+            margin: EdgeInsets.symmetric(
+                vertical: 8 * scaleFactor, horizontal: 16 * scaleFactor),
             decoration: BoxDecoration(
               color: Colors.blueGrey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(12 * scaleFactor),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black26,
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
+                  blurRadius: 4 * scaleFactor,
+                  offset: Offset(0, 2 * scaleFactor),
                 ),
               ],
             ),
             child: Row(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12 * scaleFactor),
                   child: Image.network(
                     eventImage,
-                    width: 50,
-                    height: 80,
+                    width: 50 * scaleFactor,
+                    height: 80 * scaleFactor,
                     fit: BoxFit.cover,
                   ),
                 ),
-                SizedBox(width: 16),
+                SizedBox(width: 16 * scaleFactor),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(eventName,
                           style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 16 * scaleFactor,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white)),
-                      SizedBox(height: 4),
+                              color: Colors.white,
+                              fontFamily: 'SFPro')),
+                      SizedBox(height: 4 * scaleFactor),
                       Text('Inicio: $formattedStartTime',
-                          style: TextStyle(color: Colors.white70)),
-                      SizedBox(height: 2),
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontFamily: 'SFPro',
+                            fontSize: 14 * scaleFactor,
+                          )),
+                      SizedBox(height: 2 * scaleFactor),
                       Text('Fin: $formattedEndTime',
-                          style: TextStyle(color: Colors.white70)),
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontFamily: 'SFPro',
+                            fontSize: 14 * scaleFactor,
+                          )),
                     ],
                   ),
                 ),
@@ -542,15 +614,15 @@ class EventButton extends StatelessWidget {
           ),
         ),
         Positioned(
-          top: 15,
-          right: 25,
-          child: _buildEventStateIndicator(eventState),
+          top: 15 * scaleFactor,
+          right: 25 * scaleFactor,
+          child: _buildEventStateIndicator(eventState, scaleFactor),
         ),
       ],
     );
   }
 
-  Widget _buildEventStateIndicator(String? eventState) {
+  Widget _buildEventStateIndicator(String? eventState, double scaleFactor) {
     Color color;
     String text;
 
@@ -571,12 +643,14 @@ class EventButton extends StatelessWidget {
     return Row(
       children: [
         _BlinkingCircle(color: color),
-        SizedBox(width: 4),
+        SizedBox(width: 4 * scaleFactor),
         Text(
           text,
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.bold,
+            fontFamily: 'SFPro',
+            fontSize: 14 * scaleFactor,
           ),
         ),
       ],
@@ -655,8 +729,8 @@ class __BlinkingCircleState extends State<_BlinkingCircle>
     return FadeTransition(
       opacity: _controller,
       child: Container(
-        width: 12,
-        height: 12,
+        width: 12 * MediaQuery.of(context).size.width / 375.0,
+        height: 12 * MediaQuery.of(context).size.width / 375.0,
         decoration: BoxDecoration(
           color: widget.color,
           shape: BoxShape.circle,

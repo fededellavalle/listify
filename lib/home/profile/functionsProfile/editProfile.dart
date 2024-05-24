@@ -1,3 +1,5 @@
+import 'package:app_listas/styles/color.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -5,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:intl/intl.dart'; // Para el DateFormat
 
 class EditProfilePage extends StatefulWidget {
   final String? uid;
@@ -20,6 +23,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
   String _name = '';
   String _lastname = '';
   String _email = '';
+  String _instagram = '';
+  DateTime? _birthDate;
+  String _nacionality = '';
+  String _subscription = '';
   bool _isLoading = true;
   File? _image;
 
@@ -43,6 +50,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
         _name = userData['name'] ?? '';
         _lastname = userData['lastname'] ?? '';
         _email = FirebaseAuth.instance.currentUser?.email ?? '';
+        _instagram = userData['instagram'] ?? '';
+        _birthDate = (userData['birthDate'] as Timestamp?)?.toDate();
+        _nacionality = userData['nationality'] ?? '';
+        _subscription = userData['subscription'] ?? '';
         _isLoading = false;
       });
     }
@@ -105,10 +116,28 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final double scaleFactor = MediaQuery.of(context).size.width / 375.0;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('Edit Profile'),
+        title: Text(
+          'Editar Perfil',
+          style: TextStyle(
+            fontSize: 20 * scaleFactor,
+            fontFamily: 'SFPro',
+            color: Colors.white,
+          ),
+        ),
+        leading: IconButton(
+          icon: Icon(
+            CupertinoIcons.left_chevron,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
         backgroundColor: Colors.black,
         centerTitle: true,
       ),
@@ -122,7 +151,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     GestureDetector(
                       onTap: _pickImage,
                       child: CircleAvatar(
-                        radius: 50,
+                        radius: 50 * scaleFactor,
                         backgroundImage: _image != null
                             ? FileImage(_image!)
                             : _profileImageUrl != null
@@ -131,28 +160,40 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                     as ImageProvider,
                       ),
                     ),
-                    SizedBox(height: 16),
+                    SizedBox(height: 16 * scaleFactor),
                     Text(
-                      'Tap to change profile image',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                    SizedBox(height: 16),
-                    _buildUserInfo('Name', _name),
-                    _buildUserInfo('Last Name', _lastname),
-                    _buildUserInfo('Email', _email),
-                    SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _uploadImage,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.yellow,
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      'Toca para cambiar la imagen de perfil',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontFamily: 'SFPro',
+                        fontSize: 16 * scaleFactor,
                       ),
-                      child: Text('Save Changes'),
+                    ),
+                    SizedBox(height: 16 * scaleFactor),
+                    _buildUserInfo('Nombre', _name, scaleFactor),
+                    _buildUserInfo('Apellido', _lastname, scaleFactor),
+                    _buildUserInfo('Email', _email, scaleFactor),
+                    _buildUserInfo('Instagram', _instagram, scaleFactor),
+                    _buildUserInfo(
+                        'Fecha de Nacimiento',
+                        _birthDate != null
+                            ? DateFormat('dd/MM/yyyy').format(_birthDate!)
+                            : '',
+                        scaleFactor),
+                    _buildUserInfo('Nacionalidad', _nacionality, scaleFactor),
+                    _buildUserInfo('Suscripción', _subscription, scaleFactor),
+                    SizedBox(height: 16 * scaleFactor),
+                    CupertinoButton(
+                      onPressed: _uploadImage,
+                      color: skyBluePrimary,
+                      child: Text(
+                        'Guardar Cambios',
+                        style: TextStyle(
+                          fontFamily: 'SFPro',
+                          color: Colors.black,
+                          fontSize: 16 * scaleFactor,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -161,7 +202,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  Widget _buildUserInfo(String label, String value) {
+  Widget _buildUserInfo(String label, String value, double scaleFactor) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -169,13 +210,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
           Expanded(
             child: Text(
               '$label:',
-              style: TextStyle(color: Colors.white70, fontSize: 16),
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 16 * scaleFactor,
+                fontFamily: 'SFPro',
+              ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: TextStyle(color: Colors.white, fontSize: 16),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16 * scaleFactor,
+                fontFamily: 'SFPro',
+              ),
             ),
           ),
         ],

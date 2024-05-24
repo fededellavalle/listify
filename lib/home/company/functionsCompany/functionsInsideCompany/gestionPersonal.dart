@@ -1,5 +1,5 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:unicons/unicons.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../styles/button.dart';
@@ -40,60 +40,70 @@ class _GestionPersonalState extends State<GestionPersonal> {
 
   @override
   Widget build(BuildContext context) {
-    print('personalCategories isEmpty: ${_categoriesStream?.isEmpty}');
+    double baseWidth = 375.0;
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFactor = screenWidth / baseWidth;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
           "Gestión de Personal",
-          style: GoogleFonts.roboto(
+          style: TextStyle(
             color: Colors.white,
+            fontFamily: 'SFPro',
+            fontSize: 18 * scaleFactor,
           ),
         ),
         iconTheme: IconThemeData(
           color: Colors.white,
         ),
+        leading: IconButton(
+          icon: Icon(
+            CupertinoIcons.left_chevron,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
         actions: [
-          SizedBox(height: 10),
           Container(
-            margin: EdgeInsets.only(right: 10),
-            child: Stack(
-              children: [
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) =>
-                            crearCategoriaPersonal(
-                          companyData: widget.companyData,
+            margin: EdgeInsets.only(right: 10 * scaleFactor),
+            child: IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        crearCategoriaPersonal(
+                      companyData: widget.companyData,
+                    ),
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                      return SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(1, 0),
+                          end: Offset.zero,
+                        ).animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.linearToEaseOut,
+                            reverseCurve: Curves.easeIn,
+                          ),
                         ),
-                        transitionsBuilder:
-                            (context, animation, secondaryAnimation, child) {
-                          return SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(1, 0),
-                              end: Offset.zero,
-                            ).animate(
-                              CurvedAnimation(
-                                parent: animation,
-                                curve: Curves.linearToEaseOut,
-                                reverseCurve: Curves.easeIn,
-                              ),
-                            ),
-                            child: child,
-                          );
-                        },
-                        transitionDuration: Duration(milliseconds: 500),
-                      ),
-                    );
-                  },
-                  icon: Icon(
-                    UniconsLine.plus_circle,
+                        child: child,
+                      );
+                    },
+                    transitionDuration: Duration(milliseconds: 500),
                   ),
-                ),
-              ],
+                );
+              },
+              icon: Icon(
+                CupertinoIcons.add_circled,
+                size: 24 * scaleFactor,
+              ),
             ),
           ),
         ],
@@ -102,11 +112,22 @@ class _GestionPersonalState extends State<GestionPersonal> {
         stream: _categoriesStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Text('Error al cargar las categorías');
+            return Center(
+              child: Text(
+                'Error al cargar las categorías',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'SFPro',
+                  fontSize: 18 * scaleFactor,
+                ),
+              ),
+            );
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return CircularProgressIndicator();
+            return Center(
+              child: CircularProgressIndicator(),
+            );
           }
 
           List<String> personalCategories = snapshot.data ?? [];
@@ -117,24 +138,24 @@ class _GestionPersonalState extends State<GestionPersonal> {
                 'No tienes categorías creadas, ¿crea una aquí?',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 18,
+                  fontFamily: 'SFPro',
+                  fontSize: 18 * scaleFactor,
                 ),
               ),
             );
           }
 
           return Container(
-            margin: EdgeInsets.symmetric(horizontal: 10.0),
+            margin: EdgeInsets.symmetric(horizontal: 10 * scaleFactor),
             decoration: BoxDecoration(
               color: Colors.grey.shade700.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(10 * scaleFactor),
             ),
-            height: personalCategories.length * 50.0,
+            height: personalCategories.length * 50.0 * scaleFactor,
             child: ListView.builder(
               itemCount: personalCategories.length,
               itemBuilder: (context, index) {
                 String categoryName = personalCategories[index];
-                print(categoryName);
                 return StreamBuilder<DocumentSnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('companies')
@@ -144,15 +165,26 @@ class _GestionPersonalState extends State<GestionPersonal> {
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
-                      return Text('Error al obtener la cantidad de personas');
+                      return Center(
+                        child: Text(
+                          'Error al obtener la cantidad de personas',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                            fontSize: 18 * scaleFactor,
+                          ),
+                        ),
+                      );
                     }
 
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return CircularProgressIndicator();
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
                     }
 
-                    var categoryData = snapshot.data?.data() as Map<String,
-                        dynamic>?; // Especificar el tipo de categoryData
+                    var categoryData =
+                        snapshot.data?.data() as Map<String, dynamic>?;
 
                     if (categoryData != null) {
                       int memberCount = categoryData['members']?.length ?? 0;
@@ -167,9 +199,9 @@ class _GestionPersonalState extends State<GestionPersonal> {
                                       InsideCategory(
                                 categoryName: categoryName,
                                 companyData: widget.companyData,
-                                emails: categoryData['members']
-                                        ?.cast<String>() ??
-                                    [], // Acceder a 'persons' como un Map<String, dynamic>
+                                emails:
+                                    categoryData['members']?.cast<String>() ??
+                                        [],
                               ),
                               transitionsBuilder: (context, animation,
                                   secondaryAnimation, child) {
@@ -196,31 +228,42 @@ class _GestionPersonalState extends State<GestionPersonal> {
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             Text(
-                              '$categoryName',
-                              style: GoogleFonts.roboto(
+                              categoryName,
+                              style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
+                                fontFamily: 'SFPro',
+                                fontSize: 18 * scaleFactor,
                               ),
                             ),
                             Spacer(),
                             Text(
                               '$memberCount',
-                              style: GoogleFonts.roboto(
+                              style: TextStyle(
                                 color: Colors.grey.shade600,
-                                fontSize: 18,
+                                fontFamily: 'SFPro',
+                                fontSize: 18 * scaleFactor,
                               ),
                             ),
-                            SizedBox(width: 3),
+                            SizedBox(width: 3 * scaleFactor),
                             Icon(
                               UniconsLine.angle_right_b,
-                              size: 20,
+                              size: 20 * scaleFactor,
                               color: Colors.grey.shade600,
                             ),
                           ],
                         ),
                       );
                     } else {
-                      return Text('Error: Datos de categoría no disponibles');
+                      return Center(
+                        child: Text(
+                          'Error: Datos de categoría no disponibles',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                            fontSize: 18 * scaleFactor,
+                          ),
+                        ),
+                      );
                     }
                   },
                 );

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../styles/button.dart';
@@ -64,6 +65,10 @@ class _InsideEventState extends State<InsideEvent> {
 
   @override
   Widget build(BuildContext context) {
+    double baseWidth = 375.0; // Base design width
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFactor = screenWidth / baseWidth;
+
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance
           .collection('companies')
@@ -73,7 +78,10 @@ class _InsideEventState extends State<InsideEvent> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Text('Error al cargar los datos del evento');
+          return Text(
+            'Error al cargar los datos del evento',
+            style: TextStyle(fontFamily: 'SFPro', fontSize: 14 * scaleFactor),
+          );
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -81,7 +89,10 @@ class _InsideEventState extends State<InsideEvent> {
         }
 
         if (!snapshot.hasData || snapshot.data!.data() == null) {
-          return Text('No se encontraron datos para el evento');
+          return Text(
+            'No se encontraron datos para el evento',
+            style: TextStyle(fontFamily: 'SFPro', fontSize: 14 * scaleFactor),
+          );
         }
 
         // Accede a los datos del evento desde el DocumentSnapshot
@@ -103,14 +114,6 @@ class _InsideEventState extends State<InsideEvent> {
               var categoryData =
                   categorySnapshot.data!.data()! as Map<String, dynamic>;
 
-              /*eventListsData.forEach((item) {
-                var listName = item['listName'];
-                var ticketPrice = item['ticketPrice'];
-
-                print('Nombre de la lista: $listName');
-                print('Precio del ticket: $ticketPrice');
-              });*/
-
               return Scaffold(
                 backgroundColor: Colors.black,
                 appBar: AppBar(
@@ -119,10 +122,21 @@ class _InsideEventState extends State<InsideEvent> {
                     eventData['eventName'],
                     style: TextStyle(
                       color: Colors.white,
+                      fontFamily: 'SFPro',
+                      fontSize: 18 * scaleFactor,
                     ),
                   ),
                   iconTheme: IconThemeData(
                     color: Colors.white, // Color blanco para los iconos
+                  ),
+                  leading: IconButton(
+                    icon: Icon(
+                      CupertinoIcons.left_chevron,
+                      color: Colors.white,
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
                   ),
                 ),
                 body: SingleChildScrollView(
@@ -132,11 +146,13 @@ class _InsideEventState extends State<InsideEvent> {
                           categoryData['permissions'].contains('Escribir') &&
                           eventData['eventState'] == 'Active')
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 10.0 * scaleFactor),
                           child: Container(
                             decoration: BoxDecoration(
                               color: Colors.grey.shade700.withOpacity(0.4),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius:
+                                  BorderRadius.circular(10 * scaleFactor),
                             ),
                             child: Column(
                               children: [
@@ -184,30 +200,35 @@ class _InsideEventState extends State<InsideEvent> {
                                         Container(
                                           decoration: BoxDecoration(
                                             color: Colors.green,
-                                            borderRadius:
-                                                BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                                8 * scaleFactor),
                                           ),
-                                          child: const Padding(
-                                            padding: EdgeInsets.all(8.0),
+                                          child: Padding(
+                                            padding: EdgeInsets.all(
+                                                8.0 * scaleFactor),
                                             child: Icon(
                                               Icons.group_add_rounded,
-                                              size: 20,
+                                              size: 20 * scaleFactor,
                                               color: Colors.white,
                                             ),
                                           ),
                                         ),
-                                        SizedBox(width: 15),
-                                        Text(
-                                          'Añadir gente a lista ${list['listName']}',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 18,
+                                        SizedBox(width: 15 * scaleFactor),
+                                        Flexible(
+                                          child: Text(
+                                            'Añadir gente a lista ${list['listName']}',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18 * scaleFactor,
+                                              fontFamily: 'SFPro',
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
                                         Spacer(),
                                         Icon(
                                           UniconsLine.angle_right_b,
-                                          size: 20,
+                                          size: 20 * scaleFactor,
                                           color: Colors.grey.shade600,
                                         ),
                                       ],
@@ -218,21 +239,20 @@ class _InsideEventState extends State<InsideEvent> {
                           ),
                         ),
                       if (!widget.isOwner &&
-                              categoryData['permissions'].contains(
-                                  'Escribir') /*&&
-                          eventData['eventState'] == 'Live'*/
-                          )
+                          categoryData['permissions'].contains('Escribir') &&
+                          eventData['eventState'] == 'Live')
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 10.0 * scaleFactor),
                           child: Container(
                             decoration: BoxDecoration(
                               color: Colors.grey.shade700.withOpacity(0.4),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius:
+                                  BorderRadius.circular(10 * scaleFactor),
                             ),
                             child: Column(
                               children: [
                                 for (var list in eventListsData)
-                                  //if (list['listType'] == 'Lista de Asistencia')
                                   ElevatedButton(
                                     onPressed: () {
                                       Navigator.push(
@@ -276,30 +296,35 @@ class _InsideEventState extends State<InsideEvent> {
                                         Container(
                                           decoration: BoxDecoration(
                                             color: Colors.blue.shade300,
-                                            borderRadius:
-                                                BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                                8 * scaleFactor),
                                           ),
-                                          child: const Padding(
-                                            padding: EdgeInsets.all(8.0),
+                                          child: Padding(
+                                            padding: EdgeInsets.all(
+                                                8.0 * scaleFactor),
                                             child: Icon(
                                               Icons.person_pin_rounded,
-                                              size: 20,
+                                              size: 20 * scaleFactor,
                                               color: Colors.white,
                                             ),
                                           ),
                                         ),
-                                        SizedBox(width: 15),
-                                        Text(
-                                          'Dar asistencia en lista ${list['listName']}',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 18,
+                                        SizedBox(width: 15 * scaleFactor),
+                                        Flexible(
+                                          child: Text(
+                                            'Dar asistencia en lista ${list['listName']}',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18 * scaleFactor,
+                                              fontFamily: 'SFPro',
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
                                         Spacer(),
                                         Icon(
                                           UniconsLine.angle_right_b,
-                                          size: 20,
+                                          size: 20 * scaleFactor,
                                           color: Colors.grey.shade600,
                                         ),
                                       ],
@@ -324,10 +349,21 @@ class _InsideEventState extends State<InsideEvent> {
                 eventData['eventName'],
                 style: TextStyle(
                   color: Colors.white,
+                  fontFamily: 'SFPro',
+                  fontSize: 18 * scaleFactor,
                 ),
               ),
               iconTheme: IconThemeData(
                 color: Colors.white, // Color blanco para los iconos
+              ),
+              leading: IconButton(
+                icon: Icon(
+                  CupertinoIcons.left_chevron,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
               ),
             ),
             body: SingleChildScrollView(
@@ -335,11 +371,12 @@ class _InsideEventState extends State<InsideEvent> {
                 children: [
                   if (eventData['eventState'] == 'Active')
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.grey.shade700.withOpacity(0.4),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(10 * scaleFactor),
                         ),
                         child: Column(
                           children: [
@@ -384,30 +421,30 @@ class _InsideEventState extends State<InsideEvent> {
                                     Container(
                                       decoration: BoxDecoration(
                                         color: Colors.green,
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(
+                                            8 * scaleFactor),
                                       ),
-                                      child: const Padding(
-                                        padding: EdgeInsets.all(8.0),
+                                      child: Padding(
+                                        padding:
+                                            EdgeInsets.all(8.0 * scaleFactor),
                                         child: Icon(
                                           Icons.group_add_rounded,
-                                          size: 20,
+                                          size: 20 * scaleFactor,
                                           color: Colors.white,
                                         ),
                                       ),
                                     ),
-                                    SizedBox(width: 15),
-                                    Text(
-                                      'Añadir gente a lista ${list['listName']}',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18,
+                                    SizedBox(width: 15 * scaleFactor),
+                                    Flexible(
+                                      child: Text(
+                                        'Añadir gente a lista ${list['listName']}',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18 * scaleFactor,
+                                          fontFamily: 'SFPro',
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
-                                    ),
-                                    Spacer(),
-                                    Icon(
-                                      UniconsLine.angle_right_b,
-                                      size: 20,
-                                      color: Colors.grey.shade600,
                                     ),
                                   ],
                                 ),
@@ -418,16 +455,16 @@ class _InsideEventState extends State<InsideEvent> {
                     ),
                   if (eventData['eventState'] == 'Live')
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.grey.shade700.withOpacity(0.4),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(10 * scaleFactor),
                         ),
                         child: Column(
                           children: [
                             for (var list in eventListsData)
-                              //if (list['listType'] == 'Lista de Asistencia')
                               ElevatedButton(
                                 onPressed: () {
                                   Navigator.push(
@@ -468,30 +505,30 @@ class _InsideEventState extends State<InsideEvent> {
                                     Container(
                                       decoration: BoxDecoration(
                                         color: Colors.blue.shade300,
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(
+                                            8 * scaleFactor),
                                       ),
-                                      child: const Padding(
-                                        padding: EdgeInsets.all(8.0),
+                                      child: Padding(
+                                        padding:
+                                            EdgeInsets.all(8.0 * scaleFactor),
                                         child: Icon(
                                           Icons.person_pin_rounded,
-                                          size: 20,
+                                          size: 20 * scaleFactor,
                                           color: Colors.white,
                                         ),
                                       ),
                                     ),
-                                    SizedBox(width: 15),
-                                    Text(
-                                      'Dar asistencia en lista ${list['listName']}',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18,
+                                    SizedBox(width: 15 * scaleFactor),
+                                    Flexible(
+                                      child: Text(
+                                        'Dar asistencia en lista ${list['listName']}',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18 * scaleFactor,
+                                          fontFamily: 'SFPro',
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
-                                    ),
-                                    Spacer(),
-                                    Icon(
-                                      UniconsLine.angle_right_b,
-                                      size: 20,
-                                      color: Colors.grey.shade600,
                                     ),
                                   ],
                                 ),
@@ -501,16 +538,16 @@ class _InsideEventState extends State<InsideEvent> {
                       ),
                     ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.grey.shade700.withOpacity(0.4),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(10 * scaleFactor),
                       ),
                       child: Column(
                         children: [
                           for (var list in eventListsData)
-                            //if (list['listType'] == 'Lista de Asistencia')
                             ElevatedButton(
                               onPressed: () {
                                 Navigator.push(
@@ -551,30 +588,30 @@ class _InsideEventState extends State<InsideEvent> {
                                   Container(
                                     decoration: BoxDecoration(
                                       color: Colors.orange,
-                                      borderRadius: BorderRadius.circular(8),
+                                      borderRadius: BorderRadius.circular(
+                                          8 * scaleFactor),
                                     ),
-                                    child: const Padding(
-                                      padding: EdgeInsets.all(8.0),
+                                    child: Padding(
+                                      padding:
+                                          EdgeInsets.all(8.0 * scaleFactor),
                                       child: Icon(
                                         Icons.library_books_outlined,
-                                        size: 20,
+                                        size: 20 * scaleFactor,
                                         color: Colors.white,
                                       ),
                                     ),
                                   ),
-                                  SizedBox(width: 15),
-                                  Text(
-                                    'Resumen de ${list['listName']}',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
+                                  SizedBox(width: 15 * scaleFactor),
+                                  Flexible(
+                                    child: Text(
+                                      'Resumen de ${list['listName']}',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18 * scaleFactor,
+                                        fontFamily: 'SFPro',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                  ),
-                                  Spacer(),
-                                  Icon(
-                                    UniconsLine.angle_right_b,
-                                    size: 20,
-                                    color: Colors.grey.shade600,
                                   ),
                                 ],
                               ),

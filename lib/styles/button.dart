@@ -18,10 +18,8 @@ final ButtonStyle buttonPrimary = ButtonStyle(
 //Color.fromARGB(255, 242, 187, 29) color amarillo
 
 final ButtonStyle buttonSecondary = ButtonStyle(
-  overlayColor: MaterialStateProperty.all<Color>(
-      Colors.grey), // Color del overlay (sombra) al presionar el botón
   backgroundColor: MaterialStateProperty.all<Color>(
-      Colors.black), // Color de fondo del botón con opacidad
+      Colors.white), // Color de fondo del botón con opacidad
   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
     RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(10.0),

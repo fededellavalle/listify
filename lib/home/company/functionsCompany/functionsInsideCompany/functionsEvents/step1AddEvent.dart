@@ -1,4 +1,6 @@
 import 'package:app_listas/styles/button.dart';
+import 'package:app_listas/styles/color.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'step2AddEvent.dart';
 import 'package:image_picker/image_picker.dart';
@@ -158,108 +160,174 @@ class _Step1AddEventState extends State<Step1AddEvent> {
 
   void _showSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(fontFamily: 'SFPro'),
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    double baseWidth = 375.0;
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFactor = screenWidth / baseWidth;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: Text(
-          "Paso 1: Datos principales del evento",
-          style: TextStyle(color: Colors.white, fontSize: 16),
+        leading: IconButton(
+          icon: Icon(
+            CupertinoIcons.left_chevron,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
         ),
         iconTheme: IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildEventImagePicker(),
-              SizedBox(height: 20),
-              _buildTextFormField(
-                controller: _nameController,
-                labelText: 'Nombre del Evento',
-                prefixIcon: Icons.person,
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Por favor, ingrese el nombre del evento'
-                    : null,
-              ),
-              SizedBox(height: 16),
-              _buildTextFormField(
-                controller: _ticketValueController,
-                labelText: 'Valor de la entrada',
-                prefixIcon: Icons.monetization_on,
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  LengthLimitingTextInputFormatter(8),
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
+        padding: EdgeInsets.only(
+          left: 16 * scaleFactor,
+          right: 16 * scaleFactor,
+          bottom: 16 * scaleFactor,
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Creemos un Evento',
+                  style: TextStyle(
+                    fontSize: 25 * scaleFactor,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontFamily: 'SFPro',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Text(
+                  'Paso 1: Datos principales del evento',
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                    fontSize: 15 * scaleFactor,
+                    color: Colors.grey.shade400,
+                    fontFamily: 'SFPro',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildEventImagePicker(scaleFactor),
+                  SizedBox(height: 20 * scaleFactor),
+                  _buildTextFormField(
+                    controller: _nameController,
+                    labelText: 'Nombre del Evento',
+                    prefixIcon: Icons.person,
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'Por favor, ingrese el nombre del evento'
+                        : null,
+                    scaleFactor: scaleFactor,
+                  ),
+                  SizedBox(height: 16 * scaleFactor),
+                  _buildTextFormField(
+                    controller: _ticketValueController,
+                    labelText: 'Valor de la entrada',
+                    prefixIcon: Icons.monetization_on,
+                    keyboardType:
+                        TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(8),
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
+                    ],
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'Por favor, ingrese el valor de la entrada del evento'
+                        : null,
+                    scaleFactor: scaleFactor,
+                  ),
+                  SizedBox(height: 16 * scaleFactor),
+                  _buildDateTimePicker(
+                    context: context,
+                    labelText: 'Fecha y Hora de Inicio',
+                    dateTime: _startDateTime,
+                    isStartDateTime: true,
+                    scaleFactor: scaleFactor,
+                  ),
+                  SizedBox(height: 16 * scaleFactor),
+                  _buildEndDateTimePicker(context, scaleFactor),
+                  SizedBox(height: 16 * scaleFactor),
+                  CupertinoButton(
+                    onPressed: _goToStep2,
+                    color: skyBluePrimary,
+                    child: Text(
+                      'Siguiente paso',
+                      style: TextStyle(
+                        fontSize: 16 * scaleFactor,
+                        fontFamily: 'SFPro',
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
                 ],
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Por favor, ingrese el valor de la entrada del evento'
-                    : null,
               ),
-              SizedBox(height: 16),
-              _buildDateTimePicker(
-                context: context,
-                labelText: 'Fecha y Hora de Inicio',
-                dateTime: _startDateTime,
-                isStartDateTime: true,
-              ),
-              SizedBox(height: 16),
-              _buildEndDateTimePicker(context),
-              SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _goToStep2,
-                style: buttonPrimary,
-                child: Text('Siguiente paso', style: TextStyle(fontSize: 16)),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildEventImagePicker() {
+  Widget _buildEventImagePicker(double scaleFactor) {
     return Center(
       child: Stack(
         children: [
           Container(
-            width: 200,
-            height: 350,
+            width: 200 * scaleFactor,
+            height: 350 * scaleFactor,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Color.fromARGB(255, 242, 187, 29)),
+              borderRadius: BorderRadius.circular(10 * scaleFactor),
+              border: Border.all(color: skyBluePrimary),
             ),
             child: InkWell(
               onTap: _getImage,
               child: _image == null
-                  ? Icon(Icons.camera_alt, size: 50, color: Colors.grey)
+                  ? Icon(Icons.camera_alt,
+                      size: 50 * scaleFactor, color: Colors.grey)
                   : ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(10 * scaleFactor),
                       child: Image.file(
                         _image!,
-                        width: 100,
-                        height: 200,
+                        width: 100 * scaleFactor,
+                        height: 200 * scaleFactor,
                         fit: BoxFit.cover,
                       ),
                     ),
             ),
           ),
           Positioned(
-            top: 10,
-            left: 10,
+            top: 10 * scaleFactor,
+            left: 10 * scaleFactor,
             child: Text(
               'Foto del evento',
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'SFPro',
+                fontSize: 14 * scaleFactor,
+              ),
             ),
           ),
         ],
@@ -271,6 +339,7 @@ class _Step1AddEventState extends State<Step1AddEvent> {
     required TextEditingController controller,
     required String labelText,
     required IconData prefixIcon,
+    double scaleFactor = 1.0,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
@@ -281,19 +350,29 @@ class _Step1AddEventState extends State<Step1AddEvent> {
       inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: labelText,
-        labelStyle: TextStyle(color: Color.fromARGB(255, 242, 187, 29)),
+        labelStyle: TextStyle(
+          color: white,
+          fontFamily: 'SFPro',
+          fontSize: 14 * scaleFactor,
+        ),
         prefixIcon: Icon(prefixIcon, color: Colors.grey),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10 * scaleFactor),
+        ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Color.fromARGB(255, 242, 187, 29)),
+          borderRadius: BorderRadius.circular(10 * scaleFactor),
+          borderSide: BorderSide(color: skyBluePrimary),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Color.fromARGB(255, 158, 128, 36)),
+          borderRadius: BorderRadius.circular(10 * scaleFactor),
+          borderSide: BorderSide(color: skyBlueSecondary),
         ),
       ),
-      style: TextStyle(color: Colors.white),
+      style: TextStyle(
+        color: Colors.white,
+        fontFamily: 'SFPro',
+        fontSize: 14 * scaleFactor,
+      ),
       validator: validator,
     );
   }
@@ -303,35 +382,46 @@ class _Step1AddEventState extends State<Step1AddEvent> {
     required String labelText,
     required DateTime? dateTime,
     required bool isStartDateTime,
+    double scaleFactor = 1.0,
   }) {
     return InkWell(
       onTap: () => _selectDateTime(context, isStartDateTime),
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: labelText,
-          labelStyle: TextStyle(color: Color.fromARGB(255, 242, 187, 29)),
+          labelStyle: TextStyle(
+            color: white,
+            fontFamily: 'SFPro',
+            fontSize: 14 * scaleFactor,
+          ),
           prefixIcon: Icon(Icons.event, color: Colors.grey),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10 * scaleFactor),
+          ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Color.fromARGB(255, 242, 187, 29)),
+            borderRadius: BorderRadius.circular(10 * scaleFactor),
+            borderSide: BorderSide(color: skyBluePrimary),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Color.fromARGB(255, 158, 128, 36)),
+            borderRadius: BorderRadius.circular(10 * scaleFactor),
+            borderSide: BorderSide(color: skyBlueSecondary),
           ),
         ),
         child: Text(
           dateTime != null
               ? DateFormat('dd/MM/yyyy HH:mm').format(dateTime)
               : 'Seleccione la fecha y hora de inicio',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+            color: Colors.white,
+            fontFamily: 'SFPro',
+            fontSize: 14 * scaleFactor,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildEndDateTimePicker(BuildContext context) {
+  Widget _buildEndDateTimePicker(BuildContext context, double scaleFactor) {
     return Container(
       child: _startDateTime != null
           ? _buildDateTimePicker(
@@ -339,16 +429,22 @@ class _Step1AddEventState extends State<Step1AddEvent> {
               labelText: 'Fecha y Hora de Finalización',
               dateTime: _endDateTime,
               isStartDateTime: false,
+              scaleFactor: scaleFactor,
             )
           : Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Color.fromARGB(255, 158, 128, 36)),
+                borderRadius: BorderRadius.circular(10 * scaleFactor),
+                border: Border.all(color: skyBlueSecondary),
               ),
-              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              padding: EdgeInsets.symmetric(
+                  vertical: 12 * scaleFactor, horizontal: 16 * scaleFactor),
               child: Text(
-                'Primero debes poner la fecha de inicio del evento para poner hora de finalizacion',
-                style: TextStyle(color: Color.fromARGB(255, 158, 128, 36)),
+                'Primero debes poner la fecha de inicio del evento para poner hora de finalización',
+                style: TextStyle(
+                  color: grey,
+                  fontFamily: 'SFPro',
+                  fontSize: 14 * scaleFactor,
+                ),
               ),
             ),
     );
@@ -379,8 +475,14 @@ class _Step1AddEventState extends State<Step1AddEvent> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(
-                'Por favor, complete todos los campos y seleccione una imagen.')),
+          content: Text(
+            'Por favor, complete todos los campos y seleccione una imagen.',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+              fontSize: 14,
+            ),
+          ),
+        ),
       );
     }
   }
