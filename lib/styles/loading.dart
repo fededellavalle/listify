@@ -10,7 +10,7 @@ class LoadingScreen extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SpinKitThreeBounce(
+          SpinKitFoldingCube(
             color: Color(0xFF74BEB8),
             size: 50.0,
           ),

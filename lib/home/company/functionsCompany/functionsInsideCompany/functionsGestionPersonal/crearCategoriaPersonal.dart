@@ -1,8 +1,6 @@
 import 'package:app_listas/styles/color.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../../../styles/button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class crearCategoriaPersonal extends StatefulWidget {

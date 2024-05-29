@@ -147,13 +147,13 @@ class _CreateCompanyState extends State<CreateCompany> {
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10 * scaleFactor),
                     borderSide: BorderSide(
-                      color: Color.fromARGB(255, 242, 187, 29),
+                      color: skyBluePrimary,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10 * scaleFactor),
                     borderSide: BorderSide(
-                      color: Color.fromARGB(255, 158, 128, 36),
+                      color: skyBlueSecondary,
                     ),
                   ),
                   counterText: "",
@@ -190,13 +190,13 @@ class _CreateCompanyState extends State<CreateCompany> {
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10 * scaleFactor),
                     borderSide: BorderSide(
-                      color: Color.fromARGB(255, 242, 187, 29),
+                      color: skyBluePrimary,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10 * scaleFactor),
                     borderSide: BorderSide(
-                      color: Color.fromARGB(255, 158, 128, 36),
+                      color: skyBlueSecondary,
                     ),
                   ),
                   counterText: "",
