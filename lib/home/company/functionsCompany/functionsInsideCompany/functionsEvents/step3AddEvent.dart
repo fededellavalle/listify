@@ -184,7 +184,7 @@ class _Step3AddEventState extends State<Step3AddEvent> {
                 },
               ),
               SizedBox(height: 10 * scaleFactor),
-              if (widget.template != null)
+              if (widget.template == null)
                 SwitchListTile(
                   title: Text(
                     'Guardar plantilla del Evento para próximos',
@@ -200,7 +200,7 @@ class _Step3AddEventState extends State<Step3AddEvent> {
                       _guardarPlantilla = newValue;
                     });
                   },
-                  activeColor: Color.fromARGB(255, 242, 187, 29),
+                  activeColor: Colors.green,
                 ),
               SizedBox(height: 10 * scaleFactor),
               SizedBox(

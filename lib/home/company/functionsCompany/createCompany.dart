@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:country_picker/country_picker.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Importa la biblioteca
 
 class CreateCompany extends StatefulWidget {
   final String? uid;
@@ -24,6 +25,7 @@ class CreateCompany extends StatefulWidget {
 class _CreateCompanyState extends State<CreateCompany> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController userController = TextEditingController();
+  final TextEditingController instagramController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   String? _selectedCountry;
   File? _image;
@@ -80,7 +82,7 @@ class _CreateCompanyState extends State<CreateCompany> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
-          'Agregar una nueva empresa',
+          'Crear una nueva empresa',
           style: TextStyle(
             color: Colors.white,
             fontFamily: 'SFPro',
@@ -88,7 +90,10 @@ class _CreateCompanyState extends State<CreateCompany> {
           ),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(
+            CupertinoIcons.left_chevron,
+            color: Colors.white,
+          ),
           onPressed: () {
             Navigator.of(context).pop();
           },
@@ -209,6 +214,50 @@ class _CreateCompanyState extends State<CreateCompany> {
                 maxLength: 15,
               ),
               SizedBox(height: 20 * scaleFactor),
+              TextFormField(
+                controller: instagramController,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'SFPro',
+                  fontSize: 14 * scaleFactor,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Instagram de la empresa',
+                  labelStyle: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'SFPro',
+                    fontSize: 14 * scaleFactor,
+                  ),
+                  prefixIcon: Icon(
+                    FontAwesomeIcons.instagram, // Icono de Instagram
+                    color: Colors.grey,
+                    size: 20 * scaleFactor,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
+                    borderSide: BorderSide(
+                      color: skyBluePrimary,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
+                    borderSide: BorderSide(
+                      color: skyBlueSecondary,
+                    ),
+                  ),
+                  counterText: "",
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor, ingrese el Instagram de la empresa';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 20 * scaleFactor),
               GestureDetector(
                 onTap: () {
                   showCountryPicker(
@@ -271,11 +320,14 @@ class _CreateCompanyState extends State<CreateCompany> {
 
                           String companyName = nameController.text.trim();
                           String companyUser = userController.text.trim();
+                          String instagramUser =
+                              instagramController.text.trim();
                           String ownerUid = widget.uid ?? '';
                           String? country = _selectedCountry;
 
                           if (companyName.isNotEmpty &&
                               companyUser.isNotEmpty &&
+                              instagramUser.isNotEmpty &&
                               ownerUid.isNotEmpty &&
                               country != null) {
                             try {
@@ -313,6 +365,8 @@ class _CreateCompanyState extends State<CreateCompany> {
                                   'ownerUid': ownerUid,
                                   'imageUrl': imageUrl,
                                   'nationality': country,
+                                  'subscription': 'basic',
+                                  'instagram': instagramUser,
                                 });
 
                                 setState(() {
@@ -373,7 +427,7 @@ class _CreateCompanyState extends State<CreateCompany> {
                             color: Colors.white,
                           )
                         : Text(
-                            'Agregar',
+                            'Crear empresa',
                             style: TextStyle(
                               fontSize: 16 * scaleFactor,
                               fontFamily: 'SFPro',

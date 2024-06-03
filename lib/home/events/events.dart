@@ -60,8 +60,9 @@ class _EventsPageState extends State<EventsPage>
             .collection('companies')
             .doc(companyId)
             .collection('myEvents')
-            .where('eventState',
-                whereIn: ['Active', 'Live', 'Desactive']).get();
+            .where('eventState', whereIn: ['Active', 'Live', 'Desactive'])
+            .orderBy('eventStartTime')
+            .get();
 
         if (eventSnapshot.docs.isNotEmpty) {
           if (mounted) {
@@ -107,7 +108,9 @@ class _EventsPageState extends State<EventsPage>
                   .collection('companies')
                   .doc(companyId)
                   .collection('myEvents')
-                  .where('eventState', whereIn: ['Active', 'Live']).get();
+                  .where('eventState', whereIn: ['Active', 'Live'])
+                  .orderBy('eventStartTime')
+                  .get();
 
               if (eventSnapshot.docs.isNotEmpty) {
                 if (mounted) {
@@ -196,8 +199,9 @@ class _EventsPageState extends State<EventsPage>
                   .collection('companies')
                   .doc(companyId)
                   .collection('myEvents')
-                  .where('eventState',
-                      whereIn: ['Active', 'Live', 'Desactive']).snapshots(),
+                  .where('eventState', whereIn: ['Active', 'Live', 'Desactive'])
+                  .orderBy('eventStartTime')
+                  .snapshots(),
               builder: (context, eventSnapshot) {
                 if (eventSnapshot.hasError) {
                   return Text(
@@ -307,8 +311,9 @@ class _EventsPageState extends State<EventsPage>
                             .collection('companies')
                             .doc(companyId)
                             .collection('myEvents')
-                            .where('eventState',
-                                whereIn: ['Active', 'Live']).snapshots(),
+                            .where('eventState', whereIn: ['Active', 'Live'])
+                            .orderBy('eventStartTime')
+                            .snapshots(),
                         builder: (context, eventSnapshot) {
                           if (eventSnapshot.hasError) {
                             return Text(
@@ -472,7 +477,7 @@ class EventButton extends StatelessWidget {
                 ),
               );
             } else {
-              print('No tienes permiso para acceder a este evento.');
+              _showNoPermissionDialog(context);
             }
           },
           child: AnimatedContainer(
@@ -537,8 +542,7 @@ class EventButton extends StatelessWidget {
                     ],
                   ),
                 ),
-                Icon(Icons.chevron_right,
-                    color: Colors.white, size: 24 * scaleFactor),
+                Icon(Icons.chevron_right, color: Colors.white),
               ],
             ),
           ),
@@ -549,6 +553,28 @@ class EventButton extends StatelessWidget {
           child: _buildEventStateIndicator(eventState, scaleFactor),
         ),
       ],
+    );
+  }
+
+  void _showNoPermissionDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title:
+              Text('Permiso Denegado', style: TextStyle(fontFamily: 'SFPro')),
+          content: Text('No tienes permiso para acceder a este evento.',
+              style: TextStyle(fontFamily: 'SFPro')),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK', style: TextStyle(fontFamily: 'SFPro')),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 

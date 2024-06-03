@@ -61,11 +61,13 @@ class StatisticsPage extends StatelessWidget {
 
     for (var memberGroup in membersList.values) {
       var members = memberGroup['members'];
-      totalMembers += members.length;
-      for (var member in members) {
-        if (member['assisted'] == true) {
-          totalAssisted += 1;
-          assistedTimes.add(member['assistedAt']);
+      if (members != null && members is List) {
+        totalMembers += members.length;
+        for (var member in members) {
+          if (member['assisted'] == true) {
+            totalAssisted += 1;
+            assistedTimes.add(member['assistedAt'] as Timestamp);
+          }
         }
       }
     }
@@ -141,9 +143,11 @@ class StatisticsPage extends StatelessWidget {
             );
           }
 
-          int totalMembers = snapshot.data!['totalMembers']!;
-          int totalAssisted = snapshot.data!['totalAssisted']!;
-          List<Timestamp> assistedTimes = snapshot.data!['assistedTimes'];
+          int totalMembers = snapshot.data!['totalMembers'] as int;
+          int totalAssisted = snapshot.data!['totalAssisted'] as int;
+          List<Timestamp> assistedTimes =
+              (snapshot.data!['assistedTimes'] as List<dynamic>)
+                  .cast<Timestamp>();
 
           Map<String, dynamic> frequentTimeData =
               mostFrequentTime(assistedTimes);
@@ -154,61 +158,72 @@ class StatisticsPage extends StatelessWidget {
             padding: EdgeInsets.all(16 * scaleFactor),
             child: Column(
               children: [
-                Text(
-                  'Total de personas registradas: $totalMembers',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'SFPro',
-                    fontSize: 16 * scaleFactor,
+                if (totalMembers == 0)
+                  Text(
+                    'No hay miembros en esta lista.',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'SFPro',
+                      fontSize: 16 * scaleFactor,
+                    ),
+                  )
+                else ...[
+                  Text(
+                    'Total de personas registradas: $totalMembers',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'SFPro',
+                      fontSize: 16 * scaleFactor,
+                    ),
                   ),
-                ),
-                SizedBox(height: 8 * scaleFactor),
-                Text(
-                  'Total de personas asistidas: $totalAssisted',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'SFPro',
-                    fontSize: 16 * scaleFactor,
+                  SizedBox(height: 8 * scaleFactor),
+                  Text(
+                    'Total de personas asistidas: $totalAssisted',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'SFPro',
+                      fontSize: 16 * scaleFactor,
+                    ),
                   ),
-                ),
-                SizedBox(height: 8 * scaleFactor),
-                Text(
-                  'Hora más frecuente de asistencia: ${frequentTime}h ($frequentTimeCount personas)',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'SFPro',
-                    fontSize: 16 * scaleFactor,
+                  SizedBox(height: 8 * scaleFactor),
+                  Text(
+                    'Hora más frecuente de asistencia: ${frequentTime}h ($frequentTimeCount personas)',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'SFPro',
+                      fontSize: 16 * scaleFactor,
+                    ),
                   ),
-                ),
-                SizedBox(height: 16 * scaleFactor),
-                Expanded(
-                  child: Center(
-                    child: PieChart(
-                      dataMap: {
-                        'Registradas': totalMembers.toDouble(),
-                        'Asistidas': totalAssisted.toDouble(),
-                      },
-                      chartType: ChartType.ring,
-                      colorList: [Colors.blue, Colors.red],
-                      legendOptions: LegendOptions(
-                        showLegends: true,
-                        legendPosition: LegendPosition.right,
-                        legendTextStyle: TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'SFPro',
+                  SizedBox(height: 16 * scaleFactor),
+                  Expanded(
+                    child: Center(
+                      child: PieChart(
+                        dataMap: {
+                          'Registradas': totalMembers.toDouble(),
+                          'Asistidas': totalAssisted.toDouble(),
+                        },
+                        chartType: ChartType.ring,
+                        colorList: [Colors.blue, Colors.red],
+                        legendOptions: LegendOptions(
+                          showLegends: true,
+                          legendPosition: LegendPosition.right,
+                          legendTextStyle: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                          ),
                         ),
-                      ),
-                      chartValuesOptions: ChartValuesOptions(
-                        showChartValuesInPercentage: true,
-                        showChartValuesOutside: true,
-                        chartValueStyle: TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'SFPro',
+                        chartValuesOptions: ChartValuesOptions(
+                          showChartValuesInPercentage: true,
+                          showChartValuesOutside: true,
+                          chartValueStyle: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           );

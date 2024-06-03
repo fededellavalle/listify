@@ -66,23 +66,85 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _countEvents() async {
     try {
-      QuerySnapshot liveEventsSnapshot = await FirebaseFirestore.instance
-          .collectionGroup('myEvents')
-          .where('eventState', isEqualTo: 'Live')
-          .get();
-      QuerySnapshot activeEventsSnapshot = await FirebaseFirestore.instance
-          .collectionGroup('myEvents')
-          .where('eventState', isEqualTo: 'Active')
-          .get();
-      QuerySnapshot desactiveEventsSnapshot = await FirebaseFirestore.instance
-          .collectionGroup('myEvents')
-          .where('eventState', isEqualTo: 'Desactive')
+      // Contar eventos de las compañías del usuario
+      QuerySnapshot<Map<String, dynamic>> companySnapshot =
+          await FirebaseFirestore.instance
+              .collection('companies')
+              .where('ownerUid', isEqualTo: widget.uid)
+              .get();
+
+      List<String> companyIds =
+          companySnapshot.docs.map((doc) => doc.id).toList();
+
+      int liveEvents = 0;
+      int activeEvents = 0;
+      int desactiveEvents = 0;
+
+      for (String companyId in companyIds) {
+        QuerySnapshot eventSnapshot = await FirebaseFirestore.instance
+            .collection('companies')
+            .doc(companyId)
+            .collection('myEvents')
+            .where('eventState',
+                whereIn: ['Active', 'Live', 'Desactive']).get();
+
+        liveEvents += eventSnapshot.docs
+            .where((doc) => doc['eventState'] == 'Live')
+            .length;
+        activeEvents += eventSnapshot.docs
+            .where((doc) => doc['eventState'] == 'Active')
+            .length;
+        desactiveEvents += eventSnapshot.docs
+            .where((doc) => doc['eventState'] == 'Desactive')
+            .length;
+      }
+
+      // Contar eventos de las relaciones de compañía del usuario
+      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.uid)
           .get();
 
+      if (userSnapshot.exists) {
+        Map<String, dynamic>? userData =
+            userSnapshot.data() as Map<String, dynamic>?;
+        if (userData != null) {
+          List<dynamic> companyRelationships =
+              userData['companyRelationship'] ?? [];
+
+          for (Map<String, dynamic> relationship in companyRelationships) {
+            String companyUsername = relationship['companyUsername'];
+
+            QuerySnapshot companySnapshot = await FirebaseFirestore.instance
+                .collection('companies')
+                .where('username', isEqualTo: companyUsername)
+                .get();
+
+            List<String> companyIds =
+                companySnapshot.docs.map((doc) => doc.id).toList();
+
+            for (String companyId in companyIds) {
+              QuerySnapshot eventSnapshot = await FirebaseFirestore.instance
+                  .collection('companies')
+                  .doc(companyId)
+                  .collection('myEvents')
+                  .where('eventState', whereIn: ['Active', 'Live']).get();
+
+              liveEvents += eventSnapshot.docs
+                  .where((doc) => doc['eventState'] == 'Live')
+                  .length;
+              activeEvents += eventSnapshot.docs
+                  .where((doc) => doc['eventState'] == 'Active')
+                  .length;
+            }
+          }
+        }
+      }
+
       setState(() {
-        _liveEvents = liveEventsSnapshot.size;
-        _activeEvents = activeEventsSnapshot.size;
-        _desactiveEvents = desactiveEventsSnapshot.size;
+        _liveEvents = liveEvents;
+        _activeEvents = activeEvents;
+        _desactiveEvents = desactiveEvents;
       });
     } catch (error) {
       print('Error al contar los eventos: $error');
@@ -91,6 +153,8 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _handleRefresh() async {
     await _countEvents();
+    setState(
+        () {}); // Para actualizar la lista de eventos en la fecha seleccionada
   }
 
   void _selectDate(DateTime date) {
@@ -229,7 +293,7 @@ class _HomePageState extends State<HomePage> {
                 Container(
                   padding: EdgeInsets.all(8 * scaleFactor),
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.amber : Colors.transparent,
+                    color: isSelected ? skyBluePrimary : Colors.transparent,
                     shape: BoxShape.circle,
                   ),
                   child: Text(
@@ -269,7 +333,7 @@ class _HomePageState extends State<HomePage> {
     return Container(
       padding: EdgeInsets.all(16 * scaleFactor),
       decoration: BoxDecoration(
-        color: Colors.grey.shade800,
+        color: Colors.blueGrey.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12 * scaleFactor),
       ),
       child: Column(
@@ -312,7 +376,7 @@ class _HomePageState extends State<HomePage> {
     return Container(
       padding: EdgeInsets.all(16 * scaleFactor),
       decoration: BoxDecoration(
-        color: Colors.grey.shade800,
+        color: Colors.blueGrey.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12 * scaleFactor),
       ),
       child: Row(
@@ -364,8 +428,8 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           SizedBox(height: 16 * scaleFactor),
-          FutureBuilder<List<DocumentSnapshot>>(
-            future: _fetchEvents(),
+          FutureBuilder<List<Map<String, dynamic>>>(
+            future: _fetchEvents(_selectedDate),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Text(
@@ -383,7 +447,7 @@ class _HomePageState extends State<HomePage> {
 
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
                 return Text(
-                  'No hay eventos disponibles',
+                  'No hay eventos disponibles para esta fecha',
                   style: TextStyle(
                     color: Colors.white,
                     fontFamily: 'SFPro',
@@ -393,16 +457,21 @@ class _HomePageState extends State<HomePage> {
               }
 
               return Column(
-                children: snapshot.data!.map((doc) {
-                  var event = doc.data() as Map<String, dynamic>;
+                children: snapshot.data!.map((event) {
                   var startTime = event['eventStartTime'] as Timestamp;
                   var formattedStartTime =
                       DateFormat('dd/MM/yyyy HH:mm').format(startTime.toDate());
+                  var endTime = event['eventEndTime'] as Timestamp;
+                  var formattedEndTime =
+                      DateFormat('dd/MM/yyyy HH:mm').format(endTime.toDate());
 
                   return _buildEventItem(
                     event['eventName'],
                     event['eventImage'],
                     formattedStartTime,
+                    formattedEndTime,
+                    event['companyId'],
+                    event['instagram'],
                     scaleFactor,
                   );
                 }).toList(),
@@ -414,10 +483,15 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<List<DocumentSnapshot>> _fetchEvents() async {
+  Future<List<Map<String, dynamic>>> _fetchEvents(DateTime selectedDate) async {
+    DateTime startOfDay = DateTime(
+        selectedDate.year, selectedDate.month, selectedDate.day, 0, 0, 0);
+    DateTime endOfDay = DateTime(
+        selectedDate.year, selectedDate.month, selectedDate.day, 23, 59, 59);
+
     QuerySnapshot companySnapshot = await FirebaseFirestore.instance
         .collection('companies')
-        .where('subscription', isEqualTo: 'Premium')
+        .where('subscription', isEqualTo: 'premium')
         .get();
 
     if (companySnapshot.docs.isEmpty) {
@@ -429,19 +503,25 @@ class _HomePageState extends State<HomePage> {
 
     List<DocumentSnapshot> selectedCompanyDocs = companyDocs.take(3).toList();
 
-    List<DocumentSnapshot> eventDocs = [];
+    List<Map<String, dynamic>> eventDocs = [];
 
     for (DocumentSnapshot companyDoc in selectedCompanyDocs) {
       QuerySnapshot eventSnapshot = await FirebaseFirestore.instance
           .collection('companies')
           .doc(companyDoc.id)
           .collection('myEvents')
-          .where('eventState', isEqualTo: 'Active')
-          .limit(1)
+          .where('eventState', whereIn: ['Active', 'Live'])
+          .where('eventStartTime', isGreaterThanOrEqualTo: startOfDay)
+          .where('eventStartTime', isLessThanOrEqualTo: endOfDay)
           .get();
 
       if (eventSnapshot.docs.isNotEmpty) {
-        eventDocs.add(eventSnapshot.docs.first);
+        for (var doc in eventSnapshot.docs) {
+          var event = doc.data() as Map<String, dynamic>;
+          event['companyId'] = companyDoc.id;
+          event['instagram'] = companyDoc['instagram'];
+          eventDocs.add(event);
+        }
       }
     }
 
@@ -452,13 +532,16 @@ class _HomePageState extends State<HomePage> {
     String eventName,
     String eventImage,
     String formattedStartTime,
+    String formattedEndTime,
+    String companyId,
+    String instagram,
     double scaleFactor,
   ) {
     return Container(
       margin: EdgeInsets.only(bottom: 16 * scaleFactor),
       padding: EdgeInsets.all(16 * scaleFactor),
       decoration: BoxDecoration(
-        color: Colors.grey.shade800,
+        color: Colors.blueGrey.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12 * scaleFactor),
       ),
       child: Row(
@@ -467,7 +550,7 @@ class _HomePageState extends State<HomePage> {
             borderRadius: BorderRadius.circular(12 * scaleFactor),
             child: Image.network(
               eventImage,
-              width: 80 * scaleFactor,
+              width: 50 * scaleFactor,
               height: 80 * scaleFactor,
               fit: BoxFit.cover,
             ),
@@ -488,7 +571,34 @@ class _HomePageState extends State<HomePage> {
                 ),
                 SizedBox(height: 4 * scaleFactor),
                 Text(
+                  'Evento de $companyId',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontFamily: 'SFPro',
+                    fontSize: 14 * scaleFactor,
+                  ),
+                ),
+                SizedBox(height: 4 * scaleFactor),
+                Text(
                   'Inicio: $formattedStartTime',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontFamily: 'SFPro',
+                    fontSize: 14 * scaleFactor,
+                  ),
+                ),
+                SizedBox(height: 4 * scaleFactor),
+                Text(
+                  'Fin: $formattedEndTime',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontFamily: 'SFPro',
+                    fontSize: 14 * scaleFactor,
+                  ),
+                ),
+                SizedBox(height: 4 * scaleFactor),
+                Text(
+                  'Instagram: $instagram',
                   style: TextStyle(
                     color: Colors.white70,
                     fontFamily: 'SFPro',
@@ -585,26 +695,33 @@ class EventButton extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(eventName,
-                          style: TextStyle(
-                              fontSize: 16 * scaleFactor,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              fontFamily: 'SFPro')),
+                      Text(
+                        eventName,
+                        style: TextStyle(
+                          fontSize: 16 * scaleFactor,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontFamily: 'SFPro',
+                        ),
+                      ),
                       SizedBox(height: 4 * scaleFactor),
-                      Text('Inicio: $formattedStartTime',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontFamily: 'SFPro',
-                            fontSize: 14 * scaleFactor,
-                          )),
+                      Text(
+                        'Inicio: $formattedStartTime',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontFamily: 'SFPro',
+                          fontSize: 14 * scaleFactor,
+                        ),
+                      ),
                       SizedBox(height: 2 * scaleFactor),
-                      Text('Fin: $formattedEndTime',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontFamily: 'SFPro',
-                            fontSize: 14 * scaleFactor,
-                          )),
+                      Text(
+                        'Fin: $formattedEndTime',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontFamily: 'SFPro',
+                          fontSize: 14 * scaleFactor,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -642,7 +759,7 @@ class EventButton extends StatelessWidget {
 
     return Row(
       children: [
-        _BlinkingCircle(color: color),
+        _BlinkingCircle(color: color, scaleFactor: scaleFactor),
         SizedBox(width: 4 * scaleFactor),
         Text(
           text,
@@ -660,7 +777,7 @@ class EventButton extends StatelessWidget {
   Future<bool> _checkPermission(String companyId, String category,
       String eventState, bool isOwner) async {
     try {
-      if (isOwner == true) {
+      if (isOwner) {
         return true;
       } else {
         DocumentSnapshot categorySnapshot = await FirebaseFirestore.instance
@@ -676,11 +793,9 @@ class EventButton extends StatelessWidget {
 
           if (categoryData['permissions'].contains('Escribir') &&
               eventState == 'Active') {
-            print('Podes escribir');
             return true;
           } else if (categoryData['permissions'].contains('Leer') &&
               eventState == 'Live') {
-            print('Podes Leer');
             return true;
           } else {
             return false;
@@ -698,8 +813,9 @@ class EventButton extends StatelessWidget {
 
 class _BlinkingCircle extends StatefulWidget {
   final Color color;
+  final double scaleFactor;
 
-  _BlinkingCircle({required this.color});
+  _BlinkingCircle({required this.color, required this.scaleFactor});
 
   @override
   __BlinkingCircleState createState() => __BlinkingCircleState();
@@ -729,8 +845,8 @@ class __BlinkingCircleState extends State<_BlinkingCircle>
     return FadeTransition(
       opacity: _controller,
       child: Container(
-        width: 12 * MediaQuery.of(context).size.width / 375.0,
-        height: 12 * MediaQuery.of(context).size.width / 375.0,
+        width: 12 * widget.scaleFactor,
+        height: 12 * widget.scaleFactor,
         decoration: BoxDecoration(
           color: widget.color,
           shape: BoxShape.circle,

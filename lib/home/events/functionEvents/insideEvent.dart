@@ -1,8 +1,12 @@
+import 'package:app_listas/home/events/functionEvents/functionsInsideEvent/functionsforSublists/addSublistToList.dart';
+import 'package:app_listas/home/events/functionEvents/functionsInsideEvent/functionsforSublists/eventSublistsDetails.dart';
+import 'package:app_listas/home/events/functionEvents/functionsInsideEvent/functionsforSublists/readTheSublists.dart';
+import 'package:app_listas/home/events/functionEvents/functionsInsideEvent/liveEventStatistics.dart';
+import 'package:app_listas/styles/color.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../styles/button.dart';
-import 'package:unicons/unicons.dart';
 import 'functionsInsideEvent/addPeopleToList.dart';
 import 'functionsInsideEvent/readTheList.dart';
 import 'functionsInsideEvent/eventDetails.dart';
@@ -63,6 +67,148 @@ class _InsideEventState extends State<InsideEvent> {
     }
   }
 
+  Future<void> _updateEventState(String newState) async {
+    bool? confirmUpdate = await _showConfirmationDialog(context, newState);
+
+    if (confirmUpdate == true) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('companies')
+            .doc(widget.companyId)
+            .collection('myEvents')
+            .doc(widget.eventId)
+            .update({'eventState': newState});
+        print('Estado del evento actualizado a: $newState');
+      } catch (e) {
+        print('Error al actualizar el estado del evento: $e');
+      }
+    } else {
+      print('Actualización de estado cancelada o sin confirmar.');
+    }
+  }
+
+  Future<bool?> _showConfirmationDialog(
+      BuildContext context, String newState) async {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        double scaleFactor = MediaQuery.of(context).size.width / 375.0;
+        return AlertDialog(
+          title: Text(
+            'Confirmar Actualización',
+            style: TextStyle(fontFamily: 'SFPro', fontSize: 18 * scaleFactor),
+          ),
+          content: Text(
+            '¿Estás seguro de que quieres actualizar el estado del evento a "$newState"?',
+            style: TextStyle(fontFamily: 'SFPro', fontSize: 16 * scaleFactor),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(
+                'Cancelar',
+                style:
+                    TextStyle(fontFamily: 'SFPro', fontSize: 14 * scaleFactor),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(
+                'Confirmar',
+                style:
+                    TextStyle(fontFamily: 'SFPro', fontSize: 14 * scaleFactor),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteEvent() async {
+    bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey.shade900, // Fondo gris
+          title: Text(
+            'Confirmar borrado',
+            style: TextStyle(
+              color: Colors.white,
+              fontFamily: 'SFPro',
+            ),
+          ),
+          content: Text(
+            '¿Estás seguro de que quieres borrar este evento?',
+            style: TextStyle(
+              color: Colors.white70,
+              fontFamily: 'SFPro',
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'Volver',
+                style: TextStyle(
+                  color: skyBluePrimary,
+                  fontFamily: 'SFPro',
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            TextButton(
+              child: Text(
+                'Borrar',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontFamily: 'SFPro',
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('companies')
+            .doc(widget.companyId)
+            .collection('myEvents')
+            .doc(widget.eventId)
+            .delete();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Evento borrado exitosamente'),
+          ),
+        );
+
+        Navigator.of(context).pop(); // Navega de vuelta a la página anterior
+      } catch (e) {
+        print('Error al borrar el evento: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al borrar el evento'),
+          ),
+        );
+      }
+    }
+  }
+
+  bool _canDeactivateEvent(DateTime eventStartTime) {
+    final now = DateTime.now();
+    final timeDifference = eventStartTime.difference(now);
+    return timeDifference.inHours >= 6;
+  }
+
   @override
   Widget build(BuildContext context) {
     double baseWidth = 375.0; // Base design width
@@ -97,6 +243,8 @@ class _InsideEventState extends State<InsideEvent> {
 
         // Accede a los datos del evento desde el DocumentSnapshot
         var eventData = snapshot.data!.data()! as Map<String, dynamic>;
+        DateTime eventStartTime =
+            (eventData['eventStartTime'] as Timestamp).toDate();
 
         if (!widget.isOwner && widget.companyRelationship != 'Owner') {
           return StreamBuilder<DocumentSnapshot>(
@@ -159,38 +307,75 @@ class _InsideEventState extends State<InsideEvent> {
                                 for (var list in eventListsData)
                                   ElevatedButton(
                                     onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        PageRouteBuilder(
-                                          pageBuilder: (context, animation,
-                                                  secondaryAnimation) =>
-                                              AddPeopleToList(
-                                            list: list,
-                                            eventId: widget.eventId,
-                                            companyId: widget.companyId,
-                                          ),
-                                          transitionsBuilder: (context,
-                                              animation,
-                                              secondaryAnimation,
-                                              child) {
-                                            return SlideTransition(
-                                              position: Tween<Offset>(
-                                                begin: const Offset(1, 0),
-                                                end: Offset.zero,
-                                              ).animate(
-                                                CurvedAnimation(
-                                                  parent: animation,
-                                                  curve: Curves.linearToEaseOut,
-                                                  reverseCurve: Curves.easeIn,
+                                      if (list['allowSublists'] == true) {
+                                        Navigator.push(
+                                          context,
+                                          PageRouteBuilder(
+                                            pageBuilder: (context, animation,
+                                                    secondaryAnimation) =>
+                                                AddSublistsToList(
+                                              list: list,
+                                              eventId: widget.eventId,
+                                              companyId: widget.companyId,
+                                            ),
+                                            transitionsBuilder: (context,
+                                                animation,
+                                                secondaryAnimation,
+                                                child) {
+                                              return SlideTransition(
+                                                position: Tween<Offset>(
+                                                  begin: const Offset(1, 0),
+                                                  end: Offset.zero,
+                                                ).animate(
+                                                  CurvedAnimation(
+                                                    parent: animation,
+                                                    curve:
+                                                        Curves.linearToEaseOut,
+                                                    reverseCurve: Curves.easeIn,
+                                                  ),
                                                 ),
-                                              ),
-                                              child: child,
-                                            );
-                                          },
-                                          transitionDuration:
-                                              Duration(milliseconds: 500),
-                                        ),
-                                      );
+                                                child: child,
+                                              );
+                                            },
+                                            transitionDuration:
+                                                Duration(milliseconds: 500),
+                                          ),
+                                        );
+                                      } else {
+                                        Navigator.push(
+                                          context,
+                                          PageRouteBuilder(
+                                            pageBuilder: (context, animation,
+                                                    secondaryAnimation) =>
+                                                AddPeopleToList(
+                                              list: list,
+                                              eventId: widget.eventId,
+                                              companyId: widget.companyId,
+                                            ),
+                                            transitionsBuilder: (context,
+                                                animation,
+                                                secondaryAnimation,
+                                                child) {
+                                              return SlideTransition(
+                                                position: Tween<Offset>(
+                                                  begin: const Offset(1, 0),
+                                                  end: Offset.zero,
+                                                ).animate(
+                                                  CurvedAnimation(
+                                                    parent: animation,
+                                                    curve:
+                                                        Curves.linearToEaseOut,
+                                                    reverseCurve: Curves.easeIn,
+                                                  ),
+                                                ),
+                                                child: child,
+                                              );
+                                            },
+                                            transitionDuration:
+                                                Duration(milliseconds: 500),
+                                          ),
+                                        );
+                                      }
                                     },
                                     style: buttonCompany,
                                     child: Row(
@@ -225,12 +410,6 @@ class _InsideEventState extends State<InsideEvent> {
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
-                                        Spacer(),
-                                        Icon(
-                                          UniconsLine.angle_right_b,
-                                          size: 20 * scaleFactor,
-                                          color: Colors.grey.shade600,
-                                        ),
                                       ],
                                     ),
                                   ),
@@ -239,7 +418,7 @@ class _InsideEventState extends State<InsideEvent> {
                           ),
                         ),
                       if (!widget.isOwner &&
-                          categoryData['permissions'].contains('Escribir') &&
+                          categoryData['permissions'].contains('Leer') &&
                           eventData['eventState'] == 'Live')
                         Padding(
                           padding: EdgeInsets.symmetric(
@@ -255,38 +434,76 @@ class _InsideEventState extends State<InsideEvent> {
                                 for (var list in eventListsData)
                                   ElevatedButton(
                                     onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        PageRouteBuilder(
-                                          pageBuilder: (context, animation,
-                                                  secondaryAnimation) =>
-                                              ReadTheList(
-                                            list: list,
-                                            eventId: widget.eventId,
-                                            companyId: widget.companyId,
-                                          ),
-                                          transitionsBuilder: (context,
-                                              animation,
-                                              secondaryAnimation,
-                                              child) {
-                                            return SlideTransition(
-                                              position: Tween<Offset>(
-                                                begin: const Offset(1, 0),
-                                                end: Offset.zero,
-                                              ).animate(
-                                                CurvedAnimation(
-                                                  parent: animation,
-                                                  curve: Curves.linearToEaseOut,
-                                                  reverseCurve: Curves.easeIn,
+                                      if (list['allowSublists'] == true) {
+                                        print('entro aca');
+                                        Navigator.push(
+                                          context,
+                                          PageRouteBuilder(
+                                            pageBuilder: (context, animation,
+                                                    secondaryAnimation) =>
+                                                SublistsPage(
+                                              list: list,
+                                              eventId: widget.eventId,
+                                              companyId: widget.companyId,
+                                            ),
+                                            transitionsBuilder: (context,
+                                                animation,
+                                                secondaryAnimation,
+                                                child) {
+                                              return SlideTransition(
+                                                position: Tween<Offset>(
+                                                  begin: const Offset(1, 0),
+                                                  end: Offset.zero,
+                                                ).animate(
+                                                  CurvedAnimation(
+                                                    parent: animation,
+                                                    curve:
+                                                        Curves.linearToEaseOut,
+                                                    reverseCurve: Curves.easeIn,
+                                                  ),
                                                 ),
-                                              ),
-                                              child: child,
-                                            );
-                                          },
-                                          transitionDuration:
-                                              Duration(milliseconds: 500),
-                                        ),
-                                      );
+                                                child: child,
+                                              );
+                                            },
+                                            transitionDuration:
+                                                Duration(milliseconds: 500),
+                                          ),
+                                        );
+                                      } else {
+                                        Navigator.push(
+                                          context,
+                                          PageRouteBuilder(
+                                            pageBuilder: (context, animation,
+                                                    secondaryAnimation) =>
+                                                ReadTheList(
+                                              list: list,
+                                              eventId: widget.eventId,
+                                              companyId: widget.companyId,
+                                            ),
+                                            transitionsBuilder: (context,
+                                                animation,
+                                                secondaryAnimation,
+                                                child) {
+                                              return SlideTransition(
+                                                position: Tween<Offset>(
+                                                  begin: const Offset(1, 0),
+                                                  end: Offset.zero,
+                                                ).animate(
+                                                  CurvedAnimation(
+                                                    parent: animation,
+                                                    curve:
+                                                        Curves.linearToEaseOut,
+                                                    reverseCurve: Curves.easeIn,
+                                                  ),
+                                                ),
+                                                child: child,
+                                              );
+                                            },
+                                            transitionDuration:
+                                                Duration(milliseconds: 500),
+                                          ),
+                                        );
+                                      }
                                     },
                                     style: buttonCompany,
                                     child: Row(
@@ -320,12 +537,6 @@ class _InsideEventState extends State<InsideEvent> {
                                             ),
                                             overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
-                                        Spacer(),
-                                        Icon(
-                                          UniconsLine.angle_right_b,
-                                          size: 20 * scaleFactor,
-                                          color: Colors.grey.shade600,
                                         ),
                                       ],
                                     ),
@@ -369,90 +580,228 @@ class _InsideEventState extends State<InsideEvent> {
             body: SingleChildScrollView(
               child: Column(
                 children: [
-                  if (eventData['eventState'] == 'Active')
+                  if (eventData['eventState'] == 'Desactive')
                     Padding(
                       padding:
                           EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade700.withOpacity(0.4),
-                          borderRadius: BorderRadius.circular(10 * scaleFactor),
-                        ),
-                        child: Column(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _updateEventState('Active');
+                        },
+                        style: buttonCompany,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            for (var list in eventListsData)
-                              ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    PageRouteBuilder(
-                                      pageBuilder: (context, animation,
-                                              secondaryAnimation) =>
-                                          AddPeopleToList(
-                                        list: list,
-                                        eventId: widget.eventId,
-                                        companyId: widget.companyId,
-                                      ),
-                                      transitionsBuilder: (context, animation,
-                                          secondaryAnimation, child) {
-                                        return SlideTransition(
-                                          position: Tween<Offset>(
-                                            begin: const Offset(1, 0),
-                                            end: Offset.zero,
-                                          ).animate(
-                                            CurvedAnimation(
-                                              parent: animation,
-                                              curve: Curves.linearToEaseOut,
-                                              reverseCurve: Curves.easeIn,
-                                            ),
-                                          ),
-                                          child: child,
-                                        );
-                                      },
-                                      transitionDuration:
-                                          Duration(milliseconds: 500),
-                                    ),
-                                  );
-                                },
-                                style: buttonCompany,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.green,
-                                        borderRadius: BorderRadius.circular(
-                                            8 * scaleFactor),
-                                      ),
-                                      child: Padding(
-                                        padding:
-                                            EdgeInsets.all(8.0 * scaleFactor),
-                                        child: Icon(
-                                          Icons.group_add_rounded,
-                                          size: 20 * scaleFactor,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 15 * scaleFactor),
-                                    Flexible(
-                                      child: Text(
-                                        'Añadir gente a lista ${list['listName']}',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 18 * scaleFactor,
-                                          fontFamily: 'SFPro',
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                            Text(
+                              'Activar Evento',
+                              style: TextStyle(
+                                fontSize: 18 * scaleFactor,
+                                fontFamily: 'SFPro',
+                                color: Colors.white,
                               ),
+                            ),
                           ],
                         ),
                       ),
                     ),
+                  if (eventData['eventState'] == 'Active')
+                    Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
+                      child: Column(
+                        children: [
+                          if (_canDeactivateEvent(eventStartTime))
+                            ElevatedButton(
+                              onPressed: () {
+                                _updateEventState('Desactive');
+                              },
+                              style: buttonCompany,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Desactivar Evento',
+                                    style: TextStyle(
+                                      fontSize: 18 * scaleFactor,
+                                      fontFamily: 'SFPro',
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          Column(
+                            children: [
+                              if (!_canDeactivateEvent(eventStartTime)) ...[
+                                Text(
+                                  'No puedes desactivar el evento una vez activado y antes de que comience dentro de 6 horas',
+                                  style: TextStyle(
+                                    fontSize: 16 * scaleFactor,
+                                    fontFamily: 'SFPro',
+                                    color: Colors.redAccent,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(
+                                    height: 10 *
+                                        scaleFactor), // Espacio entre el texto y el botón
+                                ElevatedButton(
+                                  onPressed: () {
+                                    // Lógica para cancelar o borrar el evento
+                                    _deleteEvent();
+                                  },
+                                  style: buttonCompany,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Cancelar Evento',
+                                        style: TextStyle(
+                                          fontSize: 18 * scaleFactor,
+                                          fontFamily: 'SFPro',
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 5,
+                                ),
+                              ],
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade700.withOpacity(0.4),
+                                  borderRadius:
+                                      BorderRadius.circular(10 * scaleFactor),
+                                ),
+                                child: Column(
+                                  children: [
+                                    for (var list in eventListsData)
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          if (list['allowSublists'] == true) {
+                                            Navigator.push(
+                                              context,
+                                              PageRouteBuilder(
+                                                pageBuilder: (context,
+                                                        animation,
+                                                        secondaryAnimation) =>
+                                                    AddSublistsToList(
+                                                  list: list,
+                                                  eventId: widget.eventId,
+                                                  companyId: widget.companyId,
+                                                ),
+                                                transitionsBuilder: (context,
+                                                    animation,
+                                                    secondaryAnimation,
+                                                    child) {
+                                                  return SlideTransition(
+                                                    position: Tween<Offset>(
+                                                      begin: const Offset(1, 0),
+                                                      end: Offset.zero,
+                                                    ).animate(
+                                                      CurvedAnimation(
+                                                        parent: animation,
+                                                        curve: Curves
+                                                            .linearToEaseOut,
+                                                        reverseCurve:
+                                                            Curves.easeIn,
+                                                      ),
+                                                    ),
+                                                    child: child,
+                                                  );
+                                                },
+                                                transitionDuration:
+                                                    Duration(milliseconds: 500),
+                                              ),
+                                            );
+                                          } else {
+                                            Navigator.push(
+                                              context,
+                                              PageRouteBuilder(
+                                                pageBuilder: (context,
+                                                        animation,
+                                                        secondaryAnimation) =>
+                                                    AddPeopleToList(
+                                                  list: list,
+                                                  eventId: widget.eventId,
+                                                  companyId: widget.companyId,
+                                                ),
+                                                transitionsBuilder: (context,
+                                                    animation,
+                                                    secondaryAnimation,
+                                                    child) {
+                                                  return SlideTransition(
+                                                    position: Tween<Offset>(
+                                                      begin: const Offset(1, 0),
+                                                      end: Offset.zero,
+                                                    ).animate(
+                                                      CurvedAnimation(
+                                                        parent: animation,
+                                                        curve: Curves
+                                                            .linearToEaseOut,
+                                                        reverseCurve:
+                                                            Curves.easeIn,
+                                                      ),
+                                                    ),
+                                                    child: child,
+                                                  );
+                                                },
+                                                transitionDuration:
+                                                    Duration(milliseconds: 500),
+                                              ),
+                                            );
+                                          }
+                                        },
+                                        style: buttonCompany,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          children: [
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.green,
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                        8 * scaleFactor),
+                                              ),
+                                              child: Padding(
+                                                padding: EdgeInsets.all(
+                                                    8.0 * scaleFactor),
+                                                child: Icon(
+                                                  Icons.group_add_rounded,
+                                                  size: 20 * scaleFactor,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(width: 15 * scaleFactor),
+                                            Flexible(
+                                              child: Text(
+                                                'Añadir gente a lista ${list['listName']}',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 18 * scaleFactor,
+                                                  fontFamily: 'SFPro',
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  const SizedBox(
+                    height: 5,
+                  ),
                   if (eventData['eventState'] == 'Live')
                     Padding(
                       padding:
@@ -467,36 +816,70 @@ class _InsideEventState extends State<InsideEvent> {
                             for (var list in eventListsData)
                               ElevatedButton(
                                 onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    PageRouteBuilder(
-                                      pageBuilder: (context, animation,
-                                              secondaryAnimation) =>
-                                          ReadTheList(
-                                        list: list,
-                                        eventId: widget.eventId,
-                                        companyId: widget.companyId,
-                                      ),
-                                      transitionsBuilder: (context, animation,
-                                          secondaryAnimation, child) {
-                                        return SlideTransition(
-                                          position: Tween<Offset>(
-                                            begin: const Offset(1, 0),
-                                            end: Offset.zero,
-                                          ).animate(
-                                            CurvedAnimation(
-                                              parent: animation,
-                                              curve: Curves.linearToEaseOut,
-                                              reverseCurve: Curves.easeIn,
+                                  if (list['allowSublists'] == true) {
+                                    print('entro aca');
+                                    Navigator.push(
+                                      context,
+                                      PageRouteBuilder(
+                                        pageBuilder: (context, animation,
+                                                secondaryAnimation) =>
+                                            SublistsPage(
+                                          list: list,
+                                          eventId: widget.eventId,
+                                          companyId: widget.companyId,
+                                        ),
+                                        transitionsBuilder: (context, animation,
+                                            secondaryAnimation, child) {
+                                          return SlideTransition(
+                                            position: Tween<Offset>(
+                                              begin: const Offset(1, 0),
+                                              end: Offset.zero,
+                                            ).animate(
+                                              CurvedAnimation(
+                                                parent: animation,
+                                                curve: Curves.linearToEaseOut,
+                                                reverseCurve: Curves.easeIn,
+                                              ),
                                             ),
-                                          ),
-                                          child: child,
-                                        );
-                                      },
-                                      transitionDuration:
-                                          Duration(milliseconds: 500),
-                                    ),
-                                  );
+                                            child: child,
+                                          );
+                                        },
+                                        transitionDuration:
+                                            Duration(milliseconds: 500),
+                                      ),
+                                    );
+                                  } else {
+                                    Navigator.push(
+                                      context,
+                                      PageRouteBuilder(
+                                        pageBuilder: (context, animation,
+                                                secondaryAnimation) =>
+                                            ReadTheList(
+                                          list: list,
+                                          eventId: widget.eventId,
+                                          companyId: widget.companyId,
+                                        ),
+                                        transitionsBuilder: (context, animation,
+                                            secondaryAnimation, child) {
+                                          return SlideTransition(
+                                            position: Tween<Offset>(
+                                              begin: const Offset(1, 0),
+                                              end: Offset.zero,
+                                            ).animate(
+                                              CurvedAnimation(
+                                                parent: animation,
+                                                curve: Curves.linearToEaseOut,
+                                                reverseCurve: Curves.easeIn,
+                                              ),
+                                            ),
+                                            child: child,
+                                          );
+                                        },
+                                        transitionDuration:
+                                            Duration(milliseconds: 500),
+                                      ),
+                                    );
+                                  }
                                 },
                                 style: buttonCompany,
                                 child: Row(
@@ -537,17 +920,135 @@ class _InsideEventState extends State<InsideEvent> {
                         ),
                       ),
                     ),
-                  Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade700.withOpacity(0.4),
-                        borderRadius: BorderRadius.circular(10 * scaleFactor),
+                  if (eventData['eventState'] == 'Live' ||
+                      eventData['eventState'] == 'Active')
+                    Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade700.withOpacity(0.4),
+                          borderRadius: BorderRadius.circular(10 * scaleFactor),
+                        ),
+                        child: Column(
+                          children: [
+                            for (var list in eventListsData)
+                              ElevatedButton(
+                                onPressed: () {
+                                  if (list['allowSublists'] == true) {
+                                    Navigator.push(
+                                      context,
+                                      PageRouteBuilder(
+                                        pageBuilder: (context, animation,
+                                                secondaryAnimation) =>
+                                            EventSublistDetails(
+                                          eventId: widget.eventId,
+                                          companyId: widget.companyId,
+                                          list: list,
+                                        ),
+                                        transitionsBuilder: (context, animation,
+                                            secondaryAnimation, child) {
+                                          return SlideTransition(
+                                            position: Tween<Offset>(
+                                              begin: const Offset(1, 0),
+                                              end: Offset.zero,
+                                            ).animate(
+                                              CurvedAnimation(
+                                                parent: animation,
+                                                curve: Curves.linearToEaseOut,
+                                                reverseCurve: Curves.easeIn,
+                                              ),
+                                            ),
+                                            child: child,
+                                          );
+                                        },
+                                        transitionDuration:
+                                            Duration(milliseconds: 500),
+                                      ),
+                                    );
+                                  } else {
+                                    Navigator.push(
+                                      context,
+                                      PageRouteBuilder(
+                                        pageBuilder: (context, animation,
+                                                secondaryAnimation) =>
+                                            EventDetails(
+                                          eventId: widget.eventId,
+                                          companyId: widget.companyId,
+                                          list: list,
+                                        ),
+                                        transitionsBuilder: (context, animation,
+                                            secondaryAnimation, child) {
+                                          return SlideTransition(
+                                            position: Tween<Offset>(
+                                              begin: const Offset(1, 0),
+                                              end: Offset.zero,
+                                            ).animate(
+                                              CurvedAnimation(
+                                                parent: animation,
+                                                curve: Curves.linearToEaseOut,
+                                                reverseCurve: Curves.easeIn,
+                                              ),
+                                            ),
+                                            child: child,
+                                          );
+                                        },
+                                        transitionDuration:
+                                            Duration(milliseconds: 500),
+                                      ),
+                                    );
+                                  }
+                                },
+                                style: buttonCompany,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange,
+                                        borderRadius: BorderRadius.circular(
+                                            8 * scaleFactor),
+                                      ),
+                                      child: Padding(
+                                        padding:
+                                            EdgeInsets.all(8.0 * scaleFactor),
+                                        child: Icon(
+                                          Icons.library_books_outlined,
+                                          size: 20 * scaleFactor,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 15 * scaleFactor),
+                                    Flexible(
+                                      child: Text(
+                                        'Resumen de ${list['listName']}',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18 * scaleFactor,
+                                          fontFamily: 'SFPro',
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
-                      child: Column(
-                        children: [
-                          for (var list in eventListsData)
+                    ),
+                  if (eventData['eventState'] == 'Live')
+                    Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade700.withOpacity(0.4),
+                          borderRadius: BorderRadius.circular(10 * scaleFactor),
+                        ),
+                        child: Column(
+                          children: [
                             ElevatedButton(
                               onPressed: () {
                                 Navigator.push(
@@ -555,10 +1056,9 @@ class _InsideEventState extends State<InsideEvent> {
                                   PageRouteBuilder(
                                     pageBuilder: (context, animation,
                                             secondaryAnimation) =>
-                                        EventDetails(
+                                        LiveEventStatisticsPage(
                                       eventId: widget.eventId,
                                       companyId: widget.companyId,
-                                      list: list,
                                     ),
                                     transitionsBuilder: (context, animation,
                                         secondaryAnimation, child) {
@@ -604,7 +1104,7 @@ class _InsideEventState extends State<InsideEvent> {
                                   SizedBox(width: 15 * scaleFactor),
                                   Flexible(
                                     child: Text(
-                                      'Resumen de ${list['listName']}',
+                                      'Estadisticas en vivo sobre ${eventData['eventName']}',
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 18 * scaleFactor,
@@ -616,10 +1116,10 @@ class _InsideEventState extends State<InsideEvent> {
                                 ],
                               ),
                             ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),

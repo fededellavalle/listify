@@ -66,59 +66,93 @@ class EventTemplatesPage extends StatelessWidget {
                 final template =
                     templates[index].data() as Map<String, dynamic>;
 
-                return ListTile(
-                  title: Text(
-                    template['eventName'],
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontFamily: 'SFPro',
-                      fontSize: 16 * scaleFactor,
-                    ),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Valor de la Entrada: \$${template['eventTicketValue'].toStringAsFixed(2)}',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontFamily: 'SFPro',
-                          fontSize: 14 * scaleFactor,
-                        ),
-                      ),
-                      Text(
-                        'Fecha de Inicio: ${template['eventStartTime'] != null ? DateFormat('dd/MM/yyyy HH:mm').format((template['eventStartTime'] as Timestamp).toDate()) : 'No especificada'}',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontFamily: 'SFPro',
-                          fontSize: 14 * scaleFactor,
-                        ),
-                      ),
-                      Text(
-                        'Fecha de Fin: ${template['eventEndTime'] != null ? DateFormat('dd/MM/yyyy HH:mm').format((template['eventEndTime'] as Timestamp).toDate()) : 'No especificada'}',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontFamily: 'SFPro',
-                          fontSize: 14 * scaleFactor,
-                        ),
+                return Container(
+                  margin: EdgeInsets.symmetric(
+                      vertical: 8 * scaleFactor, horizontal: 16 * scaleFactor),
+                  padding: EdgeInsets.all(16 * scaleFactor),
+                  decoration: BoxDecoration(
+                    color: Colors.blueGrey.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12 * scaleFactor),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 4 * scaleFactor,
+                        offset: Offset(0, 2 * scaleFactor),
                       ),
                     ],
                   ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Step1AddEvent(
-                          companyData: companyData,
-                          template: template,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Step1AddEvent(
+                            companyData: companyData,
+                            template: template,
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          template['eventName'],
+                          style: TextStyle(
+                            fontSize: 16 * scaleFactor,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                          ),
+                        ),
+                        SizedBox(height: 4 * scaleFactor),
+                        Text(
+                          'Valor de la Entrada: \$${template['eventTicketValue'].toStringAsFixed(2)}',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontFamily: 'SFPro',
+                            fontSize: 14 * scaleFactor,
+                          ),
+                        ),
+                        SizedBox(height: 2 * scaleFactor),
+                        Text(
+                          'Fecha de Inicio: ${template['eventStartTime'] != null ? DateFormat('dd/MM/yyyy HH:mm').format((template['eventStartTime'] as Timestamp).toDate()) : 'No especificada'}',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontFamily: 'SFPro',
+                            fontSize: 14 * scaleFactor,
+                          ),
+                        ),
+                        SizedBox(height: 2 * scaleFactor),
+                        Text(
+                          'Fecha de Fin: ${template['eventEndTime'] != null ? DateFormat('dd/MM/yyyy HH:mm').format((template['eventEndTime'] as Timestamp).toDate()) : 'No especificada'}',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontFamily: 'SFPro',
+                            fontSize: 14 * scaleFactor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               } else {
-                return ListTile(
-                  title: Text(
+                return Container(
+                  margin: EdgeInsets.symmetric(
+                      vertical: 8 * scaleFactor, horizontal: 16 * scaleFactor),
+                  padding: EdgeInsets.all(16 * scaleFactor),
+                  decoration: BoxDecoration(
+                    color: Colors.blueGrey.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12 * scaleFactor),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 4 * scaleFactor,
+                        offset: Offset(0, 2 * scaleFactor),
+                      ),
+                    ],
+                  ),
+                  child: Text(
                     'Slot vacío',
                     style: TextStyle(
                       color: Colors.white70,

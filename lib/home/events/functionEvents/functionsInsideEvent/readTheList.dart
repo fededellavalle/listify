@@ -65,24 +65,26 @@ class _ReadTheListState extends State<ReadTheList> {
     for (QueryDocumentSnapshot doc in eventListsSnapshot.docs) {
       Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
       if (data != null && data.containsKey('membersList')) {
-        Map<String, dynamic> membersList = data['membersList'];
-        membersList.forEach((userId, userData) {
-          if (userData['members'] != null) {
-            List<dynamic> members = userData['members'];
-            for (int i = 0; i < members.length; i++) {
-              if (members[i]['name'] == memberName) {
-                members[i]['assisted'] = !currentValue;
-                if (!currentValue) {
-                  members[i]['assistedAt'] = now;
-                } else {
-                  members[i].remove('assistedAt');
+        var membersList = data['membersList'];
+        if (membersList is Map<String, dynamic>) {
+          membersList.forEach((userId, userData) {
+            if (userData['members'] != null) {
+              List<dynamic> members = userData['members'];
+              for (int i = 0; i < members.length; i++) {
+                if (members[i]['name'] == memberName) {
+                  members[i]['assisted'] = !currentValue;
+                  if (!currentValue) {
+                    members[i]['assistedAt'] = now;
+                  } else {
+                    members[i].remove('assistedAt');
+                  }
                 }
               }
             }
-          }
-        });
+          });
 
-        batch.update(doc.reference, {'membersList': membersList});
+          batch.update(doc.reference, {'membersList': membersList});
+        }
       }
     }
 
@@ -286,7 +288,20 @@ class _ReadTheListState extends State<ReadTheList> {
                       );
                     }
 
-                    if ((listStartExtraTime == null &&
+                    if (!eventListData.containsKey('membersList')) {
+                      return Center(
+                        child: Text(
+                          'No hay miembros en esta lista.',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                            fontSize: 16 * scaleFactor,
+                          ),
+                        ),
+                      );
+                    }
+
+                    /*if ((listStartExtraTime == null &&
                             listStartTime.toDate().isAfter(DateTime.now())) ||
                         (listStartExtraTime != null &&
                             listStartExtraTime
@@ -303,9 +318,10 @@ class _ReadTheListState extends State<ReadTheList> {
                           ),
                         ),
                       );
-                    }
+                    }*/
 
-                    if (!eventListData.containsKey('membersList')) {
+                    var membersList = eventListData['membersList'];
+                    if (membersList is List) {
                       return Center(
                         child: Text(
                           'No hay miembros en esta lista.',
@@ -318,52 +334,63 @@ class _ReadTheListState extends State<ReadTheList> {
                       );
                     }
 
-                    var membersList =
-                        eventListData['membersList'] as Map<String, dynamic>;
-                    List<Map<String, dynamic>> members = [];
-                    membersList.forEach((userId, userData) {
-                      if (userData['members'] != null) {
-                        members.addAll(List<Map<String, dynamic>>.from(
-                            userData['members']));
-                      }
-                    });
+                    if (membersList is Map<String, dynamic>) {
+                      List<Map<String, dynamic>> members = [];
+                      membersList.forEach((userId, userData) {
+                        if (userData['members'] != null) {
+                          members.addAll(List<Map<String, dynamic>>.from(
+                              userData['members']));
+                        }
+                      });
 
-                    var filteredMembers = members.where((member) {
-                      return member['name']
+                      var filteredMembers = members.where((member) {
+                        return member['name']
+                            .toString()
+                            .toLowerCase()
+                            .contains(_searchTerm);
+                      }).toList();
+
+                      filteredMembers.sort((a, b) => a['name']
                           .toString()
                           .toLowerCase()
-                          .contains(_searchTerm);
-                    }).toList();
+                          .compareTo(b['name'].toString().toLowerCase()));
 
-                    filteredMembers.sort((a, b) => a['name']
-                        .toString()
-                        .toLowerCase()
-                        .compareTo(b['name'].toString().toLowerCase()));
-
-                    return ListView.builder(
-                      itemCount: filteredMembers.length,
-                      itemBuilder: (context, index) {
-                        var member = filteredMembers[index];
-                        return ListTile(
-                          title: Text(
-                            member['name'],
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontFamily: 'SFPro',
-                              fontSize: 16 * scaleFactor,
+                      return ListView.builder(
+                        itemCount: filteredMembers.length,
+                        itemBuilder: (context, index) {
+                          var member = filteredMembers[index];
+                          return ListTile(
+                            title: Text(
+                              member['name'],
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontFamily: 'SFPro',
+                                fontSize: 16 * scaleFactor,
+                              ),
                             ),
+                            trailing: Switch(
+                              activeColor: Colors.green.shade600,
+                              value: member['assisted'] ?? false,
+                              onChanged: (bool newValue) {
+                                _toggleAttendance(member['name'],
+                                    member['assisted'] ?? false);
+                              },
+                            ),
+                          );
+                        },
+                      );
+                    } else {
+                      return Center(
+                        child: Text(
+                          'Formato de miembros no reconocido.',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                            fontSize: 16 * scaleFactor,
                           ),
-                          trailing: Switch(
-                            activeColor: Colors.green.shade600,
-                            value: member['assisted'] ?? false,
-                            onChanged: (bool newValue) {
-                              _toggleAttendance(
-                                  member['name'], member['assisted'] ?? false);
-                            },
-                          ),
-                        );
-                      },
-                    );
+                        ),
+                      );
+                    }
                   },
                 );
               },

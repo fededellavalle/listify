@@ -1,4 +1,6 @@
+import 'package:app_listas/home/company/functionsCompany/functionsInsideCompany/functionsEvents/eventsLog.dart';
 import 'package:app_listas/home/company/functionsCompany/functionsInsideCompany/functionsEvents/eventsTemplates/eventsTemplates.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../../styles/button.dart';
 import 'package:unicons/unicons.dart';
@@ -37,6 +39,15 @@ class _EventosPageState extends State<EventosPage> {
         ),
         iconTheme: IconThemeData(
           color: Colors.white,
+        ),
+        leading: IconButton(
+          icon: Icon(
+            CupertinoIcons.left_chevron,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
         ),
       ),
       body: SingleChildScrollView(
@@ -97,7 +108,7 @@ class _EventosPageState extends State<EventosPage> {
                               child: Padding(
                                 padding: EdgeInsets.all(8.0 * scaleFactor),
                                 child: Icon(
-                                  UniconsLine.calendar_alt,
+                                  CupertinoIcons.calendar_badge_plus,
                                   size: 20 * scaleFactor,
                                   color: Colors.white,
                                 ),
@@ -114,7 +125,7 @@ class _EventosPageState extends State<EventosPage> {
                             ),
                             Spacer(),
                             Icon(
-                              Icons.add,
+                              CupertinoIcons.add,
                               size: 20 * scaleFactor,
                               color: Colors.grey.shade600,
                             ),
@@ -221,7 +232,16 @@ class _EventosPageState extends State<EventosPage> {
                     children: [
                       // Historial de Eventos
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EventsLogPage(
+                                companyId: widget.companyData['username'],
+                              ),
+                            ),
+                          );
+                        },
                         style: buttonCompany,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.start,

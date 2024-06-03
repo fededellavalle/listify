@@ -357,7 +357,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
                                   ],
                                 ),
                                 title: Text(
-                                  '$senderName te invita a unirte a $companyName como $category',
+                                  '$senderName te invita a unirte a $companyName (@$companyId) como $category',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontFamily: 'SFPro',

@@ -1,4 +1,5 @@
 import 'package:app_listas/styles/color.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'step2AddEvent.dart';
@@ -46,6 +47,11 @@ class _Step1AddEventState extends State<Step1AddEvent> {
     _ticketValueController = TextEditingController(
       text: widget.template?['eventTicketValue']?.toString() ?? '',
     );
+    if (widget.template != null) {
+      _startDateTime =
+          (widget.template!['eventStartTime'] as Timestamp).toDate();
+      _endDateTime = (widget.template!['eventEndTime'] as Timestamp).toDate();
+    }
   }
 
   Future<void> _loadImageFromUrl(String imageUrl) async {
@@ -87,38 +93,67 @@ class _Step1AddEventState extends State<Step1AddEvent> {
       BuildContext context, bool isStartDateTime) async {
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: _startDateTime ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime(2101),
     );
 
     if (pickedDate != null) {
-      final pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.now(),
-      );
-
-      if (pickedTime != null) {
-        final selectedDateTime = DateTime(
+      if (widget.template != null) {
+        // Si hay una plantilla, mantener la hora y solo cambiar la fecha
+        final templateStartTime =
+            (widget.template!['eventStartTime'] as Timestamp).toDate();
+        final selectedStartDateTime = DateTime(
           pickedDate.year,
           pickedDate.month,
           pickedDate.day,
-          pickedTime.hour,
-          pickedTime.minute,
+          templateStartTime.hour,
+          templateStartTime.minute,
         );
 
-        _updateDateTime(context, isStartDateTime, selectedDateTime);
+        // Actualizar la fecha de fin solo si el día cambia
+        DateTime selectedEndDateTime = _endDateTime!;
+        if (selectedStartDateTime.day != selectedEndDateTime.day) {
+          selectedEndDateTime = DateTime(
+            pickedDate.year,
+            pickedDate.month,
+            pickedDate.day + 1,
+            selectedEndDateTime.hour,
+            selectedEndDateTime.minute,
+          );
+        }
+
+        _updateDateTime(context, isStartDateTime, selectedStartDateTime,
+            selectedEndDateTime);
+      } else {
+        final pickedTime = await showTimePicker(
+          context: context,
+          initialTime: TimeOfDay.now(),
+        );
+
+        if (pickedTime != null) {
+          final selectedDateTime = DateTime(
+            pickedDate.year,
+            pickedDate.month,
+            pickedDate.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
+
+          _updateDateTime(context, isStartDateTime, selectedDateTime, null);
+        }
       }
     }
   }
 
-  void _updateDateTime(
-      BuildContext context, bool isStartDateTime, DateTime selectedDateTime) {
+  void _updateDateTime(BuildContext context, bool isStartDateTime,
+      DateTime selectedDateTime, DateTime? selectedEndDateTime) {
     setState(() {
       if (isStartDateTime) {
         if (_isValidStartDateTime(selectedDateTime)) {
           _startDateTime = selectedDateTime;
-          _endDateTime = _validateEndDateTime(_endDateTime, _startDateTime);
+          _endDateTime = selectedEndDateTime ??
+              _validateEndDateTime(_endDateTime, _startDateTime);
           _showSnackBar(context, 'Fecha y hora de inicio seleccionadas.');
         } else {
           _showSnackBar(context,
@@ -166,6 +201,50 @@ class _Step1AddEventState extends State<Step1AddEvent> {
         ),
       ),
     );
+  }
+
+  void _goToStep2() {
+    if (_formKey.currentState!.validate() &&
+        _startDateTime != null &&
+        _endDateTime != null &&
+        _image != null) {
+      if (_isValidStartDateTime(_startDateTime!) &&
+          _isValidEndDateTime(_endDateTime!, _startDateTime)) {
+        final ticketValueText =
+            _ticketValueController.text.replaceAll(',', '.');
+        final ticketValue = double.parse(ticketValueText);
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Step2AddEvent(
+              name: _nameController.text,
+              ticketValue: ticketValue,
+              startDateTime: _startDateTime,
+              endDateTime: _endDateTime,
+              image: _image,
+              companyData: widget.companyData,
+              template: widget.template,
+            ),
+          ),
+        );
+      } else {
+        _showSnackBar(
+            context, 'Las fechas no son válidas. Por favor, revíselas.');
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Por favor, complete todos los campos y seleccione una imagen.',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+              fontSize: 14,
+            ),
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -423,12 +502,42 @@ class _Step1AddEventState extends State<Step1AddEvent> {
   Widget _buildEndDateTimePicker(BuildContext context, double scaleFactor) {
     return Container(
       child: _startDateTime != null
-          ? _buildDateTimePicker(
-              context: context,
-              labelText: 'Fecha y Hora de Finalización',
-              dateTime: _endDateTime,
-              isStartDateTime: false,
-              scaleFactor: scaleFactor,
+          ? InkWell(
+              onTap: widget.template == null
+                  ? () => _selectDateTime(context, false)
+                  : null, // Deshabilitar el datepicker si hay un template
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: 'Fecha y Hora de Finalización',
+                  labelStyle: TextStyle(
+                    color: white,
+                    fontFamily: 'SFPro',
+                    fontSize: 14 * scaleFactor,
+                  ),
+                  prefixIcon: Icon(Icons.event, color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
+                    borderSide: BorderSide(color: skyBluePrimary),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10 * scaleFactor),
+                    borderSide: BorderSide(color: skyBlueSecondary),
+                  ),
+                ),
+                child: Text(
+                  _endDateTime != null
+                      ? DateFormat('dd/MM/yyyy HH:mm').format(_endDateTime!)
+                      : 'Seleccione la fecha y hora de finalización',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'SFPro',
+                    fontSize: 14 * scaleFactor,
+                  ),
+                ),
+              ),
             )
           : Container(
               decoration: BoxDecoration(
@@ -447,42 +556,5 @@ class _Step1AddEventState extends State<Step1AddEvent> {
               ),
             ),
     );
-  }
-
-  void _goToStep2() {
-    if (_formKey.currentState!.validate() &&
-        _startDateTime != null &&
-        _endDateTime != null &&
-        _image != null) {
-      final ticketValueText = _ticketValueController.text.replaceAll(',', '.');
-      final ticketValue = double.parse(ticketValueText);
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => Step2AddEvent(
-            name: _nameController.text,
-            ticketValue: ticketValue,
-            startDateTime: _startDateTime,
-            endDateTime: _endDateTime,
-            image: _image,
-            companyData: widget.companyData,
-            template: widget.template,
-          ),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Por favor, complete todos los campos y seleccione una imagen.',
-            style: TextStyle(
-              fontFamily: 'SFPro',
-              fontSize: 14,
-            ),
-          ),
-        ),
-      );
-    }
   }
 }

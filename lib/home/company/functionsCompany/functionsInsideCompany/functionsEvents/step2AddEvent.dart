@@ -322,21 +322,30 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                 ),
               ),
               SizedBox(height: 8 * scaleFactor),
-              Row(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Colors.blue,
-                    size: 20 * scaleFactor,
-                  ),
-                  SizedBox(width: 5 * scaleFactor),
-                  Text(
-                    _listTypeSummary,
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14 * scaleFactor,
-                      fontFamily: 'SFPro',
-                    ),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: Colors.blue,
+                        size: 20 * scaleFactor,
+                      ),
+                      SizedBox(width: 5 * scaleFactor),
+                      Expanded(
+                        child: Text(
+                          _listTypeSummary,
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14 * scaleFactor,
+                            fontFamily: 'SFPro',
+                          ),
+                          overflow: TextOverflow
+                              .visible, // Permitir que el texto se envuelva
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -593,42 +602,142 @@ class _Step2AddEventState extends State<Step2AddEvent> {
       builder: (BuildContext context) {
         double scaleFactor = MediaQuery.of(context).size.width / 375.0;
         String newName = _lists[index].name;
-        return AlertDialog(
-          title: Text(
-            'Editar Lista',
-            style: TextStyle(
-              fontFamily: 'SFPro',
-              fontSize: 18 * scaleFactor,
-            ),
+        String newType = _lists[index].type;
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
           ),
-          content: TextFormField(
-            initialValue: newName,
-            onChanged: (value) {
-              newName = value;
-            },
-            style: TextStyle(
-              fontFamily: 'SFPro',
-              fontSize: 16 * scaleFactor,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _lists[index].name =
-                      newName; // Actualizar el campo 'name' del objeto
-                });
-                Navigator.pop(context);
-              },
-              child: Text(
-                'Guardar',
-                style: TextStyle(
-                  fontFamily: 'SFPro',
-                  fontSize: 14 * scaleFactor,
+          child: Padding(
+            padding: EdgeInsets.all(16 * scaleFactor),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Editar Lista',
+                  style: TextStyle(
+                    fontFamily: 'SFPro',
+                    fontSize: 18 * scaleFactor,
+                  ),
                 ),
-              ),
+                SizedBox(height: 10 * scaleFactor),
+                TextFormField(
+                  initialValue: newName,
+                  onChanged: (value) {
+                    newName = value;
+                  },
+                  style: TextStyle(
+                    fontFamily: 'SFPro',
+                    fontSize: 16 * scaleFactor,
+                  ),
+                ),
+                SizedBox(height: 10 * scaleFactor),
+                DropdownButtonFormField<String>(
+                  value: newType,
+                  items: _listTypes.map((String type) {
+                    return DropdownMenuItem<String>(
+                      value: type,
+                      child: Text(
+                        type,
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontFamily: 'SFPro',
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      newType = newValue;
+                    }
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Tipo de Lista',
+                    labelStyle: TextStyle(
+                      color: Colors.black,
+                      fontFamily: 'SFPro',
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10 * scaleFactor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10 * scaleFactor),
+                      borderSide: BorderSide(
+                        color: skyBluePrimary,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10 * scaleFactor),
+                      borderSide: BorderSide(
+                        color: skyBlueSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20 * scaleFactor),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        'Cancelar',
+                        style: TextStyle(
+                          fontFamily: 'SFPro',
+                          fontSize: 14 * scaleFactor,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 10 * scaleFactor),
+                    TextButton(
+                      onPressed: () {
+                        if (newName.trim().isEmpty) {
+                          // Mostrar mensaje de error si el campo está vacío
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'El nombre no puede estar vacío.',
+                                style: TextStyle(fontFamily: 'SFPro'),
+                              ),
+                            ),
+                          );
+                        } else if (_lists.any((list) =>
+                            list.name == newName && list != _lists[index])) {
+                          // Mostrar mensaje de error si ya existe una lista con el mismo nombre
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Ya existe una lista con ese nombre.',
+                                style: TextStyle(fontFamily: 'SFPro'),
+                              ),
+                            ),
+                          );
+                        } else {
+                          setState(() {
+                            _lists[index].name =
+                                newName; // Actualizar el campo 'name' del objeto
+                            _lists[index].type =
+                                newType; // Actualizar el campo 'type' del objeto
+                          });
+                          Navigator.pop(context);
+                        }
+                      },
+                      child: Text(
+                        'Guardar',
+                        style: TextStyle(
+                          fontFamily: 'SFPro',
+                          fontSize: 14 * scaleFactor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
@@ -1236,54 +1345,59 @@ class _Step2AddEventState extends State<Step2AddEvent> {
   }
 
   void _deleteList(int index) {
-    showDialog(
+    showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) {
         double scaleFactor = MediaQuery.of(context).size.width / 375.0;
-        return AlertDialog(
+        return CupertinoActionSheet(
           title: Text(
             'Confirmación',
             style: TextStyle(
               fontFamily: 'SFPro',
               fontSize: 18 * scaleFactor,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          content: Text(
+          message: Text(
             '¿Estás seguro de que deseas eliminar esta lista?',
             style: TextStyle(
               fontFamily: 'SFPro',
               fontSize: 16 * scaleFactor,
+              color: Colors.grey[600],
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text(
-                'Cancelar',
-                style: TextStyle(
-                  fontFamily: 'SFPro',
-                  fontSize: 14 * scaleFactor,
-                ),
-              ),
-            ),
-            TextButton(
+            CupertinoActionSheetAction(
               onPressed: () {
                 setState(() {
                   _lists.removeAt(index);
                 });
                 Navigator.pop(context);
               },
+              isDestructiveAction: true,
               child: Text(
                 'Eliminar',
                 style: TextStyle(
                   fontFamily: 'SFPro',
-                  fontSize: 14 * scaleFactor,
+                  fontSize: 16 * scaleFactor,
+                  color: Colors.red,
                 ),
               ),
             ),
           ],
+          cancelButton: CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text(
+              'Cerrar',
+              style: TextStyle(
+                fontFamily: 'SFPro',
+                fontSize: 16 * scaleFactor,
+                color: Colors.black,
+              ),
+            ),
+          ),
         );
       },
     );
