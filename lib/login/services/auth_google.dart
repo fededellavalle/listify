@@ -76,9 +76,6 @@ class AuthService {
       Map<String, dynamic>? userSnapshotData =
           userSnapshot.data() as Map<String, dynamic>?;
 
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setBool('isLoggedIn', true);
-
       if (!userSnapshot.exists || userSnapshotData?['birthDate'] == null) {
         await FirebaseFirestore.instance
             .collection('users')
@@ -100,7 +97,8 @@ class AuthService {
           ),
         );
       } else {
-        // Si el usuario ya está registrado, navegar a la página de navegación
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setBool('isLoggedIn', true);
         Navigator.push(
           context,
           MaterialPageRoute(

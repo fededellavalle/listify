@@ -182,6 +182,7 @@ class _CompanyPageState extends State<CompanyPage>
                       CompanyButton(
                         companyData: companyData,
                         scaleFactor: scaleFactor,
+                        isOwner: true,
                       ),
                   ],
                 );
@@ -269,6 +270,7 @@ class _CompanyPageState extends State<CompanyPage>
                               companyData: companyInfo,
                               category: companyData['category'],
                               scaleFactor: scaleFactor,
+                              isOwner: false,
                             );
                           }
                         },
@@ -289,21 +291,9 @@ class _CompanyPageState extends State<CompanyPage>
           .collection('companies')
           .where('ownerUid', isEqualTo: uid)
           .snapshots()
-          .map((snapshot) => snapshot.docs.map((doc) {
-                String companyId = doc.id;
-                String companyName = doc['name'];
-                String companyUser = doc['username'];
-                String ownerUid = doc['ownerUid'];
-                String? imageUrl = doc['imageUrl'];
-
-                return {
-                  'companyId': companyId,
-                  'name': companyName,
-                  'username': companyUser,
-                  'ownerUid': ownerUid,
-                  'imageUrl': imageUrl,
-                };
-              }).toList());
+          .map((snapshot) => snapshot.docs
+              .map((doc) => doc.data() as Map<String, dynamic>)
+              .toList());
     } else {
       return Stream.empty();
     }
@@ -337,25 +327,41 @@ class CompanyButton extends StatelessWidget {
   final Map<String, dynamic> companyData;
   final String? category;
   final double scaleFactor;
+  final bool isOwner;
 
   CompanyButton({
     required this.companyData,
     this.category,
     required this.scaleFactor,
+    required this.isOwner,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CompanyWidget(
-              companyData: companyData,
+        if (isOwner) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CompanyWidget(
+                companyData: companyData,
+                isOwner: true,
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CompanyWidget(
+                companyData: companyData,
+                isOwner: false,
+                companyCategory: category,
+              ),
+            ),
+          );
+        }
       },
       child: AnimatedContainer(
         duration: Duration(milliseconds: 300),

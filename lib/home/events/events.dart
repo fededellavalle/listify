@@ -162,6 +162,21 @@ class _EventsPageState extends State<EventsPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Mis Eventos',
+                    style: TextStyle(
+                      fontSize: 25 * scaleFactor,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontFamily: 'SFPro',
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
               _buildFirstEventList(scaleFactor),
               _buildSecondEventList(scaleFactor),
             ],

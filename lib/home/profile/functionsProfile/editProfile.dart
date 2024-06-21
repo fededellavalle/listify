@@ -60,29 +60,48 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _pickImage() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      File? croppedFile = await _cropImage(File(pickedFile.path));
+      CroppedFile? croppedFile = await _cropImage(File(pickedFile.path));
       if (croppedFile != null) {
         setState(() {
-          _image = croppedFile;
+          _image = File(croppedFile.path);
         });
       }
     }
   }
 
-  Future<File?> _cropImage(File imageFile) async {
-    CroppedFile? croppedFile = await ImageCropper().cropImage(
+  Future<CroppedFile?> _cropImage(File imageFile) async {
+    final croppedFile = await ImageCropper().cropImage(
       sourcePath: imageFile.path,
-      aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
+      compressFormat: ImageCompressFormat.jpg,
       compressQuality: 100,
-      maxWidth: 512,
-      maxHeight: 512,
-      cropStyle: CropStyle.circle,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Recortar imágen',
+          toolbarColor: skyBluePrimary,
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.square,
+          lockAspectRatio: true,
+          aspectRatioPresets: [
+            CropAspectRatioPreset.square,
+          ],
+          cropStyle: CropStyle.circle,
+          showCropGrid: false,
+        ),
+        IOSUiSettings(
+          title: 'Recortar imágen',
+          aspectRatioLockEnabled: true,
+          aspectRatioPickerButtonHidden: true,
+          cropStyle: CropStyle.circle,
+          aspectRatioPresets: [
+            CropAspectRatioPreset.square,
+          ],
+        ),
+      ],
     );
-    return croppedFile != null ? File(croppedFile.path) : null;
+    return croppedFile;
   }
 
   Future<void> _uploadImage() async {

@@ -1,9 +1,8 @@
+import 'package:app_listas/home/company/functionsCompany/functionsInsideCompany/functionsGestionPersonal/functionsInsideCategory/invitePeopleToCategory.dart';
+import 'package:app_listas/home/company/functionsCompany/functionsInsideCompany/functionsGestionPersonal/functionsInsideCategory/member_info_modal.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:unicons/unicons.dart';
-import 'functionsInsideCategory/invitePeopleToCategory.dart';
-import 'package:flutter/services.dart';
 
 class InsideCategory extends StatefulWidget {
   final String categoryName;
@@ -64,10 +63,10 @@ class _InsideCategoryState extends State<InsideCategory> {
     List<Map<String, dynamic>> loadedMembersInfo = [];
 
     for (Map<String, dynamic> uidMap in memberUIDs) {
-      print(uidMap);
+      String userUid = uidMap['userUid'];
       DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
           .collection('users')
-          .doc(uidMap['userUid'])
+          .doc(userUid)
           .get();
 
       if (userSnapshot.exists) {
@@ -75,8 +74,8 @@ class _InsideCategoryState extends State<InsideCategory> {
             userSnapshot.data() as Map<String, dynamic>?;
 
         if (userData != null) {
+          userData['uid'] = userUid;
           loadedMembersInfo.add(userData);
-          print(loadedMembersInfo);
         }
       }
     }
@@ -263,55 +262,75 @@ class _InsideCategoryState extends State<InsideCategory> {
                   String memberApellido = member['lastname'] ?? '';
                   String memberEmail = member['email'] ?? '';
                   String memberInstagram = member['instagram'] ?? '';
+                  String memberUid = member['uid'] ?? '';
 
-                  return Card(
-                    color: Colors.grey.shade900,
-                    margin: EdgeInsets.symmetric(vertical: 5 * scaleFactor),
-                    elevation: 5,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15 * scaleFactor),
-                    ),
-                    child: ListTile(
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 10 * scaleFactor,
-                        horizontal: 15 * scaleFactor,
+                  print(member);
+
+                  return GestureDetector(
+                    onTap: () {
+                      if (memberUid.isNotEmpty) {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return MemberInfoModal(
+                              userUid: memberUid,
+                              scaleFactor: scaleFactor,
+                            );
+                          },
+                        );
+                      } else {
+                        print('Error: UID del miembro está vacío.');
+                      }
+                    },
+                    child: Card(
+                      color: Colors.grey.shade900,
+                      margin: EdgeInsets.symmetric(vertical: 5 * scaleFactor),
+                      elevation: 5,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15 * scaleFactor),
                       ),
-                      title: Text(
-                        '$memberName $memberApellido',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16 * scaleFactor,
-                          fontFamily: 'SFPro',
-                          fontWeight: FontWeight.bold,
+                      child: ListTile(
+                        contentPadding: EdgeInsets.symmetric(
+                          vertical: 10 * scaleFactor,
+                          horizontal: 15 * scaleFactor,
                         ),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Email: $memberEmail',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14 * scaleFactor,
-                              fontFamily: 'SFPro',
-                            ),
+                        title: Text(
+                          '$memberName $memberApellido',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16 * scaleFactor,
+                            fontFamily: 'SFPro',
+                            fontWeight: FontWeight.bold,
                           ),
-                          Text(
-                            'Instagram: $memberInstagram',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14 * scaleFactor,
-                              fontFamily: 'SFPro',
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Email: $memberEmail',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14 * scaleFactor,
+                                fontFamily: 'SFPro',
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      trailing: IconButton(
-                        icon: Icon(Icons.close),
-                        color: Colors.red,
-                        onPressed: () {
-                          deleteMember(member['uid'], scaleFactor);
-                        },
+                            Text(
+                              'Instagram: $memberInstagram',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14 * scaleFactor,
+                                fontFamily: 'SFPro',
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(Icons.close),
+                          color: Colors.red,
+                          onPressed: () {
+                            deleteMember(memberUid, scaleFactor);
+                          },
+                        ),
                       ),
                     ),
                   );
@@ -487,46 +506,61 @@ class _InsideCategoryState extends State<InsideCategory> {
               ),
             ),
             TextButton(
-              onPressed: () {
-                setState(() {
-                  membersInfo.removeWhere((member) => member['uid'] == uid);
-                });
+              onPressed: () async {
+                try {
+                  // Remove member from the membersInfo list
+                  setState(() {
+                    membersInfo.removeWhere((member) => member['uid'] == uid);
+                  });
 
-                FirebaseFirestore.instance
-                    .collection('companies')
-                    .doc(widget.companyData['companyId'])
-                    .collection('personalCategories')
-                    .doc(widget.categoryName)
-                    .update({
-                  'members': FieldValue.arrayRemove([uid]),
-                }).then((value) {
-                  print('Miembro eliminado de la base de datos');
-                }).catchError((error) {
+                  // Remove member from the personalCategories collection
+                  await FirebaseFirestore.instance
+                      .collection('companies')
+                      .doc(widget.companyData['companyId'])
+                      .collection('personalCategories')
+                      .doc(widget.categoryName)
+                      .update({
+                    'members': FieldValue.arrayRemove([
+                      {'userUid': uid}
+                    ]),
+                  });
+                  print('Miembro eliminado de la categoría');
+
+                  // Remove company relationship from the user's document
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(uid)
+                      .update({
+                    'companyRelationship': FieldValue.arrayRemove([
+                      {
+                        'category': widget.categoryName,
+                        'companyUsername': widget.companyData['username'],
+                      }
+                    ]),
+                  });
+                  print(
+                      'Relación de miembro eliminada de la base de datos del usuario');
+
+                  // Remove member from the company's main collection
+                  await FirebaseFirestore.instance
+                      .collection('companies')
+                      .doc(widget.companyData['companyId'])
+                      .collection('personalCategories')
+                      .doc(widget.categoryName)
+                      .update({
+                    'members': FieldValue.arrayRemove([uid]),
+                  });
+                  print('Miembro eliminado de la compañía');
+
+                  // Cerrar el diálogo después de eliminar
+                  Navigator.of(context).pop();
+                } catch (error) {
                   print('Error al eliminar el miembro: $error');
-
                   setState(() {
                     loadMembersInfo();
                   });
-                });
-
-                FirebaseFirestore.instance.collection('users').doc(uid).update({
-                  'companyRelationship': FieldValue.arrayRemove([
-                    {
-                      'category': widget.categoryName,
-                      'companyUsername': widget.companyData['username'],
-                    }
-                  ]),
-                }).then((value) {
-                  print('Relación de miembro eliminada de la base de datos');
-                }).catchError((error) {
-                  print('Error al eliminar la relación: $error');
-                  setState(() {
-                    loadMembersInfo();
-                  });
-                });
-
-                Navigator.of(context)
-                    .pop(); // Cerrar el diálogo después de eliminar
+                  Navigator.of(context).pop();
+                }
               },
               child: Text(
                 'Aceptar',

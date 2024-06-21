@@ -18,19 +18,41 @@ class GestionPersonal extends StatefulWidget {
   State<GestionPersonal> createState() => _GestionPersonalState();
 }
 
-class _GestionPersonalState extends State<GestionPersonal> {
+class _GestionPersonalState extends State<GestionPersonal>
+    with SingleTickerProviderStateMixin {
   Stream<List<String>>? _categoriesStream;
+  late AnimationController _animationController;
+  late Animation<Offset> _animation;
 
   @override
   void initState() {
     super.initState();
     _categoriesStream = loadPersonalCategories();
+
+    _animationController = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _animation = Tween<Offset>(
+      begin: Offset.zero,
+      end: Offset(0.1, -0.2),
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Stream<List<String>> loadPersonalCategories() {
     CollectionReference categoryCollection = FirebaseFirestore.instance
         .collection('companies')
-        .doc(widget.companyData['companyId'])
+        .doc(widget.companyData['username'])
         .collection('personalCategories');
 
     return categoryCollection.snapshots().map((snapshot) {
@@ -133,15 +155,33 @@ class _GestionPersonalState extends State<GestionPersonal> {
           List<String> personalCategories = snapshot.data ?? [];
 
           if (personalCategories.isEmpty) {
-            return Center(
-              child: Text(
-                'No tienes categorías creadas, ¿crea una aquí?',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontFamily: 'SFPro',
-                  fontSize: 18 * scaleFactor,
+            return Stack(
+              children: [
+                Center(
+                  child: Text(
+                    'Aún no has creado ninguna categoría.\n¡Agrega una ahora!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'SFPro',
+                      fontSize: 18 * scaleFactor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-              ),
+                Positioned(
+                  top: 1 * scaleFactor,
+                  right: 35 * scaleFactor,
+                  child: SlideTransition(
+                    position: _animation,
+                    child: Icon(
+                      CupertinoIcons.arrow_up_right,
+                      color: Colors.white,
+                      size: 40 * scaleFactor,
+                    ),
+                  ),
+                ),
+              ],
             );
           }
 
@@ -159,7 +199,7 @@ class _GestionPersonalState extends State<GestionPersonal> {
                 return StreamBuilder<DocumentSnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('companies')
-                      .doc(widget.companyData['companyId'])
+                      .doc(widget.companyData['username'])
                       .collection('personalCategories')
                       .doc(categoryName)
                       .snapshots(),

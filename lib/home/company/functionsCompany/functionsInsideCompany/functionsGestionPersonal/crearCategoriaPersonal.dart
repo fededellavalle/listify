@@ -203,7 +203,7 @@ class _crearCategoriaPersonalState extends State<crearCategoriaPersonal> {
                             setState(() {
                               isLoading = true;
                             });
-                            String categoryName = nameController.text;
+                            String categoryName = nameController.text.trim();
                             List<String> selectedPermissions =
                                 this.selectedPermises;
 
@@ -215,62 +215,154 @@ class _crearCategoriaPersonalState extends State<crearCategoriaPersonal> {
                                       .doc(widget.companyData['companyId'])
                                       .collection('personalCategories');
 
-                              await categoryCollection.doc(categoryName).set({
-                                'nombre': categoryName,
-                                'permissions': selectedPermissions,
-                                'members': [],
-                                'invitations': [],
-                              });
+                              QuerySnapshot allCategoriesSnapshot =
+                                  await categoryCollection.get();
 
-                              nameController.clear();
-                              setState(() {
-                                this.selectedPermises.clear();
-                              });
-
-                              setState(() {
-                                isLoading = true;
-                              });
-
-                              Navigator.pop(context);
-
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: Text(
-                                      'Categoria Creada',
-                                      style: TextStyle(
-                                        fontFamily: 'SFPro',
-                                        fontSize: 18 * scaleFactor,
-                                      ),
-                                    ),
-                                    content: Text(
-                                      'Su categoria fue creada exitosamente',
-                                      style: TextStyle(
-                                        fontFamily: 'SFPro',
-                                        fontSize: 16 * scaleFactor,
-                                      ),
-                                    ),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: Text(
-                                          'OK',
-                                          style: TextStyle(
-                                            fontFamily: 'SFPro',
-                                            fontSize: 14 * scaleFactor,
-                                          ),
+                              if (allCategoriesSnapshot.size >= 10) {
+                                setState(() {
+                                  isLoading = false;
+                                });
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: Text(
+                                        'Error',
+                                        style: TextStyle(
+                                          fontFamily: 'SFPro',
+                                          fontSize: 18 * scaleFactor,
                                         ),
                                       ),
-                                    ],
+                                      content: Text(
+                                        'No puedes crear más de 10 categorías en una compañía.',
+                                        style: TextStyle(
+                                          fontFamily: 'SFPro',
+                                          fontSize: 16 * scaleFactor,
+                                        ),
+                                      ),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: Text(
+                                            'OK',
+                                            style: TextStyle(
+                                              fontFamily: 'SFPro',
+                                              fontSize: 14 * scaleFactor,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              } else {
+                                final categorySnapshot =
+                                    await categoryCollection
+                                        .doc(categoryName)
+                                        .get();
+
+                                if (categorySnapshot.exists) {
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return AlertDialog(
+                                        title: Text(
+                                          'Error',
+                                          style: TextStyle(
+                                            fontFamily: 'SFPro',
+                                            fontSize: 18 * scaleFactor,
+                                          ),
+                                        ),
+                                        content: Text(
+                                          'Ya existe una categoría con este nombre en la compañía.',
+                                          style: TextStyle(
+                                            fontFamily: 'SFPro',
+                                            fontSize: 16 * scaleFactor,
+                                          ),
+                                        ),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: Text(
+                                              'OK',
+                                              style: TextStyle(
+                                                fontFamily: 'SFPro',
+                                                fontSize: 14 * scaleFactor,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
                                   );
-                                },
-                              );
+                                } else {
+                                  await categoryCollection
+                                      .doc(categoryName)
+                                      .set({
+                                    'nombre': categoryName,
+                                    'permissions': selectedPermissions,
+                                    'members': [],
+                                    'invitations': [],
+                                  });
+
+                                  nameController.clear();
+                                  setState(() {
+                                    this.selectedPermises.clear();
+                                  });
+
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+
+                                  Navigator.pop(context);
+
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return AlertDialog(
+                                        title: Text(
+                                          'Categoria Creada',
+                                          style: TextStyle(
+                                            fontFamily: 'SFPro',
+                                            fontSize: 18 * scaleFactor,
+                                          ),
+                                        ),
+                                        content: Text(
+                                          'Su categoria fue creada exitosamente',
+                                          style: TextStyle(
+                                            fontFamily: 'SFPro',
+                                            fontSize: 16 * scaleFactor,
+                                          ),
+                                        ),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: Text(
+                                              'OK',
+                                              style: TextStyle(
+                                                fontFamily: 'SFPro',
+                                                fontSize: 14 * scaleFactor,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                }
+                              }
                             } else {
                               setState(() {
-                                isLoading = true;
+                                isLoading = false;
                               });
                               showDialog(
                                 context: context,
@@ -284,7 +376,7 @@ class _crearCategoriaPersonalState extends State<crearCategoriaPersonal> {
                                       ),
                                     ),
                                     content: Text(
-                                      'Error al crear la categoria, debes ponerle nombre o tienes que seleccionar alguna opcion',
+                                      'Debes ingresar un nombre de categoría y seleccionar al menos un permiso.',
                                       style: TextStyle(
                                         fontFamily: 'SFPro',
                                         fontSize: 16 * scaleFactor,
@@ -296,7 +388,7 @@ class _crearCategoriaPersonalState extends State<crearCategoriaPersonal> {
                                           Navigator.of(context).pop();
                                         },
                                         child: Text(
-                                          'Ok',
+                                          'OK',
                                           style: TextStyle(
                                             fontFamily: 'SFPro',
                                             fontSize: 14 * scaleFactor,

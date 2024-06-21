@@ -23,13 +23,13 @@ class InvitePeopleToCategory extends StatefulWidget {
 class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
   TextEditingController userController = TextEditingController();
 
+  bool isLoading = false;
+
   @override
   Widget build(BuildContext context) {
     double baseWidth = 375.0;
     double screenWidth = MediaQuery.of(context).size.width;
     double scaleFactor = screenWidth / baseWidth;
-
-    bool isLoading = false;
 
     return Scaffold(
       backgroundColor: Colors.black.withOpacity(0.9),
@@ -52,16 +52,17 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 25.0 * scaleFactor),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Row(
+            Wrap(
               children: [
                 Text(
-                  'Invitemos a gente',
+                  'Invitemos a personas a unirse a tu compania',
                   style: TextStyle(
                     fontSize: 25 * scaleFactor,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                     fontFamily: 'SFPro',
                   ),
+                  softWrap: true,
                 ),
               ],
             ),
@@ -95,12 +96,14 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
                   borderSide: BorderSide(color: skyBlueSecondary),
                   borderRadius: BorderRadius.circular(10.0 * scaleFactor),
                 ),
+                counterText: '',
               ),
               style: TextStyle(
                 color: Colors.white,
                 fontFamily: 'SFPro',
                 fontSize: 14 * scaleFactor,
               ),
+              maxLength: 60,
             ),
             SizedBox(height: 20 * scaleFactor),
             Column(
@@ -176,7 +179,7 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
     await receivedInvitationsCollection.add({
       'sender': user?.email,
       'recipient': inviteEmail,
-      'company': widget.companyData['companyId'],
+      'company': widget.companyData['username'],
       'category': widget.categoryName,
     });
 
@@ -184,9 +187,8 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
   }
 
   Future<void> handleInvitation(double scaleFactor) async {
-    // Obtener el nombre de la categoría y el email del usuario a invitar
     String categoryName = widget.categoryName;
-    String inviteEmail = userController.text;
+    String inviteEmail = userController.text.trim();
 
     DocumentReference ownerRef = FirebaseFirestore.instance
         .collection('users')
@@ -197,34 +199,86 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
 
     String ownerEmail = ownerData?['email'] ?? 'No se encontro email';
 
-    // Verificar que se haya ingresado un nombre de categoría válido y un email de invitación
     if (categoryName.isNotEmpty && inviteEmail.isNotEmpty) {
-      // Obtener la referencia a la categoría personal dentro de la empresa
-      DocumentReference categoryRef = FirebaseFirestore.instance
+      CollectionReference categoryCollection = FirebaseFirestore.instance
           .collection('companies')
-          .doc(widget.companyData['companyId'])
-          .collection('personalCategories')
-          .doc(categoryName);
+          .doc(widget.companyData['username'])
+          .collection('personalCategories');
+
+      QuerySnapshot allCategoriesSnapshot = await categoryCollection.get();
+
+      bool isAlreadyInvitedOrMember = false;
+
+      for (QueryDocumentSnapshot categoryDoc in allCategoriesSnapshot.docs) {
+        Map<String, dynamic>? categoryData =
+            categoryDoc.data() as Map<String, dynamic>?;
+        List<dynamic> members = categoryData?['members'] ?? [];
+        List<dynamic> invitations = categoryData?['invitations'] ?? [];
+
+        if (members.contains(inviteEmail) ||
+            invitations.contains(inviteEmail)) {
+          isAlreadyInvitedOrMember = true;
+          break;
+        }
+      }
+
+      if (isAlreadyInvitedOrMember) {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text(
+                'Error',
+                style: TextStyle(
+                  fontFamily: 'SFPro',
+                  fontSize: 18 * scaleFactor,
+                ),
+              ),
+              content: Text(
+                'El usuario ya es miembro o está invitado en otra categoría.',
+                style: TextStyle(
+                  fontFamily: 'SFPro',
+                  fontSize: 16 * scaleFactor,
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(
+                    'OK',
+                    style: TextStyle(
+                      fontFamily: 'SFPro',
+                      fontSize: 14 * scaleFactor,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      DocumentReference categoryRef = categoryCollection.doc(categoryName);
 
       User? user = FirebaseAuth.instance.currentUser;
       if (user?.email != inviteEmail) {
-        // Obtener el documento de la categoría personal
         DocumentSnapshot categorySnapshot = await categoryRef.get();
         Map<String, dynamic>? categoryData =
             categorySnapshot.data() as Map<String, dynamic>?;
 
         List<dynamic> members = categoryData?['members'] ?? [];
         if (ownerEmail != inviteEmail) {
-          //Verifico que sea diferente del owner
           if (!members.contains(inviteEmail)) {
-            // Verificar si la categoría existe
             if (categorySnapshot.exists) {
-              // Verificar que los datos no sean nulos y obtener la lista de invitaciones
               List<dynamic> invitations = categoryData?['invitations'] ?? [];
 
-              // Verificar si el email de invitación ya está en la lista
               if (invitations.contains(inviteEmail)) {
-                // Mostrar mensaje de error si el email ya fue invitado anteriormente
                 showDialog(
                   context: context,
                   builder: (context) {
@@ -265,12 +319,10 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
 
                 invitations.add(inviteEmail);
 
-                // Actualizar el documento de la categoría con la nueva lista de invitaciones
                 await categoryRef.update({'invitations': invitations});
 
                 userController.clear();
 
-                // Mostrar mensaje de éxito al enviar la invitación
                 showDialog(
                   context: context,
                   builder: (context) {
@@ -294,7 +346,6 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
                           onPressed: () {
                             Navigator.of(context).pop();
                             Navigator.of(context).pop();
-                            Navigator.of(context).pop();
                           },
                           child: Text(
                             'OK',
@@ -310,7 +361,6 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
                 );
               }
             } else {
-              // Mostrar mensaje de error si la categoría no existe
               showDialog(
                 context: context,
                 builder: (context) {
@@ -348,7 +398,6 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
               );
             }
           } else {
-            // Mostrar mensaje de error si el usuario ya pertenece a la categoría
             showDialog(
               context: context,
               builder: (context) {
@@ -386,7 +435,6 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
             );
           }
         } else {
-          // Mostrar mensaje de error si el usuario intenta invitarse a sí mismo
           showDialog(
             context: context,
             builder: (context) {
@@ -424,7 +472,6 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
           );
         }
       } else {
-        // Mostrar mensaje de error si el usuario intenta invitar al propietario de la empresa
         showDialog(
           context: context,
           builder: (context) {
@@ -462,7 +509,6 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
         );
       }
     } else {
-      // Mostrar mensaje de error si no se ingresó el nombre de la categoría o el email de invitación
       showDialog(
         context: context,
         builder: (context) {

@@ -45,14 +45,33 @@ class _CreateCompanyState extends State<CreateCompany> {
   }
 
   Future<CroppedFile?> _cropImage(File imageFile) async {
-    final imageCropper = ImageCropper();
-    CroppedFile? croppedFile = await imageCropper.cropImage(
+    final croppedFile = await ImageCropper().cropImage(
       sourcePath: imageFile.path,
-      aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
+      compressFormat: ImageCompressFormat.jpg,
       compressQuality: 100,
-      maxWidth: 512,
-      maxHeight: 512,
-      cropStyle: CropStyle.circle,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Recortar imágen',
+          toolbarColor: skyBluePrimary,
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.square,
+          lockAspectRatio: true,
+          aspectRatioPresets: [
+            CropAspectRatioPreset.square,
+          ],
+          cropStyle: CropStyle.circle,
+          showCropGrid: false,
+        ),
+        IOSUiSettings(
+          title: 'Recortar imágen',
+          aspectRatioLockEnabled: true,
+          aspectRatioPickerButtonHidden: true,
+          cropStyle: CropStyle.circle,
+          aspectRatioPresets: [
+            CropAspectRatioPreset.square,
+          ],
+        ),
+      ],
     );
     return croppedFile;
   }

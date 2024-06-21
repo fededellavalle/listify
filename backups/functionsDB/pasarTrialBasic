@@ -1,0 +1,29 @@
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+admin.initializeApp();
+
+exports.checkTrialPeriod = functions.pubsub.schedule('every 24 hours').onRun(async (context) => {
+  const usersRef = admin.firestore().collection('users');
+  const now = admin.firestore.Timestamp.now();
+  const snapshot = await usersRef.where('subscription', '==', 'premium').where('trial', '==', true).get();
+
+  const batch = admin.firestore().batch();
+
+  snapshot.forEach((doc) => {
+    const trialStartDate = doc.data().trialStartDate;
+    const trialEndDate = trialStartDate.toDate();
+    trialEndDate.setDate(trialEndDate.getDate() + 7);
+
+    if (now.toDate() > trialEndDate) {
+      batch.update(doc.ref, {
+        subscription: 'basic',
+        trial: true,
+        trialStartDate: admin.firestore.FieldValue.delete()
+      });
+    }
+  });
+
+  await batch.commit();
+  console.log('Trial period check completed');
+  return null;
+});

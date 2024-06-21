@@ -11,7 +11,6 @@ import 'events/events.dart';
 import 'company/company.dart';
 import 'invitations/invitations.dart';
 import 'profile/profile.dart'; // Import the ProfilePage
-import 'dart:async'; // Importar la librería para usar StreamController
 
 class NavigationPage extends StatefulWidget {
   NavigationPage({super.key});
@@ -84,66 +83,144 @@ class _NavigationPageState extends State<NavigationPage>
     }
   }
 
+  Future<void> _activatePremiumTrial() async {
+    try {
+      DocumentSnapshot userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      if (userDoc.exists) {
+        Map<String, dynamic>? userData =
+            userDoc.data() as Map<String, dynamic>?;
+        if (userData != null) {
+          if (userData['subscription'] == 'basic' &&
+              userData['trial'] == false) {
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(uid)
+                .update({
+              'subscription': 'premium',
+              'trial': true,
+              'trialStartDate': Timestamp.now(),
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Has activado la prueba premium por 7 días.',
+                  style: TextStyle(fontFamily: 'SFPro'),
+                ),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Ya has usado la prueba premium o no eres un usuario básico.',
+                  style: TextStyle(fontFamily: 'SFPro'),
+                ),
+              ),
+            );
+          }
+        }
+      }
+    } catch (error) {
+      print('Error activando la prueba premium: $error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Error activando la prueba premium.',
+            style: TextStyle(fontFamily: 'SFPro'),
+          ),
+        ),
+      );
+    }
+  }
+
   Stream<List<Map<String, dynamic>>> _getNotifications() async* {
     List<Map<String, dynamic>> notifications = [];
 
-    // Fetch active events
-    QuerySnapshot<Map<String, dynamic>> activeEventsSnapshot =
+    QuerySnapshot<Map<String, dynamic>> activeEventsCompanySnapshot =
         await FirebaseFirestore.instance
             .collection('companies')
             .where('ownerUid', isEqualTo: uid)
             .get();
 
-    for (var companyDoc in activeEventsSnapshot.docs) {
-      QuerySnapshot activeEvents = await FirebaseFirestore.instance
-          .collection('companies')
-          .doc(companyDoc.id)
-          .collection('myEvents')
-          .where('eventState', isEqualTo: 'Active')
-          .get();
-      for (var eventDoc in activeEvents.docs) {
-        notifications.add({
-          'title': 'Evento Activo',
-          'body': 'El evento ${eventDoc['eventName']} está activo.',
-        });
+    // Obtener relaciones de empresas del usuario
+    DocumentSnapshot<Map<String, dynamic>> userSnapshot =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+    if (userSnapshot.exists) {
+      Map<String, dynamic> userData =
+          userSnapshot.data() as Map<String, dynamic>;
+      var companyRelationships =
+          userData['companyRelationship'] as List<dynamic>? ?? [];
+
+      // Crear una lista para todas las empresas (propias y relacionadas)
+      List<String> companyIds = [];
+
+      // Agregar empresas donde el usuario es el propietario
+      for (var companyDoc in activeEventsCompanySnapshot.docs) {
+        companyIds.add(companyDoc.id);
       }
-    }
 
-    // Fetch live events
-    QuerySnapshot<Map<String, dynamic>> liveEventsSnapshot =
-        await FirebaseFirestore.instance
+      // Agregar empresas relacionadas
+      for (var relationship in companyRelationships) {
+        String companyUsername = relationship['companyUsername'];
+
+        QuerySnapshot<Map<String, dynamic>> relatedCompanySnapshot =
+            await FirebaseFirestore.instance
+                .collection('companies')
+                .where('username', isEqualTo: companyUsername)
+                .get();
+
+        for (var doc in relatedCompanySnapshot.docs) {
+          companyIds.add(doc.id);
+        }
+      }
+
+      // Obtener eventos activos y en vivo para todas las empresas
+      for (String companyId in companyIds) {
+        // Eventos activos
+        QuerySnapshot activeEvents = await FirebaseFirestore.instance
             .collection('companies')
-            .where('ownerUid', isEqualTo: uid)
+            .doc(companyId)
+            .collection('myEvents')
+            .where('eventState', isEqualTo: 'Active')
             .get();
 
-    for (var companyDoc in liveEventsSnapshot.docs) {
-      QuerySnapshot liveEvents = await FirebaseFirestore.instance
-          .collection('companies')
-          .doc(companyDoc.id)
-          .collection('myEvents')
-          .where('eventState', isEqualTo: 'Live')
-          .get();
-      for (var eventDoc in liveEvents.docs) {
-        notifications.add({
-          'title': 'Evento En Vivo',
-          'body': 'El evento ${eventDoc['eventName']} está en vivo.',
-        });
+        for (var eventDoc in activeEvents.docs) {
+          notifications.add({
+            'title': 'Evento Activo',
+            'body': 'El evento ${eventDoc['eventName']} está activo.',
+          });
+        }
+
+        // Eventos en vivo
+        QuerySnapshot liveEvents = await FirebaseFirestore.instance
+            .collection('companies')
+            .doc(companyId)
+            .collection('myEvents')
+            .where('eventState', isEqualTo: 'Live')
+            .get();
+
+        for (var eventDoc in liveEvents.docs) {
+          notifications.add({
+            'title': 'Evento En Vivo',
+            'body': 'El evento ${eventDoc['eventName']} está en vivo.',
+          });
+        }
       }
     }
 
     // Fetch new invitations
     QuerySnapshot invitationSnapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
+        .collection('invitations')
+        .doc(currentUser!.email)
         .collection('receivedInvitations')
-        .where('status', isEqualTo: 'pending')
         .get();
 
     for (var invitationDoc in invitationSnapshot.docs) {
       notifications.add({
         'title': 'Nueva Invitación',
-        'body':
-            'Tienes una nueva invitación de ${invitationDoc['companyName']}.',
+        'body': 'Tienes una nueva invitación de ${invitationDoc['company']}.',
       });
     }
 
@@ -153,9 +230,8 @@ class _NavigationPageState extends State<NavigationPage>
   Stream<int> _getInvitationCount() {
     return FirebaseFirestore.instance
         .collection('invitations')
-        .doc(currentUser!.email) // Uso del email del usuario actual
-        .collection(
-            'receivedInvitations') // Subcolección de invitaciones recibidas
+        .doc(currentUser!.email)
+        .collection('receivedInvitations')
         .snapshots()
         .map((snapshot) => snapshot.docs.length);
   }
@@ -351,6 +427,17 @@ class _NavigationPageState extends State<NavigationPage>
                 },
               ),
               ListTile(
+                title: Text(
+                  'Probar Premium 7 días',
+                  style: TextStyle(color: Colors.white, fontFamily: 'SFPro'),
+                ),
+                leading: Icon(
+                  CupertinoIcons.star,
+                  color: Colors.yellow,
+                ),
+                onTap: _activatePremiumTrial,
+              ),
+              ListTile(
                 title: const Text(
                   'Cerrar Sesión',
                   style: TextStyle(color: Colors.white, fontFamily: 'SFPro'),
@@ -360,11 +447,11 @@ class _NavigationPageState extends State<NavigationPage>
                   color: skyBluePrimary,
                 ),
                 onTap: () async {
-                  showDialog(
+                  showCupertinoDialog(
                     context: context,
                     barrierDismissible: false,
                     builder: (BuildContext context) {
-                      return AlertDialog(
+                      return CupertinoAlertDialog(
                         title: Text(
                           'Cerrando sesión',
                           style: TextStyle(fontFamily: 'SFPro'),
@@ -372,7 +459,7 @@ class _NavigationPageState extends State<NavigationPage>
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            CircularProgressIndicator(),
+                            CupertinoActivityIndicator(),
                             SizedBox(height: 16),
                             Text(
                               'Por favor, espere...',
@@ -390,7 +477,7 @@ class _NavigationPageState extends State<NavigationPage>
                   Navigator.of(context).pop();
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(
+                    CupertinoPageRoute(
                       builder: (context) => LoginPage(),
                     ),
                   );

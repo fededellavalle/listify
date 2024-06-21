@@ -168,7 +168,6 @@ class _InsideEventState extends State<InsideEvent> {
               ),
               onPressed: () {
                 Navigator.of(context).pop(true);
-                Navigator.pop(context);
               },
             ),
           ],
@@ -432,115 +431,119 @@ class _InsideEventState extends State<InsideEvent> {
                             child: Column(
                               children: [
                                 for (var list in eventListsData)
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      if (list['allowSublists'] == true) {
-                                        print('entro aca');
-                                        Navigator.push(
-                                          context,
-                                          PageRouteBuilder(
-                                            pageBuilder: (context, animation,
-                                                    secondaryAnimation) =>
-                                                SublistsPage(
-                                              list: list,
-                                              eventId: widget.eventId,
-                                              companyId: widget.companyId,
-                                            ),
-                                            transitionsBuilder: (context,
-                                                animation,
-                                                secondaryAnimation,
-                                                child) {
-                                              return SlideTransition(
-                                                position: Tween<Offset>(
-                                                  begin: const Offset(1, 0),
-                                                  end: Offset.zero,
-                                                ).animate(
-                                                  CurvedAnimation(
-                                                    parent: animation,
-                                                    curve:
-                                                        Curves.linearToEaseOut,
-                                                    reverseCurve: Curves.easeIn,
+                                  if (list['listType'] == 'Lista de Asistencia')
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        if (list['allowSublists'] == true) {
+                                          print('entro aca');
+                                          Navigator.push(
+                                            context,
+                                            PageRouteBuilder(
+                                              pageBuilder: (context, animation,
+                                                      secondaryAnimation) =>
+                                                  SublistsPage(
+                                                list: list,
+                                                eventId: widget.eventId,
+                                                companyId: widget.companyId,
+                                              ),
+                                              transitionsBuilder: (context,
+                                                  animation,
+                                                  secondaryAnimation,
+                                                  child) {
+                                                return SlideTransition(
+                                                  position: Tween<Offset>(
+                                                    begin: const Offset(1, 0),
+                                                    end: Offset.zero,
+                                                  ).animate(
+                                                    CurvedAnimation(
+                                                      parent: animation,
+                                                      curve: Curves
+                                                          .linearToEaseOut,
+                                                      reverseCurve:
+                                                          Curves.easeIn,
+                                                    ),
                                                   ),
-                                                ),
-                                                child: child,
-                                              );
-                                            },
-                                            transitionDuration:
-                                                Duration(milliseconds: 500),
-                                          ),
-                                        );
-                                      } else {
-                                        Navigator.push(
-                                          context,
-                                          PageRouteBuilder(
-                                            pageBuilder: (context, animation,
-                                                    secondaryAnimation) =>
-                                                ReadTheList(
-                                              list: list,
-                                              eventId: widget.eventId,
-                                              companyId: widget.companyId,
+                                                  child: child,
+                                                );
+                                              },
+                                              transitionDuration:
+                                                  Duration(milliseconds: 500),
                                             ),
-                                            transitionsBuilder: (context,
-                                                animation,
-                                                secondaryAnimation,
-                                                child) {
-                                              return SlideTransition(
-                                                position: Tween<Offset>(
-                                                  begin: const Offset(1, 0),
-                                                  end: Offset.zero,
-                                                ).animate(
-                                                  CurvedAnimation(
-                                                    parent: animation,
-                                                    curve:
-                                                        Curves.linearToEaseOut,
-                                                    reverseCurve: Curves.easeIn,
+                                          );
+                                        } else {
+                                          Navigator.push(
+                                            context,
+                                            PageRouteBuilder(
+                                              pageBuilder: (context, animation,
+                                                      secondaryAnimation) =>
+                                                  ReadTheList(
+                                                list: list,
+                                                eventId: widget.eventId,
+                                                companyId: widget.companyId,
+                                              ),
+                                              transitionsBuilder: (context,
+                                                  animation,
+                                                  secondaryAnimation,
+                                                  child) {
+                                                return SlideTransition(
+                                                  position: Tween<Offset>(
+                                                    begin: const Offset(1, 0),
+                                                    end: Offset.zero,
+                                                  ).animate(
+                                                    CurvedAnimation(
+                                                      parent: animation,
+                                                      curve: Curves
+                                                          .linearToEaseOut,
+                                                      reverseCurve:
+                                                          Curves.easeIn,
+                                                    ),
                                                   ),
-                                                ),
-                                                child: child,
-                                              );
-                                            },
-                                            transitionDuration:
-                                                Duration(milliseconds: 500),
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    style: buttonCompany,
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Container(
-                                          decoration: BoxDecoration(
-                                            color: Colors.blue.shade300,
-                                            borderRadius: BorderRadius.circular(
-                                                8 * scaleFactor),
-                                          ),
-                                          child: Padding(
-                                            padding: EdgeInsets.all(
-                                                8.0 * scaleFactor),
-                                            child: Icon(
-                                              Icons.person_pin_rounded,
-                                              size: 20 * scaleFactor,
-                                              color: Colors.white,
+                                                  child: child,
+                                                );
+                                              },
+                                              transitionDuration:
+                                                  Duration(milliseconds: 500),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      style: buttonCompany,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.blue.shade300,
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                      8 * scaleFactor),
+                                            ),
+                                            child: Padding(
+                                              padding: EdgeInsets.all(
+                                                  8.0 * scaleFactor),
+                                              child: Icon(
+                                                Icons.person_pin_rounded,
+                                                size: 20 * scaleFactor,
+                                                color: Colors.white,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        SizedBox(width: 15 * scaleFactor),
-                                        Flexible(
-                                          child: Text(
-                                            'Dar asistencia en lista ${list['listName']}',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 18 * scaleFactor,
-                                              fontFamily: 'SFPro',
+                                          SizedBox(width: 15 * scaleFactor),
+                                          Flexible(
+                                            child: Text(
+                                              'Dar asistencia en lista ${list['listName']}',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 18 * scaleFactor,
+                                                fontFamily: 'SFPro',
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
                               ],
                             ),
                           ),
@@ -604,13 +607,15 @@ class _InsideEventState extends State<InsideEvent> {
                         ),
                       ),
                     ),
-                  if (eventData['eventState'] == 'Active')
+                  if (eventData['eventState'] == 'Live' ||
+                      eventData['eventState'] == 'Active')
                     Padding(
                       padding:
                           EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
                       child: Column(
                         children: [
-                          if (_canDeactivateEvent(eventStartTime))
+                          if (_canDeactivateEvent(eventStartTime) ||
+                              eventData['eventState'] == 'Active')
                             ElevatedButton(
                               onPressed: () {
                                 _updateEventState('Desactive');
@@ -814,112 +819,120 @@ class _InsideEventState extends State<InsideEvent> {
                         child: Column(
                           children: [
                             for (var list in eventListsData)
-                              ElevatedButton(
-                                onPressed: () {
-                                  if (list['allowSublists'] == true) {
-                                    print('entro aca');
-                                    Navigator.push(
-                                      context,
-                                      PageRouteBuilder(
-                                        pageBuilder: (context, animation,
-                                                secondaryAnimation) =>
-                                            SublistsPage(
-                                          list: list,
-                                          eventId: widget.eventId,
-                                          companyId: widget.companyId,
-                                        ),
-                                        transitionsBuilder: (context, animation,
-                                            secondaryAnimation, child) {
-                                          return SlideTransition(
-                                            position: Tween<Offset>(
-                                              begin: const Offset(1, 0),
-                                              end: Offset.zero,
-                                            ).animate(
-                                              CurvedAnimation(
-                                                parent: animation,
-                                                curve: Curves.linearToEaseOut,
-                                                reverseCurve: Curves.easeIn,
+                              if (list['listType'] == 'Lista de Asistencia')
+                                ElevatedButton(
+                                  onPressed: () {
+                                    if (list['allowSublists'] == true) {
+                                      print('entro aca');
+                                      Navigator.push(
+                                        context,
+                                        PageRouteBuilder(
+                                          pageBuilder: (context, animation,
+                                                  secondaryAnimation) =>
+                                              SublistsPage(
+                                            list: list,
+                                            eventId: widget.eventId,
+                                            companyId: widget.companyId,
+                                          ),
+                                          transitionsBuilder: (context,
+                                              animation,
+                                              secondaryAnimation,
+                                              child) {
+                                            return SlideTransition(
+                                              position: Tween<Offset>(
+                                                begin: const Offset(1, 0),
+                                                end: Offset.zero,
+                                              ).animate(
+                                                CurvedAnimation(
+                                                  parent: animation,
+                                                  curve: Curves.linearToEaseOut,
+                                                  reverseCurve: Curves.easeIn,
+                                                ),
                                               ),
-                                            ),
-                                            child: child,
-                                          );
-                                        },
-                                        transitionDuration:
-                                            Duration(milliseconds: 500),
-                                      ),
-                                    );
-                                  } else {
-                                    Navigator.push(
-                                      context,
-                                      PageRouteBuilder(
-                                        pageBuilder: (context, animation,
-                                                secondaryAnimation) =>
-                                            ReadTheList(
-                                          list: list,
-                                          eventId: widget.eventId,
-                                          companyId: widget.companyId,
+                                              child: child,
+                                            );
+                                          },
+                                          transitionDuration:
+                                              Duration(milliseconds: 500),
                                         ),
-                                        transitionsBuilder: (context, animation,
-                                            secondaryAnimation, child) {
-                                          return SlideTransition(
-                                            position: Tween<Offset>(
-                                              begin: const Offset(1, 0),
-                                              end: Offset.zero,
-                                            ).animate(
-                                              CurvedAnimation(
-                                                parent: animation,
-                                                curve: Curves.linearToEaseOut,
-                                                reverseCurve: Curves.easeIn,
+                                      );
+                                    } else {
+                                      Navigator.push(
+                                        context,
+                                        PageRouteBuilder(
+                                          pageBuilder: (context, animation,
+                                                  secondaryAnimation) =>
+                                              ReadTheList(
+                                            list: list,
+                                            eventId: widget.eventId,
+                                            companyId: widget.companyId,
+                                          ),
+                                          transitionsBuilder: (context,
+                                              animation,
+                                              secondaryAnimation,
+                                              child) {
+                                            return SlideTransition(
+                                              position: Tween<Offset>(
+                                                begin: const Offset(1, 0),
+                                                end: Offset.zero,
+                                              ).animate(
+                                                CurvedAnimation(
+                                                  parent: animation,
+                                                  curve: Curves.linearToEaseOut,
+                                                  reverseCurve: Curves.easeIn,
+                                                ),
                                               ),
-                                            ),
-                                            child: child,
-                                          );
-                                        },
-                                        transitionDuration:
-                                            Duration(milliseconds: 500),
-                                      ),
-                                    );
-                                  }
-                                },
-                                style: buttonCompany,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue.shade300,
-                                        borderRadius: BorderRadius.circular(
-                                            8 * scaleFactor),
-                                      ),
-                                      child: Padding(
-                                        padding:
-                                            EdgeInsets.all(8.0 * scaleFactor),
-                                        child: Icon(
-                                          Icons.person_pin_rounded,
-                                          size: 20 * scaleFactor,
-                                          color: Colors.white,
+                                              child: child,
+                                            );
+                                          },
+                                          transitionDuration:
+                                              Duration(milliseconds: 500),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  style: buttonCompany,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.shade300,
+                                          borderRadius: BorderRadius.circular(
+                                              8 * scaleFactor),
+                                        ),
+                                        child: Padding(
+                                          padding:
+                                              EdgeInsets.all(8.0 * scaleFactor),
+                                          child: Icon(
+                                            Icons.person_pin_rounded,
+                                            size: 20 * scaleFactor,
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    SizedBox(width: 15 * scaleFactor),
-                                    Flexible(
-                                      child: Text(
-                                        'Dar asistencia en lista ${list['listName']}',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 18 * scaleFactor,
-                                          fontFamily: 'SFPro',
-                                          overflow: TextOverflow.ellipsis,
+                                      SizedBox(width: 15 * scaleFactor),
+                                      Flexible(
+                                        child: Text(
+                                          'Dar asistencia en lista ${list['listName']}',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18 * scaleFactor,
+                                            fontFamily: 'SFPro',
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
                           ],
                         ),
                       ),
                     ),
+                  const SizedBox(
+                    height: 5,
+                  ),
                   if (eventData['eventState'] == 'Live' ||
                       eventData['eventState'] == 'Active')
                     Padding(
@@ -1038,6 +1051,9 @@ class _InsideEventState extends State<InsideEvent> {
                         ),
                       ),
                     ),
+                  const SizedBox(
+                    height: 5,
+                  ),
                   if (eventData['eventState'] == 'Live')
                     Padding(
                       padding:

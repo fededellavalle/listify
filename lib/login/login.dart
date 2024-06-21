@@ -317,10 +317,10 @@ class _LoginFormState extends State<LoginForm>
                                   ? CupertinoActivityIndicator(
                                       color: Colors.white,
                                     )
-                                  : const Text(
+                                  : Text(
                                       'Iniciar Sesión',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 16 * scaleFactor,
                                         color: Colors.black,
                                         fontFamily: 'SFPro',
                                       ),

@@ -181,7 +181,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               _buildTopBar(scaleFactor),
               _buildCalendar(scaleFactor),
-              _buildCategories(scaleFactor),
+              _buildAdvertisementBanner(scaleFactor),
               _buildEventSummary(scaleFactor),
               _buildEventList(scaleFactor),
             ],
@@ -265,6 +265,21 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildAdvertisementBanner(double scaleFactor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12 * scaleFactor),
+        child: Image.asset(
+          'lib/assets/images/logo-exodo.png',
+          height: 100 * scaleFactor,
+          width: double.infinity,
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
   Widget _buildCalendar(double scaleFactor) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -311,44 +326,6 @@ class _HomePageState extends State<HomePage> {
             ),
           );
         }),
-      ),
-    );
-  }
-
-  Widget _buildCategories(double scaleFactor) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildCategoryCard('Concierto', Icons.music_note, scaleFactor),
-          _buildCategoryCard('Deportes', Icons.sports_soccer, scaleFactor),
-          _buildCategoryCard('Educación', Icons.school, scaleFactor),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryCard(String title, IconData icon, double scaleFactor) {
-    return Container(
-      padding: EdgeInsets.all(16 * scaleFactor),
-      decoration: BoxDecoration(
-        color: Colors.blueGrey.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12 * scaleFactor),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: Colors.white, size: 30 * scaleFactor),
-          SizedBox(height: 8 * scaleFactor),
-          Text(
-            title,
-            style: TextStyle(
-              color: Colors.white,
-              fontFamily: 'SFPro',
-              fontSize: 16 * scaleFactor,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -598,7 +575,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 SizedBox(height: 4 * scaleFactor),
                 Text(
-                  'Instagram: $instagram',
+                  'Instagram: @$instagram',
                   style: TextStyle(
                     color: Colors.white70,
                     fontFamily: 'SFPro',

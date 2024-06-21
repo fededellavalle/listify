@@ -301,7 +301,7 @@ class _ReadTheListState extends State<ReadTheList> {
                       );
                     }
 
-                    /*if ((listStartExtraTime == null &&
+                    if ((listStartExtraTime == null &&
                             listStartTime.toDate().isAfter(DateTime.now())) ||
                         (listStartExtraTime != null &&
                             listStartExtraTime
@@ -318,7 +318,7 @@ class _ReadTheListState extends State<ReadTheList> {
                           ),
                         ),
                       );
-                    }*/
+                    }
 
                     var membersList = eventListData['membersList'];
                     if (membersList is List) {

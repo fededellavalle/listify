@@ -5,6 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl_phone_number_input/intl_phone_number_input.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../home/navigation_page.dart';
 
 class EndRegisterGoogle extends StatefulWidget {
@@ -30,6 +32,8 @@ class _EndRegisterGoogleState extends State<EndRegisterGoogle> {
   late DateTime _fechaNacimiento = DateTime.now();
   String _instagramUsername = 'Undefined';
   String? _selectedCountry;
+  String _phoneNumber = '';
+  PhoneNumber _initialPhoneNumber = PhoneNumber(isoCode: 'AR');
   bool _termsAccepted = false;
   bool _privacyAccepted = false;
 
@@ -132,7 +136,7 @@ class _EndRegisterGoogleState extends State<EndRegisterGoogle> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  Row(
+                  Wrap(
                     children: [
                       Text(
                         'Terminemos de crear tu cuenta',
@@ -142,6 +146,7 @@ class _EndRegisterGoogleState extends State<EndRegisterGoogle> {
                           color: Colors.white,
                           fontFamily: 'SFPro',
                         ),
+                        softWrap: true,
                       ),
                     ],
                   ),
@@ -154,6 +159,7 @@ class _EndRegisterGoogleState extends State<EndRegisterGoogle> {
                       color: Colors.grey.shade400,
                       fontFamily: 'SFPro',
                     ),
+                    softWrap: true,
                   ),
                   const SizedBox(height: 10),
                   Column(
@@ -365,6 +371,44 @@ class _EndRegisterGoogleState extends State<EndRegisterGoogle> {
                     ),
                   ),
                   const SizedBox(height: 20),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: Colors.grey,
+                      ),
+                    ),
+                    child: InternationalPhoneNumberInput(
+                      onInputChanged: (PhoneNumber number) {
+                        setState(() {
+                          _phoneNumber = number.phoneNumber!;
+                        });
+                      },
+                      initialValue: _initialPhoneNumber,
+                      selectorConfig: SelectorConfig(
+                        selectorType: PhoneInputSelectorType.DIALOG,
+                      ),
+                      ignoreBlank: false,
+                      autoValidateMode: AutovalidateMode.disabled,
+                      selectorTextStyle: TextStyle(color: Colors.white),
+                      textStyle: TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'SFPro',
+                      ),
+                      inputDecoration: InputDecoration(
+                        labelText: 'Número de Teléfono',
+                        labelStyle: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16 * scaleFactor,
+                          fontFamily: 'SFPro',
+                        ),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   Row(
                     children: [
                       Expanded(
@@ -484,6 +528,9 @@ class _EndRegisterGoogleState extends State<EndRegisterGoogle> {
                                 _isLoading = false;
                               });
                               if (success) {
+                                SharedPreferences prefs =
+                                    await SharedPreferences.getInstance();
+                                prefs.setBool('isLoggedIn', true);
                                 showDialog(
                                   context: context,
                                   builder: (context) {
@@ -688,6 +735,7 @@ class _EndRegisterGoogleState extends State<EndRegisterGoogle> {
         'birthDate': fechaNacimientoTimestamp,
         'instagram': instagram,
         'nationality': _selectedCountry,
+        'phoneNumber': _phoneNumber, // Añadir el número de teléfono aquí
         'trial': false,
         'subscription': 'basic',
       });

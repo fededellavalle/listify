@@ -1,17 +1,17 @@
+import 'dart:io';
 import 'package:app_listas/login/login.dart';
 import 'package:app_listas/login/services/firebase_exceptions.dart';
 import 'package:app_listas/styles/color.dart';
 import 'package:app_listas/styles/inputsDecoration.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/widgets.dart';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:country_picker/country_picker.dart';
+import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 
 class RegisterPage extends StatelessWidget {
   @override
@@ -88,6 +88,9 @@ class _RegisterFormState extends State<RegisterForm>
   late AnimationController _controller;
   late Animation<double> _animation;
 
+  String _phoneNumber = '';
+  PhoneNumber _initialPhoneNumber = PhoneNumber(isoCode: 'AR');
+
   @override
   void initState() {
     super.initState();
@@ -135,7 +138,6 @@ class _RegisterFormState extends State<RegisterForm>
     if (requirements.isEmpty) {
       return 'Todos los requisitos están cumplidos';
     } else {
-      print(requirements);
       return message +
           '\n- ' +
           requirements.join('\n- ') +
@@ -165,14 +167,33 @@ class _RegisterFormState extends State<RegisterForm>
   }
 
   Future<CroppedFile?> _cropImage(File imageFile) async {
-    final imageCropper = ImageCropper();
-    CroppedFile? croppedFile = await imageCropper.cropImage(
+    final croppedFile = await ImageCropper().cropImage(
       sourcePath: imageFile.path,
-      aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
+      compressFormat: ImageCompressFormat.jpg,
       compressQuality: 100,
-      maxWidth: 512,
-      maxHeight: 512,
-      cropStyle: CropStyle.circle,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Recortar imágen',
+          toolbarColor: skyBluePrimary,
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.square,
+          lockAspectRatio: true,
+          aspectRatioPresets: [
+            CropAspectRatioPreset.square,
+          ],
+          cropStyle: CropStyle.circle,
+          showCropGrid: false,
+        ),
+        IOSUiSettings(
+          title: 'Recortar imágen',
+          aspectRatioLockEnabled: true,
+          aspectRatioPickerButtonHidden: true,
+          cropStyle: CropStyle.circle,
+          aspectRatioPresets: [
+            CropAspectRatioPreset.square,
+          ],
+        ),
+      ],
     );
     return croppedFile;
   }
@@ -602,12 +623,59 @@ class _RegisterFormState extends State<RegisterForm>
                       children: <Widget>[
                         Text(
                           '${_fechaNacimiento.day}/${_fechaNacimiento.month}/${_fechaNacimiento.year}',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.white,
                             fontFamily: 'SFPro',
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: skyBluePrimary,
+                    ),
+                  ),
+                  child: InternationalPhoneNumberInput(
+                    onInputChanged: (PhoneNumber number) {
+                      setState(() {
+                        _phoneNumber = number.phoneNumber!;
+                      });
+                    },
+                    initialValue: _initialPhoneNumber,
+                    selectorConfig: const SelectorConfig(
+                      selectorType: PhoneInputSelectorType.DIALOG,
+                      setSelectorButtonAsPrefixIcon: true,
+                    ),
+                    ignoreBlank: false,
+                    autoValidateMode: AutovalidateMode.disabled,
+                    selectorTextStyle: const TextStyle(color: Colors.white),
+                    textStyle: const TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'SFPro',
+                    ),
+                    inputDecoration: InputDecoration(
+                      hintText: 'Número de Teléfono',
+                      hintStyle: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16 * scaleFactor,
+                        fontFamily: 'SFPro',
+                      ),
+                      prefixIcon: Icon(
+                        CupertinoIcons.phone,
+                        color: Colors.grey,
+                        size: 24 * scaleFactor,
+                      ),
+                      border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
                     ),
                   ),
                 ),
@@ -625,14 +693,13 @@ class _RegisterFormState extends State<RegisterForm>
                     );
                   },
                   child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 20, horizontal: 20),
                     decoration: BoxDecoration(
                       color: Colors.black,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: _selectedCountry != null
-                            ? Colors.white
-                            : Colors.grey,
+                        color: skyBluePrimary,
                       ),
                     ),
                     child: Row(
@@ -743,6 +810,7 @@ class _RegisterFormState extends State<RegisterForm>
                   onPressed: _isLoading
                       ? null
                       : () async {
+                          print('Phone: $_phoneNumber');
                           if (_formKey.currentState!.validate() &&
                               _selectedCountry != null &&
                               _termsAccepted &&
@@ -754,7 +822,7 @@ class _RegisterFormState extends State<RegisterForm>
 
                             if (!validateDateOfBirth(_fechaNacimiento)) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
+                                const SnackBar(
                                     content: Text(
                                   'Debe ser mayor de 14 años.',
                                   style: TextStyle(
@@ -777,6 +845,7 @@ class _RegisterFormState extends State<RegisterForm>
                               _image,
                               _instagramUsername,
                               _selectedCountry,
+                              _phoneNumber, // Añade el número de teléfono aquí
                             );
                             bool success = result[0];
                             String errorMessage = result[1];
@@ -964,6 +1033,7 @@ class _RegisterFormState extends State<RegisterForm>
     File? image,
     String instagramUsername,
     String? nationality,
+    String phoneNumber, // Añade el número de teléfono aquí
   ) async {
     try {
       UserCredential userCredential =
@@ -997,6 +1067,7 @@ class _RegisterFormState extends State<RegisterForm>
           'imageUrl': imageUrl,
           'instagram': instagramUsername,
           'nationality': nationality,
+          'phoneNumber': phoneNumber, // Guarda el número de teléfono aquí
           'trial': false,
           'subscription': 'basic',
         });
@@ -1016,6 +1087,7 @@ class _RegisterFormState extends State<RegisterForm>
           'imageUrl': imageUrl,
           'instagram': instagramUsername,
           'nationality': nationality,
+          'phoneNumber': phoneNumber, // Guarda el número de teléfono aquí
           'trial': false,
           'subscription': 'basic',
         });

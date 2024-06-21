@@ -79,18 +79,18 @@ class _AddPeopleToSublistState extends State<AddPeopleToSublist> {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: Text(
+                  title: const Text(
                     'Error',
                     style: TextStyle(fontFamily: 'SFPro'),
                   ),
-                  content: Text(
+                  content: const Text(
                     'No puedes añadir más de 25 personas a una sublista.',
                     style: TextStyle(fontFamily: 'SFPro'),
                   ),
                   actions: <Widget>[
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: Text(
+                      child: const Text(
                         'OK',
                         style: TextStyle(fontFamily: 'SFPro'),
                       ),
@@ -110,18 +110,18 @@ class _AddPeopleToSublistState extends State<AddPeopleToSublist> {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: Text(
+                  title: const Text(
                     'Error',
                     style: TextStyle(fontFamily: 'SFPro'),
                   ),
-                  content: Text(
+                  content: const Text(
                     'El nombre ya está en esta sublista.',
                     style: TextStyle(fontFamily: 'SFPro'),
                   ),
                   actions: <Widget>[
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: Text(
+                      child: const Text(
                         'OK',
                         style: TextStyle(fontFamily: 'SFPro'),
                       ),
@@ -160,7 +160,7 @@ class _AddPeopleToSublistState extends State<AddPeopleToSublist> {
         isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
             'Debe ingresar un nombre.',
             style: TextStyle(
@@ -179,19 +179,19 @@ class _AddPeopleToSublistState extends State<AddPeopleToSublist> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text(
+            title: const Text(
               'Confirmar Eliminación',
               style: TextStyle(fontFamily: 'SFPro'),
             ),
             content: Text(
               '¿Estás seguro de que quieres eliminar a $name de la sublista?',
-              style: TextStyle(fontFamily: 'SFPro'),
+              style: const TextStyle(fontFamily: 'SFPro'),
             ),
             actions: <Widget>[
               TextButton(
                 onPressed: () =>
                     Navigator.of(context).pop(false), // No eliminar
-                child: Text(
+                child: const Text(
                   'Cancelar',
                   style: TextStyle(fontFamily: 'SFPro'),
                 ),
@@ -199,7 +199,7 @@ class _AddPeopleToSublistState extends State<AddPeopleToSublist> {
               TextButton(
                 onPressed: () =>
                     Navigator.of(context).pop(true), // Confirmar eliminar
-                child: Text(
+                child: const Text(
                   'Eliminar',
                   style: TextStyle(fontFamily: 'SFPro'),
                 ),
@@ -238,7 +238,7 @@ class _AddPeopleToSublistState extends State<AddPeopleToSublist> {
 
   @override
   Widget build(BuildContext context) {
-    double baseWidth = 375.0; // Base design width
+    double baseWidth = 375.0;
     double screenWidth = MediaQuery.of(context).size.width;
     double scaleFactor = screenWidth / baseWidth;
 
@@ -254,11 +254,11 @@ class _AddPeopleToSublistState extends State<AddPeopleToSublist> {
             fontSize: 18 * scaleFactor,
           ),
         ),
-        iconTheme: IconThemeData(
+        iconTheme: const IconThemeData(
           color: Colors.white,
         ),
         leading: IconButton(
-          icon: Icon(
+          icon: const Icon(
             CupertinoIcons.left_chevron,
             color: Colors.white,
           ),

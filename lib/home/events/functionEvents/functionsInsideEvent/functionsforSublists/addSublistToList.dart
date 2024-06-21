@@ -153,7 +153,7 @@ class _AddSublistsToListState extends State<AddSublistsToList> {
         await listDoc.update({
           'sublists.$userId.$sublistName': {
             'members': [
-              {'name': sublistName, 'assisted': true}
+              {'name': sublistName, 'assisted': false}
             ]
           },
         });
