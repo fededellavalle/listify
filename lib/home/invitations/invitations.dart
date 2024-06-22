@@ -241,8 +241,11 @@ class _InvitationsPageState extends State<InvitationsPage> {
                           as Map<String, dynamic>;
                       String sender = invitation['sender'] ??
                           'Sin remitente'; // Email del remitente de la invitación
-                      String category = invitation['category'] ??
-                          'Sin mensaje'; // Categoría de la invitación
+                      String category = invitation['category'] ?? '';
+
+                      String position = invitation['position'] ?? '';
+
+                      String role = category.isNotEmpty ? category : position;
                       String companyId =
                           invitation['company']; // UID de la compañía
 
@@ -357,7 +360,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
                                   ],
                                 ),
                                 title: Text(
-                                  '$senderName te invita a unirte a $companyName (@$companyId) como $category',
+                                  '$senderName te invita a unirte a $companyName (@$companyId) como $role',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontFamily: 'SFPro',
@@ -378,8 +381,13 @@ class _InvitationsPageState extends State<InvitationsPage> {
                                           onPressed: _isLoading
                                               ? null
                                               : () async {
-                                                  await acceptInvitation(
-                                                      companyId, category);
+                                                  if (category.isNotEmpty) {
+                                                    await acceptInvitation(
+                                                        companyId, category);
+                                                  } else {
+                                                    await acceptInvitation(
+                                                        companyId, category);
+                                                  }
                                                 },
                                           style: ButtonStyle(
                                             padding: MaterialStateProperty.all<

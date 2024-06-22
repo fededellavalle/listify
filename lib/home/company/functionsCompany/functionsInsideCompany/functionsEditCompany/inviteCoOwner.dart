@@ -1,4 +1,6 @@
 import 'package:app_listas/styles/color.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -111,7 +113,7 @@ class _InviteCoOwnerState extends State<InviteCoOwner> {
                             setState(() {
                               isLoading = true;
                             });
-
+                            await handleInvitation(scaleFactor);
                             setState(() {
                               isLoading = false;
                             });
@@ -157,5 +159,194 @@ class _InviteCoOwnerState extends State<InviteCoOwner> {
         ),
       ),
     );
+  }
+
+  Future<void> sendInvitation(String inviteEmail, User? user) async {
+    // Obtener una referencia a la colección de invitaciones para el destinatario
+    CollectionReference invitationsCollection =
+        FirebaseFirestore.instance.collection('invitations');
+
+    // Guardar la invitación en la subcolección "ReceivedInvitations" dentro del documento del destinatario
+    DocumentReference recipientDocRef = invitationsCollection.doc(inviteEmail);
+    CollectionReference receivedInvitationsCollection =
+        recipientDocRef.collection('receivedInvitations');
+
+    await receivedInvitationsCollection.add({
+      'sender': user?.email,
+      'recipient': inviteEmail,
+      'company': widget.companyData['username'],
+      'position': 'Co-Owner',
+    });
+
+    print('Invitacion enviada a $inviteEmail');
+  }
+
+  Future<void> handleInvitation(double scaleFactor) async {
+    String inviteEmail = userController.text.trim();
+
+    DocumentReference ownerRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.companyData['ownerUid']);
+    DocumentSnapshot ownerSnapshot = await ownerRef.get();
+    Map<String, dynamic>? ownerData =
+        ownerSnapshot.data() as Map<String, dynamic>?;
+
+    String ownerEmail = ownerData?['email'] ?? 'No se encontro email';
+
+    if (inviteEmail.isNotEmpty) {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user?.email != inviteEmail) {
+        if (ownerEmail != inviteEmail) {
+          showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: Text(
+                  'Error',
+                  style: TextStyle(
+                    fontFamily: 'SFPro',
+                    fontSize: 18 * scaleFactor,
+                  ),
+                ),
+                content: Text(
+                  'El email ya fue invitado anteriormente.',
+                  style: TextStyle(
+                    fontFamily: 'SFPro',
+                    fontSize: 16 * scaleFactor,
+                  ),
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                      'Ok',
+                      style: TextStyle(
+                        fontFamily: 'SFPro',
+                        fontSize: 14 * scaleFactor,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        } else {
+          await sendInvitation(inviteEmail, user);
+
+          userController.clear();
+
+          showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: Text(
+                  'Invitación Enviada',
+                  style: TextStyle(
+                    fontFamily: 'SFPro',
+                    fontSize: 18 * scaleFactor,
+                  ),
+                ),
+                content: Text(
+                  'La invitación fue enviada exitosamente.',
+                  style: TextStyle(
+                    fontFamily: 'SFPro',
+                    fontSize: 16 * scaleFactor,
+                  ),
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                      'OK',
+                      style: TextStyle(
+                        fontFamily: 'SFPro',
+                        fontSize: 14 * scaleFactor,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      } else {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text(
+                'Error',
+                style: TextStyle(
+                  fontFamily: 'SFPro',
+                  fontSize: 18 * scaleFactor,
+                ),
+              ),
+              content: Text(
+                'No puedes invitar al owner',
+                style: TextStyle(
+                  fontFamily: 'SFPro',
+                  fontSize: 16 * scaleFactor,
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(
+                    'Ok',
+                    style: TextStyle(
+                      fontFamily: 'SFPro',
+                      fontSize: 14 * scaleFactor,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(
+              'Error',
+              style: TextStyle(
+                fontFamily: 'SFPro',
+                fontSize: 18 * scaleFactor,
+              ),
+            ),
+            content: Text(
+              'Por favor, ingrese el nombre de la categoría y el email del usuario a invitar.',
+              style: TextStyle(
+                fontFamily: 'SFPro',
+                fontSize: 16 * scaleFactor,
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text(
+                  'Ok',
+                  style: TextStyle(
+                    fontFamily: 'SFPro',
+                    fontSize: 14 * scaleFactor,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 }

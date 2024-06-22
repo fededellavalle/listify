@@ -200,7 +200,7 @@ class _EditCompanyPageState extends State<EditCompanyPage> {
                     _buildCompanyInfo('Owner UID',
                         widget.companyData['ownerUid'], scaleFactor),
                     _buildCoOwnerField(
-                        widget.companyData['coOwner'], scaleFactor),
+                        widget.companyData['co-ownerUid'], scaleFactor),
                     SizedBox(height: 16 * scaleFactor),
                     CupertinoButton(
                       onPressed: () {

@@ -293,7 +293,20 @@ class _CompanyPageState extends State<CompanyPage>
           .snapshots()
           .map((snapshot) => snapshot.docs
               .map((doc) => doc.data() as Map<String, dynamic>)
-              .toList());
+              .toList())
+          .asyncExpand((ownerCompanies) {
+        return FirebaseFirestore.instance
+            .collection('companies')
+            .where('co-ownerUid', isEqualTo: uid)
+            .snapshots()
+            .map((snapshot) => snapshot.docs
+                .map((doc) => doc.data() as Map<String, dynamic>)
+                .toList())
+            .map((coOwnerCompanies) {
+          ownerCompanies.addAll(coOwnerCompanies);
+          return ownerCompanies;
+        });
+      });
     } else {
       return Stream.empty();
     }
