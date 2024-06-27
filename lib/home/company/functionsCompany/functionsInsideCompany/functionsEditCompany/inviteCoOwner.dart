@@ -196,7 +196,7 @@ class _InviteCoOwnerState extends State<InviteCoOwner> {
     if (inviteEmail.isNotEmpty) {
       User? user = FirebaseAuth.instance.currentUser;
       if (user?.email != inviteEmail) {
-        if (ownerEmail != inviteEmail) {
+        if (ownerEmail == inviteEmail) {
           showDialog(
             context: context,
             builder: (context) {
@@ -209,7 +209,7 @@ class _InviteCoOwnerState extends State<InviteCoOwner> {
                   ),
                 ),
                 content: Text(
-                  'El email ya fue invitado anteriormente.',
+                  'No puedes invitarte a ti mismo.',
                   style: TextStyle(
                     fontFamily: 'SFPro',
                     fontSize: 16 * scaleFactor,

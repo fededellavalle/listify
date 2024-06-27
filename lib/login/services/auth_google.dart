@@ -81,7 +81,6 @@ class AuthService {
             .collection('users')
             .doc(userCredential.user!.uid)
             .set({
-          'name': userCredential.user?.displayName,
           'email': userCredential.user?.email,
           'imageUrl': userCredential.user?.photoURL,
         });

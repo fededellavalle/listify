@@ -23,38 +23,40 @@ class _InvitationsPageState extends State<InvitationsPage> {
     currentUser = FirebaseAuth.instance.currentUser;
   }
 
-  Future<void> acceptInvitation(String companyUser, String category) async {
+  Future<void> acceptInvitation(
+      String companyUser, String category, String position) async {
     setState(() {
       _isLoading = true;
-    });
-    setState(() {
       _isLoadingAccept = true;
     });
 
     try {
-      // Agregar la relación de compañía al usuario actual
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser!.uid) // UID del usuario
-          .update({
-        'companyRelationship': FieldValue.arrayUnion([
-          {'companyUsername': companyUser, 'category': category}
-        ])
-      });
+      if (position == 'Co-Owner') {
+        await addCoOwnerToCompany(companyUser);
+      } else {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser!.uid) // UID del usuario
+            .update({
+          'companyRelationship': FieldValue.arrayUnion([
+            {'companyUsername': companyUser, 'category': category}
+          ])
+        });
 
-      await FirebaseFirestore.instance
-          .collection('companies')
-          .doc(companyUser)
-          .collection('personalCategories')
-          .doc(category)
-          .update({
-        'invitations': FieldValue.arrayRemove([currentUser!.email]),
-        'members': FieldValue.arrayUnion([
-          {
-            'userUid': currentUser!.uid,
-          }
-        ])
-      });
+        await FirebaseFirestore.instance
+            .collection('companies')
+            .doc(companyUser)
+            .collection('personalCategories')
+            .doc(category)
+            .update({
+          'invitations': FieldValue.arrayRemove([currentUser!.email]),
+          'members': FieldValue.arrayUnion([
+            {
+              'userUid': currentUser!.uid,
+            }
+          ])
+        });
+      }
 
       await FirebaseFirestore.instance
           .collection('invitations')
@@ -68,7 +70,6 @@ class _InvitationsPageState extends State<InvitationsPage> {
         });
       });
 
-      // Notificar al usuario que la invitación ha sido aceptada
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Invitación aceptada'),
@@ -86,10 +87,22 @@ class _InvitationsPageState extends State<InvitationsPage> {
     } finally {
       setState(() {
         _isLoadingAccept = false;
-      });
-      setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> addCoOwnerToCompany(String companyUsername) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('companies')
+          .doc(companyUsername)
+          .update({
+        'co-ownerUid': currentUser!.uid,
+      });
+    } catch (e) {
+      print('Error al agregar co-owner: $e');
+      throw e;
     }
   }
 
@@ -381,13 +394,10 @@ class _InvitationsPageState extends State<InvitationsPage> {
                                           onPressed: _isLoading
                                               ? null
                                               : () async {
-                                                  if (category.isNotEmpty) {
-                                                    await acceptInvitation(
-                                                        companyId, category);
-                                                  } else {
-                                                    await acceptInvitation(
-                                                        companyId, category);
-                                                  }
+                                                  await acceptInvitation(
+                                                      companyId,
+                                                      category,
+                                                      position);
                                                 },
                                           style: ButtonStyle(
                                             padding: MaterialStateProperty.all<

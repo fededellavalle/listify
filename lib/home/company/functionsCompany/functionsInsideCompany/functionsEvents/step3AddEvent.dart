@@ -212,7 +212,7 @@ class _Step3AddEventState extends State<Step3AddEvent> {
                           setState(() {
                             _isLoading = true;
                           });
-                          createEvent(context);
+                          validateAndCreateEvent(context);
                         },
                   style: buttonPrimary,
                   child: Row(
@@ -247,6 +247,31 @@ class _Step3AddEventState extends State<Step3AddEvent> {
     );
   }
 
+  void validateAndCreateEvent(BuildContext context) {
+    DateTime currentTime = DateTime.now();
+    DateTime startTime = widget.startDateTime ?? currentTime;
+
+    if (startTime.isBefore(currentTime.add(Duration(hours: 6)))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'La fecha de inicio debe ser al menos 6 horas después de la hora actual.',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+              fontSize: 14,
+            ),
+          ),
+        ),
+      );
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    createEvent(context);
+  }
+
   Future<void> createEvent(BuildContext context) async {
     String uuid = Uuid().v4();
 
@@ -265,78 +290,62 @@ class _Step3AddEventState extends State<Step3AddEvent> {
           .collection('myEvents')
           .doc(uuid)
           .set({
-        'eventName': widget.name,
-        'eventTicketValue': widget.ticketValue,
-        'eventStartTime': widget.startDateTime,
-        'eventEndTime': widget.endDateTime,
-        'eventImage': imageUrl,
-        'eventState': 'Desactive',
+        'name': widget.name,
+        'ticketValue': widget.ticketValue,
+        'startDateTime': widget.startDateTime,
+        'endDateTime': widget.endDateTime,
+        'lists': widget.lists
+            .map((list) => {
+                  'name': list.name,
+                  'type': list.type,
+                  'selectedStartDate': list.selectedStartDate,
+                  'selectedEndDate': list.selectedEndDate,
+                  'addExtraTime': list.addExtraTime,
+                  'selectedStartExtraDate': list.selectedStartExtraDate,
+                  'selectedEndExtraDate': list.selectedEndExtraDate,
+                })
+            .toList(),
+        'image': imageUrl,
       });
 
-      // Colección de listas de eventos
-      CollectionReference eventListsCollection = FirebaseFirestore.instance
-          .collection('companies')
-          .doc(widget.companyData['companyId'])
-          .collection('myEvents')
-          .doc(uuid)
-          .collection('eventLists');
-
-      // Agregar cada lista como un documento en la colección de listas de eventos
-      for (var listItem in widget.lists) {
-        await eventListsCollection.doc(listItem.name).set({
-          'listName': listItem.name,
-          'listType': listItem.type,
-          'listStartTime': listItem.selectedStartDate,
-          'listEndTime': listItem.selectedEndDate,
-          'ticketPrice': listItem.ticketPrice,
-          'membersList': [],
-          'allowSublists': listItem.allowSublists,
+      // Guardar la plantilla si se seleccionó la opción
+      if (_guardarPlantilla) {
+        await FirebaseFirestore.instance
+            .collection('companies')
+            .doc(widget.companyData['companyId'])
+            .collection('eventTemplates')
+            .doc(uuid)
+            .set({
+          'name': widget.name,
+          'ticketValue': widget.ticketValue,
+          'startDateTime': widget.startDateTime,
+          'endDateTime': widget.endDateTime,
+          'lists': widget.lists
+              .map((list) => {
+                    'name': list.name,
+                    'type': list.type,
+                    'selectedStartDate': list.selectedStartDate,
+                    'selectedEndDate': list.selectedEndDate,
+                    'addExtraTime': list.addExtraTime,
+                    'selectedStartExtraDate': list.selectedStartExtraDate,
+                    'selectedEndExtraDate': list.selectedEndExtraDate,
+                  })
+              .toList(),
+          'image': imageUrl,
         });
       }
 
-      if (_guardarPlantilla) {
-        await saveTemplate();
-      }
-
-      // Mostrar el AlertDialog
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          double scaleFactor = MediaQuery.of(context).size.width / 375.0;
-          return AlertDialog(
-            title: Text(
-              'Evento Creado',
-              style: TextStyle(
-                fontFamily: 'SFPro',
-                fontSize: 18 * scaleFactor,
-              ),
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Evento creado exitosamente.',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+              fontSize: 14,
             ),
-            content: Text(
-              'El evento ${widget.name} se ha creado correctamente.',
-              style: TextStyle(
-                fontFamily: 'SFPro',
-                fontSize: 16 * scaleFactor,
-              ),
-            ),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pop();
-                },
-                child: Text(
-                  'Aceptar',
-                  style: TextStyle(
-                    fontFamily: 'SFPro',
-                    fontSize: 14 * scaleFactor,
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+          ),
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -355,68 +364,5 @@ class _Step3AddEventState extends State<Step3AddEvent> {
         _isLoading = false;
       });
     }
-  }
-
-  Future<void> saveTemplate() async {
-    // Verificar el número de plantillas existentes
-    QuerySnapshot templateSnapshot = await FirebaseFirestore.instance
-        .collection('companies')
-        .doc(widget.companyData['companyId'])
-        .collection('eventTemplates')
-        .get();
-
-    if (templateSnapshot.size >= 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Ya tienes 3 plantillas guardadas. Elimina una para poder guardar una nueva.',
-            style: TextStyle(
-              fontFamily: 'SFPro',
-              fontSize: 14,
-            ),
-          ),
-        ),
-      );
-      return;
-    }
-
-    // Guardar la plantilla
-    await FirebaseFirestore.instance
-        .collection('companies')
-        .doc(widget.companyData['companyId'])
-        .collection('eventTemplates')
-        .add({
-      'eventName': widget.name,
-      'eventTicketValue': widget.ticketValue,
-      'eventStartTime': widget.startDateTime,
-      'eventEndTime': widget.endDateTime,
-      'eventImage': widget.image != null ? widget.image!.path : null,
-      'lists': widget.lists.map((listItem) {
-        return {
-          'listName': listItem.name,
-          'listType': listItem.type,
-          'listStartTime': listItem.selectedStartDate,
-          'listEndTime': listItem.selectedEndDate,
-          'ticketPrice': listItem.ticketPrice,
-          'addExtraTime': listItem.addExtraTime,
-          'selectedStartExtraDate': listItem.selectedStartExtraDate,
-          'selectedEndExtraDate': listItem.selectedEndExtraDate,
-          'ticketExtraPrice': listItem.ticketExtraPrice,
-          'allowSublists': listItem.allowSublists,
-        };
-      }).toList(),
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Plantilla guardada exitosamente.',
-          style: TextStyle(
-            fontFamily: 'SFPro',
-            fontSize: 14,
-          ),
-        ),
-      ),
-    );
   }
 }

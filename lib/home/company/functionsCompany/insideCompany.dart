@@ -56,28 +56,35 @@ class _CompanyWidgetState extends State<CompanyWidget> {
             CupertinoActionSheetAction(
               onPressed: () async {
                 try {
-                  await FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(uid)
-                      .update({
-                    'companyRelationship': FieldValue.arrayRemove([
-                      {
-                        'category': widget.companyCategory,
-                        'companyUsername': companyId,
-                      }
-                    ]),
-                  });
+                  if (widget.companyData['co-ownerUid'] == uid) {
+                    await FirebaseFirestore.instance
+                        .collection('companies')
+                        .doc(widget.companyData['username'])
+                        .update({'co-ownerUid': null});
+                  } else {
+                    await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(uid)
+                        .update({
+                      'companyRelationship': FieldValue.arrayRemove([
+                        {
+                          'category': widget.companyCategory,
+                          'companyUsername': companyId,
+                        }
+                      ]),
+                    });
 
-                  await FirebaseFirestore.instance
-                      .collection('companies')
-                      .doc(companyId)
-                      .collection('personalCategories')
-                      .doc(widget.companyCategory)
-                      .update({
-                    'members': FieldValue.arrayRemove([
-                      {'userUid': uid}
-                    ]),
-                  });
+                    await FirebaseFirestore.instance
+                        .collection('companies')
+                        .doc(companyId)
+                        .collection('personalCategories')
+                        .doc(widget.companyCategory)
+                        .update({
+                      'members': FieldValue.arrayRemove([
+                        {'userUid': uid}
+                      ]),
+                    });
+                  }
 
                   Navigator.of(context).pop(); // Cerrar el diálogo
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -366,131 +373,133 @@ class _CompanyWidgetState extends State<CompanyWidget> {
                       ),
                     ),
                     SizedBox(height: 20 * scaleFactor),
-                    Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade700.withOpacity(0.4),
-                          borderRadius: BorderRadius.circular(10 * scaleFactor),
-                        ),
-                        child: Column(
-                          children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  PageRouteBuilder(
-                                    pageBuilder: (context, animation,
-                                            secondaryAnimation) =>
-                                        EditCompanyPage(
-                                      companyData: widget.companyData,
+                    if (widget.companyData['ownerUid'] == uid)
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 10.0 * scaleFactor),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade700.withOpacity(0.4),
+                            borderRadius:
+                                BorderRadius.circular(10 * scaleFactor),
+                          ),
+                          child: Column(
+                            children: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    PageRouteBuilder(
+                                      pageBuilder: (context, animation,
+                                              secondaryAnimation) =>
+                                          EditCompanyPage(
+                                        companyData: widget.companyData,
+                                      ),
+                                      transitionsBuilder: (context, animation,
+                                          secondaryAnimation, child) {
+                                        return SlideTransition(
+                                          position: Tween<Offset>(
+                                            begin: const Offset(1, 0),
+                                            end: Offset.zero,
+                                          ).animate(animation),
+                                          child: child,
+                                        );
+                                      },
                                     ),
-                                    transitionsBuilder: (context, animation,
-                                        secondaryAnimation, child) {
-                                      return SlideTransition(
-                                        position: Tween<Offset>(
-                                          begin: const Offset(1, 0),
-                                          end: Offset.zero,
-                                        ).animate(animation),
-                                        child: child,
-                                      );
-                                    },
-                                  ),
-                                );
-                              },
-                              style: buttonCompany,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.yellow,
-                                      borderRadius: BorderRadius.circular(
-                                          8 * scaleFactor),
-                                    ),
-                                    child: Padding(
-                                      padding:
-                                          EdgeInsets.all(8.0 * scaleFactor),
-                                      child: Icon(
-                                        CupertinoIcons.pen,
-                                        size: 20 * scaleFactor,
-                                        color: Colors.black,
+                                  );
+                                },
+                                style: buttonCompany,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.yellow,
+                                        borderRadius: BorderRadius.circular(
+                                            8 * scaleFactor),
+                                      ),
+                                      child: Padding(
+                                        padding:
+                                            EdgeInsets.all(8.0 * scaleFactor),
+                                        child: Icon(
+                                          CupertinoIcons.pen,
+                                          size: 20 * scaleFactor,
+                                          color: Colors.black,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  SizedBox(
-                                    width: 15 * scaleFactor,
-                                  ),
-                                  Text(
-                                    'Editar Empresa',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18 * scaleFactor,
-                                      fontFamily: 'SFPro',
+                                    SizedBox(
+                                      width: 15 * scaleFactor,
                                     ),
-                                  ),
-                                  const Spacer(),
-                                  Icon(
-                                    UniconsLine.angle_right_b,
-                                    size: 20 * scaleFactor,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            //Eliminar compania
-                            ElevatedButton(
-                              onPressed: () {},
-                              style: buttonCompany,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.red,
-                                      borderRadius: BorderRadius.circular(
-                                          8 * scaleFactor),
-                                    ),
-                                    child: Padding(
-                                      padding:
-                                          EdgeInsets.all(8.0 * scaleFactor),
-                                      child: Icon(
-                                        UniconsLine.trash,
-                                        size: 20 * scaleFactor,
+                                    Text(
+                                      'Editar Empresa',
+                                      style: TextStyle(
                                         color: Colors.white,
+                                        fontSize: 18 * scaleFactor,
+                                        fontFamily: 'SFPro',
                                       ),
                                     ),
-                                  ),
-                                  SizedBox(
-                                    width: 15 * scaleFactor,
-                                  ),
-                                  Text(
-                                    'Eliminar Empresa',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18 * scaleFactor,
-                                      fontFamily: 'SFPro',
+                                    const Spacer(),
+                                    Icon(
+                                      UniconsLine.angle_right_b,
+                                      size: 20 * scaleFactor,
+                                      color: Colors.grey.shade600,
                                     ),
-                                  ),
-                                  Spacer(),
-                                  Icon(
-                                    UniconsLine.angle_right_b,
-                                    size: 20 * scaleFactor,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                              //Eliminar compania
+                              ElevatedButton(
+                                onPressed: () {},
+                                style: buttonCompany,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.red,
+                                        borderRadius: BorderRadius.circular(
+                                            8 * scaleFactor),
+                                      ),
+                                      child: Padding(
+                                        padding:
+                                            EdgeInsets.all(8.0 * scaleFactor),
+                                        child: Icon(
+                                          UniconsLine.trash,
+                                          size: 20 * scaleFactor,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 15 * scaleFactor,
+                                    ),
+                                    Text(
+                                      'Eliminar Empresa',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18 * scaleFactor,
+                                        fontFamily: 'SFPro',
+                                      ),
+                                    ),
+                                    Spacer(),
+                                    Icon(
+                                      UniconsLine.angle_right_b,
+                                      size: 20 * scaleFactor,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
                     SizedBox(height: 20 * scaleFactor),
                   ],
                 ),
 
-              if (!widget.isOwner)
+              if (!widget.isOwner || uid == widget.companyData['co-ownerUid'])
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
                   child: Container(

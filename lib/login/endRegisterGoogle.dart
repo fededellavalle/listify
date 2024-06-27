@@ -39,8 +39,18 @@ class _EndRegisterGoogleState extends State<EndRegisterGoogle> {
 
   bool _isLoading = false;
 
-  TextEditingController _controller = TextEditingController();
+  TextEditingController _controllerName = TextEditingController();
+  TextEditingController _controllerLastname = TextEditingController();
   TextEditingController _controllerEmail = TextEditingController();
+
+  final _nameValidator = RegExp(r'^[a-zA-Z ]+$');
+  final _surnameValidator = RegExp(r'^[a-zA-Z ]+$');
+
+  @override
+  void initState() {
+    super.initState();
+    _controllerName.text = widget.displayName ?? '';
+  }
 
   void _showTermsAndConditions() {
     showDialog(
@@ -123,7 +133,6 @@ class _EndRegisterGoogleState extends State<EndRegisterGoogle> {
     double screenWidth = MediaQuery.of(context).size.width;
     double scaleFactor = screenWidth / baseWidth;
 
-    _controller.text = widget.displayName ?? '';
     _controllerEmail.text = widget.email ?? '';
     return Scaffold(
       backgroundColor: Colors.black,
@@ -176,8 +185,7 @@ class _EndRegisterGoogleState extends State<EndRegisterGoogle> {
                   ),
                   const SizedBox(height: 20),
                   TextFormField(
-                    controller: _controller,
-                    readOnly: true,
+                    controller: _controllerName,
                     decoration: InputDecoration(
                       labelText: 'Nombre',
                       labelStyle: TextStyle(
@@ -202,11 +210,64 @@ class _EndRegisterGoogleState extends State<EndRegisterGoogle> {
                           color: skyBlueSecondary,
                         ),
                       ),
+                      counterText: '',
                     ),
+                    maxLength: 15,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16 * scaleFactor,
                     ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, ingrese su Nombre';
+                      } else if (!_nameValidator.hasMatch(value)) {
+                        return 'Ingrese solo letras y espacios';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _controllerLastname,
+                    decoration: InputDecoration(
+                      labelText: 'Apellido',
+                      labelStyle: TextStyle(
+                        color: white,
+                        fontSize: 16 * scaleFactor,
+                        fontFamily: 'SFPro',
+                      ),
+                      prefixIcon:
+                          Icon(CupertinoIcons.person, color: Colors.grey),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                          color: skyBluePrimary,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                          color: skyBlueSecondary,
+                        ),
+                      ),
+                      counterText: '',
+                    ),
+                    maxLength: 15,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16 * scaleFactor,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, ingrese su Apellido';
+                      } else if (!_surnameValidator.hasMatch(value)) {
+                        return 'Ingrese solo letras y espacios';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 20),
                   TextFormField(
@@ -266,7 +327,9 @@ class _EndRegisterGoogleState extends State<EndRegisterGoogle> {
                           color: skyBlueSecondary,
                         ),
                       ),
+                      counterText: '',
                     ),
+                    maxLength: 30,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16 * scaleFactor,
@@ -732,10 +795,12 @@ class _EndRegisterGoogleState extends State<EndRegisterGoogle> {
           .collection('users')
           .doc(widget.uid)
           .update({
+        'name': _controllerName.text.trim(),
+        'lastname': _controllerLastname.text.trim(),
         'birthDate': fechaNacimientoTimestamp,
         'instagram': instagram,
         'nationality': _selectedCountry,
-        'phoneNumber': _phoneNumber, // Añadir el número de teléfono aquí
+        'phoneNumber': _phoneNumber,
         'trial': false,
         'subscription': 'basic',
       });

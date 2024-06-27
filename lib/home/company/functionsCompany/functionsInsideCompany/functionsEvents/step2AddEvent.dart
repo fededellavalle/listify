@@ -844,6 +844,25 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                                 _lists[index]
                                                         .selectedStartDate =
                                                     newValue;
+                                                if (_lists[index]
+                                                            .selectedEndDate !=
+                                                        null &&
+                                                    _lists[index]
+                                                        .selectedEndDate!
+                                                        .isBefore(newValue)) {
+                                                  _lists[index]
+                                                          .selectedEndDate =
+                                                      _availableDates.last;
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                          'La hora de fin no puede ser anterior a la hora de inicio.'),
+                                                      backgroundColor:
+                                                          Colors.red,
+                                                    ),
+                                                  );
+                                                }
                                               });
                                             }
                                           },
@@ -892,10 +911,29 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                           }).toList(),
                                           onChanged: (DateTime? newValue) {
                                             if (newValue != null) {
-                                              setState(() {
-                                                _lists[index].selectedEndDate =
-                                                    newValue;
-                                              });
+                                              if (_lists[index]
+                                                          .selectedStartDate !=
+                                                      null &&
+                                                  newValue.isBefore(_lists[
+                                                          index]
+                                                      .selectedStartDate!)) {
+                                                // Mostrar un mensaje de error usando un SnackBar, Dialog, etc.
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                        'La hora de fin no puede ser anterior a la hora de inicio.'),
+                                                    backgroundColor: Colors.red,
+                                                  ),
+                                                );
+                                                // No actualizar el valor de selectedEndDate
+                                              } else {
+                                                setState(() {
+                                                  _lists[index]
+                                                          .selectedEndDate =
+                                                      newValue;
+                                                });
+                                              }
                                             }
                                           },
                                           dropdownColor: Colors.grey.shade800,
@@ -1024,19 +1062,40 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                                         ),
                                                       );
                                                     }).toList(),
-                                                    onChanged: _lists[index]
-                                                            .addExtraTime
-                                                        ? (DateTime? newValue) {
-                                                            if (newValue !=
-                                                                null) {
-                                                              setState(() {
-                                                                _lists[index]
-                                                                        .selectedStartExtraDate =
-                                                                    newValue;
-                                                              });
-                                                            }
-                                                          }
-                                                        : null,
+                                                    onChanged:
+                                                        _lists[index]
+                                                                .addExtraTime
+                                                            ? (DateTime?
+                                                                newValue) {
+                                                                if (newValue !=
+                                                                    null) {
+                                                                  setState(() {
+                                                                    _lists[index]
+                                                                            .selectedStartExtraDate =
+                                                                        newValue;
+                                                                    if (_lists[index]
+                                                                            .selectedEndExtraDate
+                                                                            ?.isBefore(newValue) ==
+                                                                        true) {
+                                                                      _lists[index]
+                                                                              .selectedEndExtraDate =
+                                                                          _availableDates
+                                                                              .last;
+                                                                      ScaffoldMessenger.of(
+                                                                              context)
+                                                                          .showSnackBar(
+                                                                        SnackBar(
+                                                                          content:
+                                                                              Text('La hora de fin no puede ser anterior a la hora de inicio.'),
+                                                                          backgroundColor:
+                                                                              Colors.red,
+                                                                        ),
+                                                                      );
+                                                                    }
+                                                                  });
+                                                                }
+                                                              }
+                                                            : null,
                                                     dropdownColor:
                                                         Colors.grey.shade800,
                                                     decoration: InputDecoration(
@@ -1090,19 +1149,41 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                                         ),
                                                       );
                                                     }).toList(),
-                                                    onChanged: _lists[index]
-                                                            .addExtraTime
-                                                        ? (DateTime? newValue) {
-                                                            if (newValue !=
-                                                                null) {
-                                                              setState(() {
-                                                                _lists[index]
-                                                                        .selectedEndExtraDate =
-                                                                    newValue;
-                                                              });
-                                                            }
-                                                          }
-                                                        : null,
+                                                    onChanged:
+                                                        _lists[index]
+                                                                .addExtraTime
+                                                            ? (DateTime?
+                                                                newValue) {
+                                                                if (newValue !=
+                                                                    null) {
+                                                                  setState(() {
+                                                                    _lists[index]
+                                                                            .selectedStartExtraDate =
+                                                                        newValue;
+                                                                    // Verifica si la hora de fin extra es anterior a la hora de inicio extra
+                                                                    if (_lists[index]
+                                                                            .selectedEndExtraDate
+                                                                            ?.isBefore(newValue) ==
+                                                                        true) {
+                                                                      _lists[index]
+                                                                              .selectedEndExtraDate =
+                                                                          _availableDates
+                                                                              .last;
+                                                                      ScaffoldMessenger.of(
+                                                                              context)
+                                                                          .showSnackBar(
+                                                                        SnackBar(
+                                                                          content:
+                                                                              Text('La hora de fin no puede ser anterior a la hora de inicio.'),
+                                                                          backgroundColor:
+                                                                              Colors.red,
+                                                                        ),
+                                                                      );
+                                                                    }
+                                                                  });
+                                                                }
+                                                              }
+                                                            : null,
                                                     dropdownColor:
                                                         Colors.grey.shade800,
                                                     decoration: InputDecoration(
