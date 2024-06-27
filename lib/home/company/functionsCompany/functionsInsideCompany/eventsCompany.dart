@@ -237,7 +237,8 @@ class _EventosPageState extends State<EventosPage> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => EventsLogPage(
-                                companyId: widget.companyData['username'],
+                                companyId:
+                                    widget.companyData['companyUsername'],
                               ),
                             ),
                           );

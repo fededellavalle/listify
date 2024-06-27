@@ -117,7 +117,7 @@ class _HomePageState extends State<HomePage> {
 
             QuerySnapshot companySnapshot = await FirebaseFirestore.instance
                 .collection('companies')
-                .where('username', isEqualTo: companyUsername)
+                .where('companyUsername', isEqualTo: companyUsername)
                 .get();
 
             List<String> companyIds =

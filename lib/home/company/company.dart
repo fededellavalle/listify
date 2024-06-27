@@ -241,7 +241,7 @@ class _CompanyPageState extends State<CompanyPage>
                       FutureBuilder<DocumentSnapshot>(
                         future: FirebaseFirestore.instance
                             .collection('companies')
-                            .where('username',
+                            .where('companyUsername',
                                 isEqualTo: companyData['companyUsername'])
                             .limit(1)
                             .get()
@@ -418,7 +418,7 @@ class CompanyButton extends StatelessWidget {
                   ),
                   SizedBox(height: 2 * scaleFactor),
                   Text(
-                    '@${companyData['username'] ?? ''}',
+                    '@${companyData['companyUsername'] ?? ''}',
                     style: TextStyle(
                       fontSize: 16 * scaleFactor,
                       fontFamily: 'SFPro',

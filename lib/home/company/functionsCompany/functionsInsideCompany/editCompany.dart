@@ -165,7 +165,7 @@ class _EditCompanyPageState extends State<EditCompanyPage> {
     try {
       await FirebaseFirestore.instance
           .collection('companies')
-          .doc(widget.companyData['username'])
+          .doc(widget.companyData['companyUsername'])
           .update({
         'name': _nameController.text,
       });
@@ -201,7 +201,7 @@ class _EditCompanyPageState extends State<EditCompanyPage> {
                 try {
                   await FirebaseFirestore.instance
                       .collection('companies')
-                      .doc(widget.companyData['username'])
+                      .doc(widget.companyData['companyUsername'])
                       .update({'co-ownerUid': null});
                   setState(() {
                     coOwnerName = 'Invitar Co-Owner';
@@ -418,7 +418,7 @@ class _EditCompanyPageState extends State<EditCompanyPage> {
                     SizedBox(height: 16 * scaleFactor),
                     _buildEditableField('Nombre', _nameController, scaleFactor),
                     _buildCompanyInfo('Username',
-                        widget.companyData['username'], scaleFactor),
+                        widget.companyData['companyUsername'], scaleFactor),
                     _buildCompanyInfo('Instagram',
                         widget.companyData['instagram'], scaleFactor),
                     _buildCompanyInfo('Nationality',

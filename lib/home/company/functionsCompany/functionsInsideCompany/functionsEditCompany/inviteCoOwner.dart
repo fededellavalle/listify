@@ -174,7 +174,7 @@ class _InviteCoOwnerState extends State<InviteCoOwner> {
     await receivedInvitationsCollection.add({
       'sender': user?.email,
       'recipient': inviteEmail,
-      'company': widget.companyData['username'],
+      'company': widget.companyData['companyUsername'],
       'position': 'Co-Owner',
     });
 

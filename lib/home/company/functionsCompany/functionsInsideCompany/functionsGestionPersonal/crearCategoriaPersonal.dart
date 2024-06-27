@@ -212,7 +212,8 @@ class _crearCategoriaPersonalState extends State<crearCategoriaPersonal> {
                               CollectionReference categoryCollection =
                                   FirebaseFirestore.instance
                                       .collection('companies')
-                                      .doc(widget.companyData['companyId'])
+                                      .doc(
+                                          widget.companyData['companyUsername'])
                                       .collection('personalCategories');
 
                               QuerySnapshot allCategoriesSnapshot =

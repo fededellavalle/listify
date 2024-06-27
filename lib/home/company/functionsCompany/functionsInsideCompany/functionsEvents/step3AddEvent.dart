@@ -278,7 +278,7 @@ class _Step3AddEventState extends State<Step3AddEvent> {
     try {
       // Subir la imagen y obtener su URL
       Reference ref = FirebaseStorage.instance.ref().child(
-          'company_images/${widget.companyData['companyId']}/myEvents/$uuid.jpg');
+          'company_images/${widget.companyData['companyUsername']}/myEvents/$uuid.jpg');
       UploadTask uploadTask = ref.putFile(widget.image!);
       TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
       String imageUrl = await taskSnapshot.ref.getDownloadURL();
@@ -286,66 +286,82 @@ class _Step3AddEventState extends State<Step3AddEvent> {
       // Crear un documento para el evento
       await FirebaseFirestore.instance
           .collection('companies')
-          .doc(widget.companyData['companyId'])
+          .doc(widget.companyData['companyUsername'])
           .collection('myEvents')
           .doc(uuid)
           .set({
-        'name': widget.name,
-        'ticketValue': widget.ticketValue,
-        'startDateTime': widget.startDateTime,
-        'endDateTime': widget.endDateTime,
-        'lists': widget.lists
-            .map((list) => {
-                  'name': list.name,
-                  'type': list.type,
-                  'selectedStartDate': list.selectedStartDate,
-                  'selectedEndDate': list.selectedEndDate,
-                  'addExtraTime': list.addExtraTime,
-                  'selectedStartExtraDate': list.selectedStartExtraDate,
-                  'selectedEndExtraDate': list.selectedEndExtraDate,
-                })
-            .toList(),
-        'image': imageUrl,
+        'eventName': widget.name,
+        'eventTicketValue': widget.ticketValue,
+        'eventStartTime': widget.startDateTime,
+        'eventEndTime': widget.endDateTime,
+        'eventImage': imageUrl,
+        'eventState': 'Desactive',
       });
 
-      // Guardar la plantilla si se seleccionó la opción
-      if (_guardarPlantilla) {
-        await FirebaseFirestore.instance
-            .collection('companies')
-            .doc(widget.companyData['companyId'])
-            .collection('eventTemplates')
-            .doc(uuid)
-            .set({
-          'name': widget.name,
-          'ticketValue': widget.ticketValue,
-          'startDateTime': widget.startDateTime,
-          'endDateTime': widget.endDateTime,
-          'lists': widget.lists
-              .map((list) => {
-                    'name': list.name,
-                    'type': list.type,
-                    'selectedStartDate': list.selectedStartDate,
-                    'selectedEndDate': list.selectedEndDate,
-                    'addExtraTime': list.addExtraTime,
-                    'selectedStartExtraDate': list.selectedStartExtraDate,
-                    'selectedEndExtraDate': list.selectedEndExtraDate,
-                  })
-              .toList(),
-          'image': imageUrl,
+      // Colección de listas de eventos
+      CollectionReference eventListsCollection = FirebaseFirestore.instance
+          .collection('companies')
+          .doc(widget.companyData['companyUsername'])
+          .collection('myEvents')
+          .doc(uuid)
+          .collection('eventLists');
+
+      // Agregar cada lista como un documento en la colección de listas de eventos
+      for (var listItem in widget.lists) {
+        await eventListsCollection.doc(listItem.name).set({
+          'listName': listItem.name,
+          'listType': listItem.type,
+          'listStartTime': listItem.selectedStartDate,
+          'listEndTime': listItem.selectedEndDate,
+          'ticketPrice': listItem.ticketPrice,
+          'membersList': [],
+          'allowSublists': listItem.allowSublists,
         });
       }
 
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Evento creado exitosamente.',
-            style: TextStyle(
-              fontFamily: 'SFPro',
-              fontSize: 14,
+      if (_guardarPlantilla) {
+        await saveTemplate();
+      }
+
+      // Mostrar el AlertDialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          double scaleFactor = MediaQuery.of(context).size.width / 375.0;
+          return AlertDialog(
+            title: Text(
+              'Evento Creado',
+              style: TextStyle(
+                fontFamily: 'SFPro',
+                fontSize: 18 * scaleFactor,
+              ),
             ),
-          ),
-        ),
+            content: Text(
+              'El evento ${widget.name} se ha creado correctamente.',
+              style: TextStyle(
+                fontFamily: 'SFPro',
+                fontSize: 16 * scaleFactor,
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                },
+                child: Text(
+                  'Aceptar',
+                  style: TextStyle(
+                    fontFamily: 'SFPro',
+                    fontSize: 14 * scaleFactor,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -364,5 +380,68 @@ class _Step3AddEventState extends State<Step3AddEvent> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> saveTemplate() async {
+    // Verificar el número de plantillas existentes
+    QuerySnapshot templateSnapshot = await FirebaseFirestore.instance
+        .collection('companies')
+        .doc(widget.companyData['companyUsername'])
+        .collection('eventTemplates')
+        .get();
+
+    if (templateSnapshot.size >= 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Ya tienes 3 plantillas guardadas. Elimina una para poder guardar una nueva.',
+            style: TextStyle(
+              fontFamily: 'SFPro',
+              fontSize: 14,
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    // Guardar la plantilla
+    await FirebaseFirestore.instance
+        .collection('companies')
+        .doc(widget.companyData['companyUsername'])
+        .collection('eventTemplates')
+        .add({
+      'eventName': widget.name,
+      'eventTicketValue': widget.ticketValue,
+      'eventStartTime': widget.startDateTime,
+      'eventEndTime': widget.endDateTime,
+      'eventImage': widget.image != null ? widget.image!.path : null,
+      'lists': widget.lists.map((listItem) {
+        return {
+          'listName': listItem.name,
+          'listType': listItem.type,
+          'listStartTime': listItem.selectedStartDate,
+          'listEndTime': listItem.selectedEndDate,
+          'ticketPrice': listItem.ticketPrice,
+          'addExtraTime': listItem.addExtraTime,
+          'selectedStartExtraDate': listItem.selectedStartExtraDate,
+          'selectedEndExtraDate': listItem.selectedEndExtraDate,
+          'ticketExtraPrice': listItem.ticketExtraPrice,
+          'allowSublists': listItem.allowSublists,
+        };
+      }).toList(),
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Plantilla guardada exitosamente.',
+          style: TextStyle(
+            fontFamily: 'SFPro',
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
   }
 }

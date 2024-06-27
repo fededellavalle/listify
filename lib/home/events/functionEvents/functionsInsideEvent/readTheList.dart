@@ -369,7 +369,12 @@ class _ReadTheListState extends State<ReadTheList> {
                               ),
                             ),
                             trailing: Switch(
-                              activeColor: Colors.green.shade600,
+                              activeColor: isWithinExtraTime(
+                                      member['assitedAt'],
+                                      listEndTime,
+                                      listEndExtraTime)
+                                  ? Colors.blue.shade600
+                                  : Colors.green.shade600,
                               value: member['assisted'] ?? false,
                               onChanged: (bool newValue) {
                                 _toggleAttendance(member['name'],
@@ -399,5 +404,17 @@ class _ReadTheListState extends State<ReadTheList> {
         ],
       ),
     );
+  }
+
+  bool isWithinExtraTime(Timestamp assistedAt, Timestamp listEndTime,
+      Timestamp? listEndExtraTime) {
+    DateTime assistedAtDate = assistedAt.toDate();
+    DateTime listEndTimeDate = listEndTime.toDate();
+    if (listEndExtraTime != null) {
+      DateTime listEndExtraTimeDate = listEndExtraTime.toDate();
+      return assistedAtDate.isAfter(listEndTimeDate) &&
+          assistedAtDate.isBefore(listEndExtraTimeDate);
+    }
+    return false;
   }
 }

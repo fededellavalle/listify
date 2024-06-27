@@ -36,7 +36,7 @@ class EventTemplatesPage extends StatelessWidget {
       body: FutureBuilder<QuerySnapshot>(
         future: FirebaseFirestore.instance
             .collection('companies')
-            .doc(companyData['companyId'])
+            .doc(companyData['companyUsername'])
             .collection('eventTemplates')
             .get(),
         builder: (context, snapshot) {

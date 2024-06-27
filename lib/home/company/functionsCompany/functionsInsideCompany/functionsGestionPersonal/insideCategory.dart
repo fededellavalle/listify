@@ -534,7 +534,8 @@ class _InsideCategoryState extends State<InsideCategory> {
                     'companyRelationship': FieldValue.arrayRemove([
                       {
                         'category': widget.categoryName,
-                        'companyUsername': widget.companyData['username'],
+                        'companyUsername':
+                            widget.companyData['companyUsername'],
                       }
                     ]),
                   });

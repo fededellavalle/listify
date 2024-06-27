@@ -380,7 +380,7 @@ class _CreateCompanyState extends State<CreateCompany> {
                                     .doc(companyUser)
                                     .set({
                                   'name': companyName,
-                                  'username': companyUser,
+                                  'companyUsername': companyUser,
                                   'ownerUid': ownerUid,
                                   'imageUrl': imageUrl,
                                   'nationality': country,

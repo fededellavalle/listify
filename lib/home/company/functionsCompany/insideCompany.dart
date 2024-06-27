@@ -59,7 +59,7 @@ class _CompanyWidgetState extends State<CompanyWidget> {
                   if (widget.companyData['co-ownerUid'] == uid) {
                     await FirebaseFirestore.instance
                         .collection('companies')
-                        .doc(widget.companyData['username'])
+                        .doc(widget.companyData['companyUsername'])
                         .update({'co-ownerUid': null});
                   } else {
                     await FirebaseFirestore.instance
@@ -172,7 +172,7 @@ class _CompanyWidgetState extends State<CompanyWidget> {
               ),
               SizedBox(height: 10 * scaleFactor),
               Text(
-                '@${widget.companyData['username'] ?? ''}',
+                '@${widget.companyData['companyUsername'] ?? ''}',
                 style: TextStyle(
                   fontSize: 16 * scaleFactor,
                   color: Colors.white,
@@ -512,7 +512,7 @@ class _CompanyWidgetState extends State<CompanyWidget> {
                         ElevatedButton(
                           onPressed: () {
                             leaveCompany(
-                                context, widget.companyData['username']);
+                                context, widget.companyData['companyUsername']);
                           },
                           style: buttonCompany,
                           child: Row(

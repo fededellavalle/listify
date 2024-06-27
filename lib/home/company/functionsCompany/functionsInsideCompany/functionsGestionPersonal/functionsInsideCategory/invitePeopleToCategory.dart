@@ -179,7 +179,7 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
     await receivedInvitationsCollection.add({
       'sender': user?.email,
       'recipient': inviteEmail,
-      'company': widget.companyData['username'],
+      'company': widget.companyData['companyUsername'],
       'category': widget.categoryName,
     });
 
@@ -202,7 +202,7 @@ class _InvitePeopleToCategoryState extends State<InvitePeopleToCategory> {
     if (categoryName.isNotEmpty && inviteEmail.isNotEmpty) {
       CollectionReference categoryCollection = FirebaseFirestore.instance
           .collection('companies')
-          .doc(widget.companyData['username'])
+          .doc(widget.companyData['companyUsername'])
           .collection('personalCategories');
 
       QuerySnapshot allCategoriesSnapshot = await categoryCollection.get();

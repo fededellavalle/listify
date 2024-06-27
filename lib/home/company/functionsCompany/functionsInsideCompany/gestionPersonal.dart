@@ -52,7 +52,7 @@ class _GestionPersonalState extends State<GestionPersonal>
   Stream<List<String>> loadPersonalCategories() {
     CollectionReference categoryCollection = FirebaseFirestore.instance
         .collection('companies')
-        .doc(widget.companyData['username'])
+        .doc(widget.companyData['companyUsername'])
         .collection('personalCategories');
 
     return categoryCollection.snapshots().map((snapshot) {
@@ -199,7 +199,7 @@ class _GestionPersonalState extends State<GestionPersonal>
                 return StreamBuilder<DocumentSnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('companies')
-                      .doc(widget.companyData['username'])
+                      .doc(widget.companyData['companyUsername'])
                       .collection('personalCategories')
                       .doc(categoryName)
                       .snapshots(),
