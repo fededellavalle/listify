@@ -310,7 +310,7 @@ class _ReadTheListState extends State<ReadTheList> {
                             listStartTime.toDate().isAfter(DateTime.now()))) {
                       return Center(
                         child: Text(
-                          'La lista no está abierta aún.',
+                          'La lista aún no está abierta.',
                           style: TextStyle(
                             color: Colors.white,
                             fontFamily: 'SFPro',
@@ -320,82 +320,66 @@ class _ReadTheListState extends State<ReadTheList> {
                       );
                     }
 
-                    var membersList = eventListData['membersList'];
-                    if (membersList is List) {
-                      return Center(
-                        child: Text(
-                          'No hay miembros en esta lista.',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontFamily: 'SFPro',
-                            fontSize: 16 * scaleFactor,
-                          ),
-                        ),
-                      );
-                    }
+                    List<Map<String, dynamic>> membersList = [];
 
-                    if (membersList is Map<String, dynamic>) {
-                      List<Map<String, dynamic>> members = [];
-                      membersList.forEach((userId, userData) {
-                        if (userData['members'] != null) {
-                          members.addAll(List<Map<String, dynamic>>.from(
-                              userData['members']));
+                    eventListData['membersList'].forEach((userId, userData) {
+                      if (userData['members'] != null) {
+                        for (var member in userData['members']) {
+                          membersList.add(member);
                         }
-                      });
+                      }
+                    });
 
-                      var filteredMembers = members.where((member) {
-                        return member['name']
-                            .toString()
-                            .toLowerCase()
-                            .contains(_searchTerm);
-                      }).toList();
+                    membersList.sort((a, b) => a['name']
+                        .toLowerCase()
+                        .compareTo(b['name'].toLowerCase()));
 
-                      filteredMembers.sort((a, b) => a['name']
-                          .toString()
-                          .toLowerCase()
-                          .compareTo(b['name'].toString().toLowerCase()));
+                    List<Map<String, dynamic>> filteredMembersList =
+                        _searchTerm.isEmpty
+                            ? membersList
+                            : membersList
+                                .where((member) => member['name']
+                                    .toLowerCase()
+                                    .contains(_searchTerm))
+                                .toList();
 
-                      return ListView.builder(
-                        itemCount: filteredMembers.length,
-                        itemBuilder: (context, index) {
-                          var member = filteredMembers[index];
-                          return ListTile(
-                            title: Text(
-                              member['name'],
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontFamily: 'SFPro',
-                                fontSize: 16 * scaleFactor,
-                              ),
+                    return ListView.builder(
+                      itemCount: filteredMembersList.length,
+                      itemBuilder: (context, index) {
+                        var member = filteredMembersList[index];
+                        bool isAssisted = member['assisted'] ?? false;
+
+                        Timestamp? assistedAt = member['assistedAt'];
+                        bool isWithinExtraTime = assistedAt != null &&
+                            listStartExtraTime != null &&
+                            listEndExtraTime != null &&
+                            assistedAt
+                                .toDate()
+                                .isAfter(listStartExtraTime.toDate()) &&
+                            assistedAt
+                                .toDate()
+                                .isBefore(listEndExtraTime.toDate());
+
+                        return ListTile(
+                          title: Text(
+                            member['name'],
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontFamily: 'SFPro',
+                              fontSize: 14 * scaleFactor,
                             ),
-                            trailing: Switch(
-                              activeColor: isWithinExtraTime(
-                                      member['assitedAt'],
-                                      listEndTime,
-                                      listEndExtraTime)
-                                  ? Colors.blue.shade600
-                                  : Colors.green.shade600,
-                              value: member['assisted'] ?? false,
-                              onChanged: (bool newValue) {
-                                _toggleAttendance(member['name'],
-                                    member['assisted'] ?? false);
-                              },
-                            ),
-                          );
-                        },
-                      );
-                    } else {
-                      return Center(
-                        child: Text(
-                          'Formato de miembros no reconocido.',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontFamily: 'SFPro',
-                            fontSize: 16 * scaleFactor,
                           ),
-                        ),
-                      );
-                    }
+                          trailing: Switch(
+                            value: isAssisted,
+                            activeColor:
+                                isWithinExtraTime ? Colors.blue : Colors.green,
+                            onChanged: (value) {
+                              _toggleAttendance(member['name'], isAssisted);
+                            },
+                          ),
+                        );
+                      },
+                    );
                   },
                 );
               },
@@ -404,17 +388,5 @@ class _ReadTheListState extends State<ReadTheList> {
         ],
       ),
     );
-  }
-
-  bool isWithinExtraTime(Timestamp assistedAt, Timestamp listEndTime,
-      Timestamp? listEndExtraTime) {
-    DateTime assistedAtDate = assistedAt.toDate();
-    DateTime listEndTimeDate = listEndTime.toDate();
-    if (listEndExtraTime != null) {
-      DateTime listEndExtraTimeDate = listEndExtraTime.toDate();
-      return assistedAtDate.isAfter(listEndTimeDate) &&
-          assistedAtDate.isBefore(listEndExtraTimeDate);
-    }
-    return false;
   }
 }

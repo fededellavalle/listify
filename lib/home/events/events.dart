@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'functionEvents/insideEvent.dart';
+import 'package:rxdart/rxdart.dart';
 
 class EventsPage extends StatefulWidget {
   final String? uid;
@@ -188,11 +189,8 @@ class _EventsPageState extends State<EventsPage>
   }
 
   Widget _buildFirstEventList(double scaleFactor) {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('companies')
-          .where('ownerUid', isEqualTo: widget.uid)
-          .snapshots(),
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: _fetchUserCompanyData(widget.uid),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Text(
@@ -201,12 +199,16 @@ class _EventsPageState extends State<EventsPage>
           );
         }
 
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (!snapshot.hasData) {
           return Center(child: CircularProgressIndicator());
         }
 
-        List<String> companyIds =
-            snapshot.data!.docs.map((doc) => doc.id).toList();
+        List<String> companyIds = snapshot.data!
+            .map((e) => e['companyUsername'])
+            .where((username) => username != null)
+            .map((username) => username as String)
+            .toList();
+
         return Column(
           children: companyIds.map((companyId) {
             return StreamBuilder<QuerySnapshot>(
@@ -275,6 +277,34 @@ class _EventsPageState extends State<EventsPage>
         );
       },
     );
+  }
+
+  Stream<List<Map<String, dynamic>>> _fetchUserCompanyData(String? uid) {
+    if (uid != null) {
+      var ownerStream = FirebaseFirestore.instance
+          .collection('companies')
+          .where('ownerUid', isEqualTo: uid)
+          .snapshots()
+          .map((snapshot) => snapshot.docs
+              .map((doc) => doc.data() as Map<String, dynamic>)
+              .toList());
+
+      var coOwnerStream = FirebaseFirestore.instance
+          .collection('companies')
+          .where('co-ownerUid', isEqualTo: uid)
+          .snapshots()
+          .map((snapshot) => snapshot.docs
+              .map((doc) => doc.data() as Map<String, dynamic>)
+              .toList());
+
+      return Rx.combineLatest2(ownerStream, coOwnerStream,
+          (ownerCompanies, coOwnerCompanies) {
+        ownerCompanies.addAll(coOwnerCompanies);
+        return ownerCompanies;
+      });
+    } else {
+      return Stream.empty();
+    }
   }
 
   Widget _buildSecondEventList(double scaleFactor) {

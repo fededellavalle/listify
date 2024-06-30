@@ -359,6 +359,29 @@ class _AddPeopleToListState extends State<AddPeopleToList> {
                         maxLength: 25,
                       ),
                       SizedBox(height: 10 * scaleFactor),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: Colors.blue,
+                            size: 20 * scaleFactor,
+                          ),
+                          SizedBox(width: 5 * scaleFactor),
+                          Expanded(
+                            child: Text(
+                              'Solo se permiten ingresar letras',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 14 * scaleFactor,
+                                fontFamily: 'SFPro',
+                              ),
+                              overflow: TextOverflow
+                                  .visible, // Permitir que el texto se envuelva
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10 * scaleFactor),
                       SizedBox(
                         width: double.infinity,
                         child: CupertinoButton(

@@ -17,6 +17,84 @@ class LiveEventStatisticsPage extends StatelessWidget {
     return formattedDate;
   }
 
+  Future<double> calculateGeneratedMoney() async {
+    double normalTimeMoney = 0.0;
+    double extraTimeMoney = 0.0;
+
+    var eventListsSnapshot = await FirebaseFirestore.instance
+        .collection('companies')
+        .doc(companyId)
+        .collection('myEvents')
+        .doc(eventId)
+        .collection('eventLists')
+        .get();
+
+    for (var doc in eventListsSnapshot.docs) {
+      var listData = doc.data();
+
+      double ticketPrice = listData['ticketPrice']?.toDouble() ?? 0.0;
+      double ticketExtraPrice = listData['ticketExtraPrice']?.toDouble() ?? 0.0;
+
+      Timestamp? listStartNormalTime = listData['listStartTime'];
+      Timestamp? listEndNormalTime = listData['listEndTime'];
+      Timestamp? listStartExtraTime = listData['listStartExtraTime'];
+      Timestamp? listEndExtraTime = listData['listEndExtraTime'];
+
+      if (listData['allowSublists'] == true) {
+        var sublists = listData['sublists'] as Map<String, dynamic>;
+        sublists.forEach((userId, userSublists) {
+          if (userSublists is Map<String, dynamic>) {
+            userSublists.forEach((sublistName, sublistData) {
+              var members = sublistData['members'] as List<dynamic>;
+              for (var member in members) {
+                if (member['assisted'] == true) {
+                  var assistedAt = (member['assistedAt'] as Timestamp).toDate();
+
+                  if (assistedAt.isAfter(listStartExtraTime!.toDate()) &&
+                      assistedAt.isBefore(listEndExtraTime!.toDate())) {
+                    extraTimeMoney += ticketExtraPrice;
+                  } else if (assistedAt
+                          .isAfter(listStartNormalTime!.toDate()) &&
+                      assistedAt.isBefore(listEndNormalTime!.toDate())) {
+                    normalTimeMoney += ticketPrice;
+                  }
+                }
+              }
+            });
+          }
+        });
+      } else {
+        var membersList = listData['membersList'] as Map<String, dynamic>;
+        membersList.forEach((userId, userData) {
+          if (userData['members'] != null) {
+            var members = userData['members'] as List<dynamic>;
+            for (var member in members) {
+              if (member['assisted'] == true) {
+                var assistedAt = (member['assistedAt'] as Timestamp).toDate();
+
+                print('assistedAt: $assistedAt');
+                print(
+                    'listStartExtraTime!.toDate(): ${listStartExtraTime!.toDate()}');
+                print(
+                    'listEndExtraTime!.toDate(): ${listEndExtraTime!.toDate()}');
+
+                if (assistedAt.isAfter(listStartExtraTime!.toDate()) &&
+                    assistedAt.isBefore(listEndExtraTime!.toDate())) {
+                  extraTimeMoney += ticketExtraPrice;
+                } else if (assistedAt.isAfter(listStartNormalTime!.toDate()) &&
+                    assistedAt.isBefore(listEndNormalTime!.toDate())) {
+                  normalTimeMoney += ticketPrice;
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    return normalTimeMoney + extraTimeMoney;
+  }
+
   @override
   Widget build(BuildContext context) {
     double baseWidth = 375.0; // Base design width
@@ -134,6 +212,40 @@ class LiveEventStatisticsPage extends StatelessWidget {
                     fontFamily: 'SFPro',
                     fontSize: 16 * scaleFactor,
                   ),
+                ),
+                SizedBox(height: 16 * scaleFactor),
+                FutureBuilder<double>(
+                  future: calculateGeneratedMoney(),
+                  builder: (context, moneySnapshot) {
+                    if (moneySnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    } else if (moneySnapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'Error al calcular el dinero generado',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontFamily: 'SFPro',
+                            fontSize: 16 * scaleFactor,
+                          ),
+                        ),
+                      );
+                    } else {
+                      double totalMoney = moneySnapshot.data!;
+
+                      return Text(
+                        'Dinero generado: \$${totalMoney.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontFamily: 'SFPro',
+                          fontSize: 16 * scaleFactor,
+                        ),
+                      );
+                    }
+                  },
                 ),
                 SizedBox(height: 16 * scaleFactor),
                 Text(

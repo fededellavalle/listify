@@ -430,6 +430,43 @@ class _InsideEventState extends State<InsideEvent> {
                             ),
                             child: Column(
                               children: [
+                                ElevatedButton(
+                                  onPressed: () {},
+                                  style: buttonCompany,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.shade300,
+                                          borderRadius: BorderRadius.circular(
+                                              8 * scaleFactor),
+                                        ),
+                                        child: Padding(
+                                          padding:
+                                              EdgeInsets.all(8.0 * scaleFactor),
+                                          child: Icon(
+                                            CupertinoIcons.tickets,
+                                            size: 20 * scaleFactor,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 15 * scaleFactor),
+                                      Flexible(
+                                        child: Text(
+                                          'Vender entradas generales',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18 * scaleFactor,
+                                            fontFamily: 'SFPro',
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                                 for (var list in eventListsData)
                                   if (list['listType'] == 'Lista de Asistencia')
                                     ElevatedButton(
@@ -818,6 +855,43 @@ class _InsideEventState extends State<InsideEvent> {
                         ),
                         child: Column(
                           children: [
+                            ElevatedButton(
+                              onPressed: () {},
+                              style: buttonCompany,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.shade300,
+                                      borderRadius: BorderRadius.circular(
+                                          8 * scaleFactor),
+                                    ),
+                                    child: Padding(
+                                      padding:
+                                          EdgeInsets.all(8.0 * scaleFactor),
+                                      child: Icon(
+                                        CupertinoIcons.tickets_fill,
+                                        size: 20 * scaleFactor,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 15 * scaleFactor),
+                                  Flexible(
+                                    child: Text(
+                                      'Vender entradas generales',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18 * scaleFactor,
+                                        fontFamily: 'SFPro',
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                             for (var list in eventListsData)
                               if (list['listType'] == 'Lista de Asistencia')
                                 ElevatedButton(

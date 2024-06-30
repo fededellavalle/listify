@@ -1259,7 +1259,7 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                                               value);
                                                       if (parsedValue != null) {
                                                         _lists[index]
-                                                                .ticketPrice =
+                                                                .ticketExtraPrice =
                                                             parsedValue;
                                                       }
                                                     },

@@ -269,10 +269,26 @@ class _ReadTheSublistState extends State<ReadTheSublist> {
                     .toLowerCase()
                     .compareTo(b['name'].toString().toLowerCase()));
 
+                Timestamp? listStartNormalTime = listData['listStartTime'];
+                Timestamp? listEndNormalTime = listData['listEndTime'];
+                Timestamp? listStartExtraTime = listData['listStartExtraTime'];
+                Timestamp? listEndExtraTime = listData['listEndExtraTime'];
+
                 return ListView.builder(
                   itemCount: filteredMembers.length,
                   itemBuilder: (context, index) {
                     var member = filteredMembers[index];
+                    bool isAssisted = member['assisted'] ?? false;
+
+                    Timestamp? assistedAt = member['assistedAt'];
+                    bool isWithinExtraTime = assistedAt != null &&
+                        listStartExtraTime != null &&
+                        listEndExtraTime != null &&
+                        assistedAt
+                            .toDate()
+                            .isAfter(listStartExtraTime.toDate()) &&
+                        assistedAt.toDate().isBefore(listEndExtraTime.toDate());
+
                     return ListTile(
                       title: Text(
                         member['name'],
@@ -283,11 +299,11 @@ class _ReadTheSublistState extends State<ReadTheSublist> {
                         ),
                       ),
                       trailing: Switch(
-                        activeColor: Colors.green.shade600,
-                        value: member['assisted'] ?? false,
-                        onChanged: (bool newValue) {
-                          _toggleAttendance(
-                              member['name'], member['assisted'] ?? false);
+                        value: isAssisted,
+                        activeColor:
+                            isWithinExtraTime ? Colors.blue : Colors.green,
+                        onChanged: (value) {
+                          _toggleAttendance(member['name'], isAssisted);
                         },
                       ),
                     );

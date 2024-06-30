@@ -1,3 +1,4 @@
+import 'package:app_listas/styles/color.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -30,6 +31,9 @@ class StatisticsPage extends StatelessWidget {
         'totalMembers': 0,
         'totalAssisted': 0,
         'assistedTimes': [],
+        'normalTimeCount': 0,
+        'normalTimeMoneyCount': 0,
+        'extraTimeCount': 0,
       };
     }
 
@@ -39,6 +43,9 @@ class StatisticsPage extends StatelessWidget {
         'totalMembers': 0,
         'totalAssisted': 0,
         'assistedTimes': [],
+        'normalTimeCount': 0,
+        'normalTimeMoneyCount': 0,
+        'extraTimeCount': 0,
       };
     }
 
@@ -48,6 +55,9 @@ class StatisticsPage extends StatelessWidget {
         'totalMembers': 0,
         'totalAssisted': 0,
         'assistedTimes': [],
+        'normalTimeCount': 0,
+        'normalTimeMoneyCount': 0,
+        'extraTimeCount': 0,
       };
     }
 
@@ -58,7 +68,22 @@ class StatisticsPage extends StatelessWidget {
     num totalMembers = 0;
     num totalAssisted = 0;
     List<Timestamp> assistedTimes = [];
+    int normalTimeCount = 0;
+    int extraTimeCount = 0;
+    double ticketPrice = 0;
+    double? ticketExtraPrice = 0;
+    double normalTimeMoneyCount = 0;
 
+    Timestamp? listStartNormalTime = eventListData['listStartTime'];
+    Timestamp? listEndNormalTime = eventListData['listEndTime'];
+    Timestamp? listStartExtraTime = eventListData['listStartExtraTime'];
+    Timestamp? listEndExtraTime = eventListData['listEndExtraTime'];
+
+    ticketPrice = eventListData['ticketPrice'];
+    print(eventListData['ticketExtraPrice']);
+
+    print(ticketPrice);
+    print(ticketExtraPrice);
     for (var memberGroup in membersList.values) {
       var members = memberGroup['members'];
       if (members != null && members is List) {
@@ -67,6 +92,20 @@ class StatisticsPage extends StatelessWidget {
           if (member['assisted'] == true) {
             totalAssisted += 1;
             assistedTimes.add(member['assistedAt'] as Timestamp);
+
+            DateTime assistedDateTime = member['assistedAt'].toDate();
+            if (listStartExtraTime != null &&
+                listEndExtraTime != null &&
+                assistedDateTime.isAfter(listStartExtraTime.toDate()) &&
+                assistedDateTime.isBefore(listEndExtraTime.toDate())) {
+              extraTimeCount++;
+            } else if (listStartNormalTime != null &&
+                listEndNormalTime != null &&
+                assistedDateTime.isAfter(listStartNormalTime.toDate()) &&
+                assistedDateTime.isBefore(listEndNormalTime.toDate())) {
+              normalTimeCount++;
+              normalTimeMoneyCount = normalTimeMoneyCount + ticketPrice;
+            }
           }
         }
       }
@@ -76,6 +115,9 @@ class StatisticsPage extends StatelessWidget {
       'totalMembers': totalMembers,
       'totalAssisted': totalAssisted,
       'assistedTimes': assistedTimes,
+      'normalTimeCount': normalTimeCount,
+      'normalTimeMoneyCount': normalTimeMoneyCount,
+      'extraTimeCount': extraTimeCount,
     };
   }
 
@@ -145,6 +187,10 @@ class StatisticsPage extends StatelessWidget {
 
           int totalMembers = snapshot.data!['totalMembers'] as int;
           int totalAssisted = snapshot.data!['totalAssisted'] as int;
+          int normalTimeCount = snapshot.data!['normalTimeCount'] as int;
+          int extraTimeCount = snapshot.data!['extraTimeCount'] as int;
+          double normalTimeMoneyCount =
+              snapshot.data!['normalTimeMoneyCount'] as double;
           List<Timestamp> assistedTimes =
               (snapshot.data!['assistedTimes'] as List<dynamic>)
                   .cast<Timestamp>();
@@ -159,13 +205,27 @@ class StatisticsPage extends StatelessWidget {
             child: Column(
               children: [
                 if (totalMembers == 0)
-                  Text(
-                    'No hay miembros en esta lista.',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontFamily: 'SFPro',
-                      fontSize: 16 * scaleFactor,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Todavía no hay personas registradas en esta lista',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                            fontSize: 16 * scaleFactor,
+                          ),
+                          overflow: TextOverflow.visible,
+                        ),
+                      ),
+                      Icon(
+                        CupertinoIcons.person_crop_circle_fill_badge_xmark,
+                        color: Colors.white,
+                        size: 20 *
+                            scaleFactor, // Tamaño del icono ajustable según scaleFactor
+                      ),
+                    ],
                   )
                 else ...[
                   Text(
@@ -187,7 +247,35 @@ class StatisticsPage extends StatelessWidget {
                   ),
                   SizedBox(height: 8 * scaleFactor),
                   Text(
-                    'Hora más frecuente de asistencia: ${frequentTime}h ($frequentTimeCount personas)',
+                    'Asistencias en tiempo normal: $normalTimeCount',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontFamily: 'SFPro',
+                      fontSize: 16 * scaleFactor,
+                    ),
+                  ),
+                  SizedBox(height: 8 * scaleFactor),
+                  Text(
+                    'Dinero generado en tiempo normal: \$${normalTimeMoneyCount}',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontFamily: 'SFPro',
+                      fontSize: 16 * scaleFactor,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 8 * scaleFactor),
+                  Text(
+                    'Asistencias en tiempo extra: $extraTimeCount',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontFamily: 'SFPro',
+                      fontSize: 16 * scaleFactor,
+                    ),
+                  ),
+                  SizedBox(height: 8 * scaleFactor),
+                  Text(
+                    '${frequentTime == 'No data' ? 'No hay asistencias en este momento' : 'Hora más frecuente de asistencia: ${frequentTime}h ($frequentTimeCount personas)'}',
                     style: TextStyle(
                       color: Colors.white,
                       fontFamily: 'SFPro',
@@ -202,8 +290,8 @@ class StatisticsPage extends StatelessWidget {
                           'Registradas': totalMembers.toDouble(),
                           'Asistidas': totalAssisted.toDouble(),
                         },
-                        chartType: ChartType.ring,
-                        colorList: [Colors.blue, Colors.red],
+                        chartType: ChartType.disc,
+                        colorList: [Colors.blue, Colors.green],
                         legendOptions: LegendOptions(
                           showLegends: true,
                           legendPosition: LegendPosition.right,
@@ -216,7 +304,7 @@ class StatisticsPage extends StatelessWidget {
                           showChartValuesInPercentage: true,
                           showChartValuesOutside: true,
                           chartValueStyle: TextStyle(
-                            color: Colors.white,
+                            color: Colors.black,
                             fontFamily: 'SFPro',
                           ),
                         ),

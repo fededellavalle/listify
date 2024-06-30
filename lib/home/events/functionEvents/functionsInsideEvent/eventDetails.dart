@@ -182,6 +182,15 @@ class _EventDetailsState extends State<EventDetails> {
 
                       Map<String, String> memberNames = snapshot.data!;
 
+                      Timestamp? listStartNormalTime =
+                          eventListData['listStartTime'];
+                      Timestamp? listEndNormalTime =
+                          eventListData['listEndTime'];
+                      Timestamp? listStartExtraTime =
+                          eventListData['listStartExtraTime'];
+                      Timestamp? listEndExtraTime =
+                          eventListData['listEndExtraTime'];
+
                       return ListView.builder(
                         itemCount: membersList.length,
                         itemBuilder: (context, index) {
@@ -249,6 +258,40 @@ class _EventDetailsState extends State<EventDetails> {
                                           'Hora de asistencia: ${formatTimestamp(member['assistedAt'])}',
                                           style: TextStyle(
                                             color: Colors.white,
+                                            fontFamily: 'SFPro',
+                                            fontSize: 12 * scaleFactor,
+                                          ),
+                                        ),
+                                      if (member['assisted'] &&
+                                          listStartExtraTime != null &&
+                                          listEndExtraTime != null &&
+                                          member['assistedAt'].toDate().isAfter(
+                                              listStartExtraTime.toDate()) &&
+                                          member['assistedAt']
+                                              .toDate()
+                                              .isBefore(
+                                                  listEndExtraTime.toDate()))
+                                        Text(
+                                          'Asistió en extra time',
+                                          style: TextStyle(
+                                            color: Colors.blue,
+                                            fontFamily: 'SFPro',
+                                            fontSize: 12 * scaleFactor,
+                                          ),
+                                        )
+                                      else if (member['assisted'] &&
+                                          listStartNormalTime != null &&
+                                          listEndNormalTime != null &&
+                                          member['assistedAt'].toDate().isAfter(
+                                              listStartNormalTime.toDate()) &&
+                                          member['assistedAt']
+                                              .toDate()
+                                              .isBefore(
+                                                  listEndNormalTime.toDate()))
+                                        Text(
+                                          'Asistió en tiempo normal',
+                                          style: TextStyle(
+                                            color: Colors.green,
                                             fontFamily: 'SFPro',
                                             fontSize: 12 * scaleFactor,
                                           ),

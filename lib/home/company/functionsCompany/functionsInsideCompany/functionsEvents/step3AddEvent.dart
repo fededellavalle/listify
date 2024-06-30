@@ -316,6 +316,11 @@ class _Step3AddEventState extends State<Step3AddEvent> {
           'ticketPrice': listItem.ticketPrice,
           'membersList': [],
           'allowSublists': listItem.allowSublists,
+          if (listItem.addExtraTime == true) ...{
+            'listStartExtraTime': listItem.selectedStartExtraDate,
+            'listEndExtraTime': listItem.selectedEndExtraDate,
+            'ticketExtraPrice': listItem.ticketExtraPrice,
+          }
         });
       }
 
