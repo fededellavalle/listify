@@ -30,7 +30,7 @@ class _InsideCategoryState extends State<InsideCategory> {
   void loadMembers() async {
     DocumentReference categoryRef = FirebaseFirestore.instance
         .collection('companies')
-        .doc(widget.companyData['companyId'])
+        .doc(widget.companyData['companyUsername'])
         .collection('personalCategories')
         .doc(widget.categoryName);
 
@@ -89,7 +89,7 @@ class _InsideCategoryState extends State<InsideCategory> {
   void loadInvitations() async {
     DocumentReference categoryRef = FirebaseFirestore.instance
         .collection('companies')
-        .doc(widget.companyData['companyId'])
+        .doc(widget.companyData['companyUsername'])
         .collection('personalCategories')
         .doc(widget.categoryName);
 
@@ -442,7 +442,7 @@ class _InsideCategoryState extends State<InsideCategory> {
 
                 FirebaseFirestore.instance
                     .collection('companies')
-                    .doc(widget.companyData['companyId'])
+                    .doc(widget.companyData['companyUsername'])
                     .collection('personalCategories')
                     .doc(widget.categoryName)
                     .update({
@@ -516,7 +516,7 @@ class _InsideCategoryState extends State<InsideCategory> {
                   // Remove member from the personalCategories collection
                   await FirebaseFirestore.instance
                       .collection('companies')
-                      .doc(widget.companyData['companyId'])
+                      .doc(widget.companyData['companyUsername'])
                       .collection('personalCategories')
                       .doc(widget.categoryName)
                       .update({
@@ -545,7 +545,7 @@ class _InsideCategoryState extends State<InsideCategory> {
                   // Remove member from the company's main collection
                   await FirebaseFirestore.instance
                       .collection('companies')
-                      .doc(widget.companyData['companyId'])
+                      .doc(widget.companyData['companyUsername'])
                       .collection('personalCategories')
                       .doc(widget.categoryName)
                       .update({

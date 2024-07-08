@@ -9,6 +9,7 @@ class ListItem {
   DateTime? selectedEndExtraDate;
   double? ticketExtraPrice;
   bool allowSublists;
+  bool onlyWriteOwners;
 
   ListItem({
     required this.name,
@@ -21,5 +22,6 @@ class ListItem {
     required this.ticketPrice,
     required this.ticketExtraPrice,
     required this.allowSublists,
+    required this.onlyWriteOwners,
   });
 }

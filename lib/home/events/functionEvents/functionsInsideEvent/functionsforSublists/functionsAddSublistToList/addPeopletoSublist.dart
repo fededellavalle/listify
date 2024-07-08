@@ -258,13 +258,15 @@ class _AddPeopleToSublistState extends State<AddPeopleToSublist> {
           color: Colors.white,
         ),
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             CupertinoIcons.left_chevron,
             color: Colors.white,
           ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          onPressed: isLoading
+              ? null
+              : () {
+                  Navigator.of(context).pop();
+                },
         ),
       ),
       body: Padding(

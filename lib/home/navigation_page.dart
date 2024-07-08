@@ -30,7 +30,8 @@ class _NavigationPageState extends State<NavigationPage>
   late String uid;
   bool _isLoading = true;
   late AnimationController _controller;
-  late User? currentUser; // Usuario actual
+  late User? currentUser;
+  late bool _trial = false;
 
   @override
   void initState() {
@@ -76,6 +77,7 @@ class _NavigationPageState extends State<NavigationPage>
           _firstName = userData['name'] ?? '';
           _lastName = userData['lastname'] ?? '';
           _email = FirebaseAuth.instance.currentUser?.email ?? '';
+          _trial = userData['trial'] ?? true;
         }
       }
     } catch (error) {
@@ -100,6 +102,9 @@ class _NavigationPageState extends State<NavigationPage>
               'subscription': 'premium',
               'trial': true,
               'trialStartDate': Timestamp.now(),
+            });
+            setState(() {
+              _trial = true;
             });
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -428,15 +433,34 @@ class _NavigationPageState extends State<NavigationPage>
               ),
               ListTile(
                 title: Text(
-                  'Probar Premium 7 días',
+                  'Mi Perfil',
                   style: TextStyle(color: Colors.white, fontFamily: 'SFPro'),
                 ),
                 leading: Icon(
-                  CupertinoIcons.star,
-                  color: Colors.yellow,
+                  CupertinoIcons.person,
+                  color: skyBluePrimary,
                 ),
-                onTap: _activatePremiumTrial,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfilePage(uid: uid),
+                    ),
+                  );
+                },
               ),
+              if (_trial != true)
+                ListTile(
+                  title: Text(
+                    'Probar Premium 7 días',
+                    style: TextStyle(color: Colors.white, fontFamily: 'SFPro'),
+                  ),
+                  leading: Icon(
+                    CupertinoIcons.star,
+                    color: Colors.yellow,
+                  ),
+                  onTap: _activatePremiumTrial,
+                ),
               ListTile(
                 title: const Text(
                   'Cerrar Sesión',

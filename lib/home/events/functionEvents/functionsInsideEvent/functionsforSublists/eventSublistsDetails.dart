@@ -260,12 +260,12 @@ class _EventSublistDetailsState extends State<EventSublistDetails> {
                                             listEndExtraTime != null &&
                                             member['assistedAt']
                                                 .toDate()
-                                                .isAfter(listStartExtraTime!
+                                                .isAfter(listStartExtraTime
                                                     .toDate()) &&
                                             member['assistedAt']
                                                 .toDate()
                                                 .isBefore(
-                                                    listEndExtraTime!.toDate()))
+                                                    listEndExtraTime.toDate()))
                                           Text(
                                             'Asistió en extra time',
                                             style: TextStyle(
@@ -279,12 +279,12 @@ class _EventSublistDetailsState extends State<EventSublistDetails> {
                                             listEndNormalTime != null &&
                                             member['assistedAt']
                                                 .toDate()
-                                                .isAfter(listStartNormalTime!
+                                                .isAfter(listStartNormalTime
                                                     .toDate()) &&
                                             member['assistedAt']
                                                 .toDate()
-                                                .isBefore(listEndNormalTime!
-                                                    .toDate()))
+                                                .isBefore(
+                                                    listEndNormalTime.toDate()))
                                           Text(
                                             'Asistió en tiempo normal',
                                             style: TextStyle(

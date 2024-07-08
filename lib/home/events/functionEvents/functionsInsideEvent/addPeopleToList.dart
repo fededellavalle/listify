@@ -272,9 +272,11 @@ class _AddPeopleToListState extends State<AddPeopleToList> {
             CupertinoIcons.left_chevron,
             color: Colors.white,
           ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          onPressed: isLoading
+              ? null
+              : () {
+                  Navigator.of(context).pop();
+                },
         ),
       ),
       body: Padding(

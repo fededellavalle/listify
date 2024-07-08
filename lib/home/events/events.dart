@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:app_listas/styles/eventButtonSkeleton.dart';
 import 'package:app_listas/styles/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -98,7 +99,7 @@ class _EventsPageState extends State<EventsPage>
 
             QuerySnapshot companySnapshot = await FirebaseFirestore.instance
                 .collection('companies')
-                .where('username', isEqualTo: companyUsername)
+                .where('companyUsername', isEqualTo: companyUsername)
                 .get();
 
             List<String> companyIds =
@@ -200,7 +201,7 @@ class _EventsPageState extends State<EventsPage>
         }
 
         if (!snapshot.hasData) {
-          return Center(child: CircularProgressIndicator());
+          return Center(child: EventButtonSkeleton(scaleFactor: scaleFactor));
         }
 
         List<String> companyIds = snapshot.data!
@@ -229,7 +230,8 @@ class _EventsPageState extends State<EventsPage>
                 }
 
                 if (eventSnapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return Center(
+                      child: EventButtonSkeleton(scaleFactor: scaleFactor));
                 }
 
                 final events = eventSnapshot.data!.docs;
@@ -318,7 +320,7 @@ class _EventsPageState extends State<EventsPage>
           );
         } else if (relationshipSnapshot.connectionState ==
             ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return Center(child: EventButtonSkeleton(scaleFactor: scaleFactor));
         } else {
           List<Map<String, dynamic>> companyRelationships =
               relationshipSnapshot.data!;
@@ -331,7 +333,7 @@ class _EventsPageState extends State<EventsPage>
               return StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('companies')
-                    .where('username', isEqualTo: companyUsername)
+                    .where('companyUsername', isEqualTo: companyUsername)
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
@@ -343,7 +345,8 @@ class _EventsPageState extends State<EventsPage>
                   }
 
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
+                    return Center(
+                        child: EventButtonSkeleton(scaleFactor: scaleFactor));
                   }
 
                   List<String> companyIds =
@@ -371,7 +374,9 @@ class _EventsPageState extends State<EventsPage>
 
                           if (eventSnapshot.connectionState ==
                               ConnectionState.waiting) {
-                            return Center(child: CircularProgressIndicator());
+                            return Center(
+                                child: EventButtonSkeleton(
+                                    scaleFactor: scaleFactor));
                           }
 
                           WidgetsBinding.instance.addPostFrameCallback((_) {

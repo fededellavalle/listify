@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:unicons/unicons.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../styles/button.dart';
-import 'functionsGestionPersonal/crearCategoriaPersonal.dart';
+import 'functionsGestionPersonal/createPersonalCategory.dart';
 import 'functionsGestionPersonal/insideCategory.dart';
 
 class GestionPersonal extends StatefulWidget {

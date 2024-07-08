@@ -113,9 +113,11 @@ class _CreateCompanyState extends State<CreateCompany> {
             CupertinoIcons.left_chevron,
             color: Colors.white,
           ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          onPressed: _isLoading
+              ? null
+              : () {
+                  Navigator.of(context).pop();
+                },
         ),
       ),
       body: SingleChildScrollView(

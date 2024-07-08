@@ -153,9 +153,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
             CupertinoIcons.left_chevron,
             color: Colors.white,
           ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          onPressed: _isLoading
+              ? null
+              : () {
+                  Navigator.of(context).pop();
+                },
         ),
         backgroundColor: Colors.black,
         centerTitle: true,

@@ -190,7 +190,7 @@ class _CompanyWidgetState extends State<CompanyWidget> {
                           EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade700.withOpacity(0.4),
+                          color: Colors.blueGrey.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10 * scaleFactor),
                         ),
                         child: Column(
@@ -379,7 +379,7 @@ class _CompanyWidgetState extends State<CompanyWidget> {
                             horizontal: 10.0 * scaleFactor),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade700.withOpacity(0.4),
+                            color: Colors.blueGrey.withOpacity(0.1),
                             borderRadius:
                                 BorderRadius.circular(10 * scaleFactor),
                           ),
@@ -504,7 +504,7 @@ class _CompanyWidgetState extends State<CompanyWidget> {
                   padding: EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade700.withOpacity(0.4),
+                      color: Colors.blueGrey.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10 * scaleFactor),
                     ),
                     child: Column(

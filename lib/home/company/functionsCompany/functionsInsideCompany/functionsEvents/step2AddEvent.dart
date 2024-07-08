@@ -70,6 +70,7 @@ class _Step2AddEventState extends State<Step2AddEvent> {
           selectedEndExtraDate: null,
           ticketExtraPrice: null,
           allowSublists: false,
+          onlyWriteOwners: false,
         ),
       ];
     } else {
@@ -92,6 +93,7 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                 ? (list['ticketExtraPrice'] as num).toDouble()
                 : null,
             allowSublists: list['allowSublists'] ?? false,
+            onlyWriteOwners: list['onlyWriteOwners'] ?? false,
           ),
       ];
     }
@@ -271,8 +273,13 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                       color: skyBlueSecondary,
                     ),
                   ),
+                  counterText: '',
                 ),
-                style: TextStyle(color: Colors.white, fontFamily: 'SFPro'),
+                maxLength: 25,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'SFPro',
+                ),
               ),
               SizedBox(height: 16 * scaleFactor),
               DropdownButtonFormField<String>(
@@ -540,39 +547,81 @@ class _Step2AddEventState extends State<Step2AddEvent> {
       );
     } else {
       if (listName.isNotEmpty) {
-        setState(() {
-          _lists.add(ListItem(
-            name: listName,
-            type: listType,
-            addExtraTime: false,
-            selectedStartDate: _availableDates.first,
-            selectedEndDate: _availableDates.last,
-            ticketPrice: widget.ticketValue,
-            selectedStartExtraDate: null,
-            selectedEndExtraDate: null,
-            ticketExtraPrice: widget.ticketValue,
-            allowSublists: false,
-          ));
-          _listNameController.clear();
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Se ha creado la lista: $listName',
-              style: TextStyle(
-                fontFamily: 'SFPro',
-                fontSize: 14 * scaleFactor,
+        // Eliminar espacios en blanco y comparar el nombre de la lista
+        String trimmedListName = listName.trim().toLowerCase();
+        if (trimmedListName == 'personal') {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              double scaleFactor = MediaQuery.of(context).size.width / 375.0;
+              return AlertDialog(
+                title: Text(
+                  'Error al Crear Lista',
+                  style: TextStyle(
+                    fontFamily: 'SFPro',
+                    fontSize: 18 * scaleFactor,
+                  ),
+                ),
+                content: Text(
+                  'No se puede crear una lista con este nombre.',
+                  style: TextStyle(
+                    fontFamily: 'SFPro',
+                    fontSize: 16 * scaleFactor,
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      'Aceptar',
+                      style: TextStyle(
+                        fontFamily: 'SFPro',
+                        fontSize: 14 * scaleFactor,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        } else {
+          setState(() {
+            _lists.add(ListItem(
+              name: listName,
+              type: listType,
+              addExtraTime: false,
+              selectedStartDate: _availableDates.first,
+              selectedEndDate: _availableDates.last,
+              ticketPrice: widget.ticketValue,
+              selectedStartExtraDate: null,
+              selectedEndExtraDate: null,
+              ticketExtraPrice: widget.ticketValue,
+              allowSublists: false,
+              onlyWriteOwners: false,
+            ));
+            _listNameController.clear();
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Se ha creado la lista: $listName',
+                style: TextStyle(
+                  fontFamily: 'SFPro',
+                  fontSize: 14 * scaleFactor,
+                ),
+              ),
+              duration: Duration(seconds: 3),
+              action: SnackBarAction(
+                label: 'Aceptar',
+                onPressed: () {},
+                textColor: Colors.white,
+                disabledTextColor: Colors.grey,
               ),
             ),
-            duration: Duration(seconds: 3),
-            action: SnackBarAction(
-              label: 'Aceptar',
-              onPressed: () {},
-              textColor: Colors.white,
-              disabledTextColor: Colors.grey,
-            ),
-          ),
-        );
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1356,57 +1405,62 @@ class _Step2AddEventState extends State<Step2AddEvent> {
                                       ],
                                     ),
                                   ),
-                                  CheckboxListTile(
-                                    value: _lists[index].allowSublists,
-                                    onChanged: (bool? newValue) {
-                                      if (newValue != null) {
-                                        setState(() {
-                                          _lists[index].allowSublists =
-                                              newValue;
-                                        });
-                                      }
-                                    },
-                                    activeColor: Colors.blue,
-                                    checkColor: Colors.white,
-                                    controlAffinity:
-                                        ListTileControlAffinity.leading,
-                                    title: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            'Permitir Sublistas dentro de la Lista',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontFamily: 'SFPro',
-                                              fontSize: 14 * scaleFactor,
-                                            ),
-                                          ),
-                                        ),
-                                        Icon(
-                                          Icons.star,
-                                          color: Colors.yellow,
-                                          size: 20 * scaleFactor,
-                                        ),
-                                      ],
+                                  SwitchListTile(
+                                    title: Text(
+                                      'Permitir Sublistas dentro de la Lista',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontFamily: 'SFPro',
+                                        fontSize: 14 * scaleFactor,
+                                      ),
                                     ),
+                                    value: _lists[index].allowSublists,
+                                    onChanged: (newValue) {
+                                      setState(() {
+                                        _lists[index].allowSublists = newValue;
+                                      });
+                                    },
+                                    activeColor: Colors.green,
+                                  ),
+                                  SwitchListTile(
+                                    title: Text(
+                                      'Solamente pueden escribir los owners de la empresa',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontFamily: 'SFPro',
+                                        fontSize: 14 * scaleFactor,
+                                      ),
+                                    ),
+                                    value: _lists[index].onlyWriteOwners,
+                                    onChanged: (newValue) {
+                                      setState(() {
+                                        _lists[index].onlyWriteOwners =
+                                            newValue;
+                                      });
+                                    },
+                                    activeColor: Colors.green,
                                   ),
                                 ],
                               ),
                             ),
                             SizedBox(
+                              height: 5,
+                            ),
+                            SizedBox(
                               width: double.infinity,
-                              child: ElevatedButton(
+                              child: CupertinoButton(
                                 onPressed: () {
                                   if (_formKey.currentState!.validate()) {
                                     Navigator.pop(context);
                                   }
                                 },
-                                style: buttonPrimary,
+                                color: skyBluePrimary,
                                 child: Text(
                                   'Confirmar Configuración',
                                   style: TextStyle(
                                     fontFamily: 'SFPro',
                                     fontSize: 16 * scaleFactor,
+                                    color: Colors.black,
                                   ),
                                 ),
                               ),

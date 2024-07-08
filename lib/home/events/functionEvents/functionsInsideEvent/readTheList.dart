@@ -269,6 +269,25 @@ class _ReadTheListState extends State<ReadTheList> {
                     Timestamp? listStartExtraTime =
                         eventListData['listStartExtraTime'];
 
+                    if ((listStartExtraTime == null &&
+                            listStartTime.toDate().isAfter(DateTime.now())) ||
+                        (listStartExtraTime != null &&
+                            listStartExtraTime
+                                .toDate()
+                                .isAfter(DateTime.now()) &&
+                            listStartTime.toDate().isAfter(DateTime.now()))) {
+                      return Center(
+                        child: Text(
+                          'La lista no esta abierta.',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'SFPro',
+                            fontSize: 16 * scaleFactor,
+                          ),
+                        ),
+                      );
+                    }
+
                     if ((listEndExtraTime == null &&
                             listEndTime.toDate().isBefore(DateTime.now())) ||
                         (listEndExtraTime != null &&

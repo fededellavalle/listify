@@ -1,6 +1,7 @@
 import 'package:app_listas/home/events/functionEvents/insideEvent.dart';
 import 'package:app_listas/home/profile/profile.dart';
 import 'package:app_listas/styles/color.dart';
+import 'package:app_listas/styles/eventButtonSkeleton.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -75,6 +76,19 @@ class _HomePageState extends State<HomePage> {
 
       List<String> companyIds =
           companySnapshot.docs.map((doc) => doc.id).toList();
+
+      // Contar eventos de las compañías donde el usuario es co-owner
+      QuerySnapshot<Map<String, dynamic>> coOwnerCompanySnapshot =
+          await FirebaseFirestore.instance
+              .collection('companies')
+              .where('co-ownerUid', isEqualTo: widget.uid)
+              .get();
+
+      List<String> coOwnerCompanyIds =
+          coOwnerCompanySnapshot.docs.map((doc) => doc.id).toList();
+
+      // Combinar las listas de companyIds y coOwnerCompanyIds
+      companyIds.addAll(coOwnerCompanyIds);
 
       int liveEvents = 0;
       int activeEvents = 0;
@@ -419,7 +433,10 @@ class _HomePageState extends State<HomePage> {
                 );
               }
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
+                return Center(
+                    child: EventButtonSkeleton(
+                  scaleFactor: scaleFactor,
+                ));
               }
 
               if (!snapshot.hasData || snapshot.data!.isEmpty) {

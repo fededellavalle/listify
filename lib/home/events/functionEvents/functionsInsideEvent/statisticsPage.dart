@@ -34,6 +34,7 @@ class StatisticsPage extends StatelessWidget {
         'normalTimeCount': 0,
         'normalTimeMoneyCount': 0,
         'extraTimeCount': 0,
+        'extraTimeMoneyCount': 0,
       };
     }
 
@@ -58,6 +59,7 @@ class StatisticsPage extends StatelessWidget {
         'normalTimeCount': 0,
         'normalTimeMoneyCount': 0,
         'extraTimeCount': 0,
+        'extraTimeMoneyCount': 0,
       };
     }
 
@@ -70,17 +72,17 @@ class StatisticsPage extends StatelessWidget {
     List<Timestamp> assistedTimes = [];
     int normalTimeCount = 0;
     int extraTimeCount = 0;
-    double ticketPrice = 0;
-    double? ticketExtraPrice = 0;
     double normalTimeMoneyCount = 0;
+    double extraTimeMoneyCount = 0;
 
     Timestamp? listStartNormalTime = eventListData['listStartTime'];
     Timestamp? listEndNormalTime = eventListData['listEndTime'];
     Timestamp? listStartExtraTime = eventListData['listStartExtraTime'];
     Timestamp? listEndExtraTime = eventListData['listEndExtraTime'];
 
-    ticketPrice = eventListData['ticketPrice'];
-    print(eventListData['ticketExtraPrice']);
+    double ticketPrice = eventListData['ticketPrice']?.toDouble() ?? 0.0;
+    double ticketExtraPrice =
+        eventListData['ticketExtraPrice']?.toDouble() ?? 0.0;
 
     print(ticketPrice);
     print(ticketExtraPrice);
@@ -99,6 +101,7 @@ class StatisticsPage extends StatelessWidget {
                 assistedDateTime.isAfter(listStartExtraTime.toDate()) &&
                 assistedDateTime.isBefore(listEndExtraTime.toDate())) {
               extraTimeCount++;
+              extraTimeMoneyCount = extraTimeMoneyCount + ticketExtraPrice;
             } else if (listStartNormalTime != null &&
                 listEndNormalTime != null &&
                 assistedDateTime.isAfter(listStartNormalTime.toDate()) &&
@@ -118,6 +121,7 @@ class StatisticsPage extends StatelessWidget {
       'normalTimeCount': normalTimeCount,
       'normalTimeMoneyCount': normalTimeMoneyCount,
       'extraTimeCount': extraTimeCount,
+      'extraTimeMoneyCount': extraTimeMoneyCount,
     };
   }
 
@@ -191,6 +195,8 @@ class StatisticsPage extends StatelessWidget {
           int extraTimeCount = snapshot.data!['extraTimeCount'] as int;
           double normalTimeMoneyCount =
               snapshot.data!['normalTimeMoneyCount'] as double;
+          double extraTimeMoneyCount =
+              snapshot.data!['extraTimeMoneyCount'] as double;
           List<Timestamp> assistedTimes =
               (snapshot.data!['assistedTimes'] as List<dynamic>)
                   .cast<Timestamp>();
@@ -272,6 +278,16 @@ class StatisticsPage extends StatelessWidget {
                       fontFamily: 'SFPro',
                       fontSize: 16 * scaleFactor,
                     ),
+                  ),
+                  SizedBox(height: 8 * scaleFactor),
+                  Text(
+                    'Dinero generado en tiempo extra: \$${extraTimeMoneyCount}',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontFamily: 'SFPro',
+                      fontSize: 16 * scaleFactor,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 8 * scaleFactor),
                   Text(

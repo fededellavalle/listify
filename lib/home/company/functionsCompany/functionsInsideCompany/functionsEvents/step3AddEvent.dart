@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'list_item.dart';
 import 'package:intl/intl.dart';
@@ -35,6 +37,7 @@ class Step3AddEvent extends StatefulWidget {
 
 class _Step3AddEventState extends State<Step3AddEvent> {
   bool _guardarPlantilla = false;
+  bool _crearListaPersonal = true;
   bool _isLoading = false;
 
   @override
@@ -57,6 +60,17 @@ class _Step3AddEventState extends State<Step3AddEvent> {
         ),
         iconTheme: IconThemeData(
           color: Colors.white,
+        ),
+        leading: IconButton(
+          icon: Icon(
+            CupertinoIcons.left_chevron,
+            color: Colors.white,
+          ),
+          onPressed: _isLoading
+              ? null
+              : () {
+                  Navigator.of(context).pop();
+                },
         ),
       ),
       body: SingleChildScrollView(
@@ -182,6 +196,24 @@ class _Step3AddEventState extends State<Step3AddEvent> {
                     ],
                   );
                 },
+              ),
+              SizedBox(height: 10 * scaleFactor),
+              SwitchListTile(
+                title: Text(
+                  'Crear una lista de tu personal',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'SFPro',
+                    fontSize: 14 * scaleFactor,
+                  ),
+                ),
+                value: _crearListaPersonal,
+                onChanged: (newValue) {
+                  setState(() {
+                    _crearListaPersonal = newValue;
+                  });
+                },
+                activeColor: Colors.green,
               ),
               SizedBox(height: 10 * scaleFactor),
               if (widget.template == null)
@@ -314,14 +346,79 @@ class _Step3AddEventState extends State<Step3AddEvent> {
           'listStartTime': listItem.selectedStartDate,
           'listEndTime': listItem.selectedEndDate,
           'ticketPrice': listItem.ticketPrice,
-          'membersList': [],
+          if (listItem.allowSublists) ...{
+            'sublists': [],
+          } else ...{
+            'membersList': [],
+          },
           'allowSublists': listItem.allowSublists,
+          'onlyWriteOwners': listItem.onlyWriteOwners,
           if (listItem.addExtraTime == true) ...{
             'listStartExtraTime': listItem.selectedStartExtraDate,
             'listEndExtraTime': listItem.selectedEndExtraDate,
             'ticketExtraPrice': listItem.ticketExtraPrice,
           }
         });
+      }
+
+      if (_crearListaPersonal) {
+        CollectionReference personalCategoriesCollection = FirebaseFirestore
+            .instance
+            .collection('companies')
+            .doc(widget.companyData['companyUsername'])
+            .collection('personalCategories');
+
+        String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
+        QuerySnapshot categoriesSnapshot =
+            await personalCategoriesCollection.get();
+
+        for (QueryDocumentSnapshot categoryDoc in categoriesSnapshot.docs) {
+          String categoryName = categoryDoc.id;
+          Map<String, dynamic> categoryData =
+              categoryDoc.data() as Map<String, dynamic>;
+          List<dynamic> members = categoryData['members'] ?? [];
+
+          List<Map<String, dynamic>> membersWithNames = [];
+
+          for (var member in members) {
+            String userUid = member['userUid'];
+            DocumentSnapshot userDoc = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(userUid)
+                .get();
+
+            if (userDoc.exists) {
+              String userName = userDoc['name'];
+              String lastName = userDoc['lastname'];
+
+              membersWithNames
+                  .add({'name': '$userName $lastName', 'assisted': false});
+            }
+          }
+
+          // Crear una sublista para cada categoría
+          DocumentReference listDoc = eventListsCollection.doc('Personal');
+
+          // Inicializar el documento 'Personal' si no existe
+          await listDoc.set({
+            'listName': 'Personal',
+            'listType': 'Lista de Asistencia',
+            'listStartTime': widget.startDateTime,
+            'listEndTime': widget.endDateTime,
+            'ticketPrice': widget.ticketValue,
+            'allowSublists': true,
+            'onlyWriteOwners': true,
+            'sublists': {}
+          }, SetOptions(merge: true));
+
+          // Actualizar el documento 'Personal' con la sublista
+          await listDoc.update({
+            'sublists.$currentUserId.$categoryName': {
+              'members': membersWithNames
+            },
+          });
+        }
       }
 
       if (_guardarPlantilla) {
@@ -433,6 +530,7 @@ class _Step3AddEventState extends State<Step3AddEvent> {
           'selectedEndExtraDate': listItem.selectedEndExtraDate,
           'ticketExtraPrice': listItem.ticketExtraPrice,
           'allowSublists': listItem.allowSublists,
+          'onlyWriteOwners': listItem.onlyWriteOwners,
         };
       }).toList(),
     });

@@ -262,9 +262,11 @@ class _AddSublistsToListState extends State<AddSublistsToList> {
             CupertinoIcons.left_chevron,
             color: Colors.white,
           ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          onPressed: isLoading
+              ? null
+              : () {
+                  Navigator.of(context).pop();
+                },
         ),
       ),
       body: Padding(

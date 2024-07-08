@@ -138,6 +138,46 @@ class _SublistsPageState extends State<SublistsPage> {
                   );
                 }
 
+                Timestamp listEndTime = eventListData['listEndTime'];
+                Timestamp? listEndExtraTime = eventListData['listEndExtraTime'];
+                Timestamp listStartTime = eventListData['listStartTime'];
+                Timestamp? listStartExtraTime =
+                    eventListData['listStartExtraTime'];
+
+                if ((listStartExtraTime == null &&
+                        listStartTime.toDate().isAfter(DateTime.now())) ||
+                    (listStartExtraTime != null &&
+                        listStartExtraTime.toDate().isAfter(DateTime.now()) &&
+                        listStartTime.toDate().isAfter(DateTime.now()))) {
+                  return Center(
+                    child: Text(
+                      'La lista no esta abierta.',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'SFPro',
+                        fontSize: 16 * scaleFactor,
+                      ),
+                    ),
+                  );
+                }
+
+                if ((listEndExtraTime == null &&
+                        listEndTime.toDate().isBefore(DateTime.now())) ||
+                    (listEndExtraTime != null &&
+                        listEndExtraTime.toDate().isBefore(DateTime.now()) &&
+                        listEndTime.toDate().isBefore(DateTime.now()))) {
+                  return Center(
+                    child: Text(
+                      'La lista se cerró.',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'SFPro',
+                        fontSize: 16 * scaleFactor,
+                      ),
+                    ),
+                  );
+                }
+
                 var sublists = eventListData['sublists'];
                 if (sublists is! Map<String, dynamic>) {
                   return Center(
