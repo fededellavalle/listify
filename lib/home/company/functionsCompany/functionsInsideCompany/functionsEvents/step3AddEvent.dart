@@ -15,7 +15,7 @@ class Step3AddEvent extends StatefulWidget {
   final DateTime? startDateTime;
   final DateTime? endDateTime;
   final List<ListItem> lists;
-  File? image;
+  final File? image;
   final Map<String, dynamic> companyData;
   final Map<String, dynamic>? template;
 

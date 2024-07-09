@@ -269,8 +269,6 @@ class _ReadTheSublistState extends State<ReadTheSublist> {
                     .toLowerCase()
                     .compareTo(b['name'].toString().toLowerCase()));
 
-                Timestamp? listStartNormalTime = listData['listStartTime'];
-                Timestamp? listEndNormalTime = listData['listEndTime'];
                 Timestamp? listStartExtraTime = listData['listStartExtraTime'];
                 Timestamp? listEndExtraTime = listData['listEndExtraTime'];
 

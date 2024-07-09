@@ -1,4 +1,3 @@
-import 'package:app_listas/styles/button.dart';
 import 'package:app_listas/styles/color.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +12,7 @@ class Step2AddEvent extends StatefulWidget {
   final double ticketValue;
   final DateTime? startDateTime;
   final DateTime? endDateTime;
-  File? image;
+  final File? image;
   final Map<String, dynamic> companyData;
   final Map<String, dynamic>? template;
 
