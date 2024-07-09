@@ -146,29 +146,6 @@ class _crearCategoriaPersonalState extends State<crearCategoriaPersonal> {
                     });
                   },
                 ),
-                SwitchListTile(
-                  title: Text(
-                    'Poder gestionar el personal',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontFamily: 'SFPro',
-                      fontSize: 16 * scaleFactor,
-                    ),
-                  ),
-                  activeColor: Colors.green,
-                  value: isChecked3!,
-                  onChanged: (bool value) {
-                    setState(() {
-                      isChecked3 = value;
-                      if (isChecked3! &&
-                          !selectedPermises.contains('Gestionar')) {
-                        selectedPermises.add('Gestionar');
-                      } else {
-                        selectedPermises.remove('Gestionar');
-                      }
-                    });
-                  },
-                ),
               ],
             ),
             SizedBox(height: 8 * scaleFactor),

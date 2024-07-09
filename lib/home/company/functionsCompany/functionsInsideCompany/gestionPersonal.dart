@@ -191,7 +191,7 @@ class _GestionPersonalState extends State<GestionPersonal>
               color: Colors.grey.shade700.withOpacity(0.4),
               borderRadius: BorderRadius.circular(10 * scaleFactor),
             ),
-            height: personalCategories.length * 50.0 * scaleFactor,
+            height: personalCategories.length * 47 * scaleFactor,
             child: ListView.builder(
               itemCount: personalCategories.length,
               itemBuilder: (context, index) {

@@ -19,11 +19,38 @@ class CompanyPage extends StatefulWidget {
 class _CompanyPageState extends State<CompanyPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late Stream<List<Map<String, dynamic>>>? _userCompaniesStream;
+  late Stream<List<Map<String, dynamic>>>? _invitedCompaniesStream;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+
+    // Initialize streams
+    _userCompaniesStream = _fetchUserCompanyData(widget.uid);
+    _invitedCompaniesStream = _fetchUserCompanyRelationships(widget.uid);
+
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        setState(() {
+          // Stop the current streams when changing tabs
+          _userCompaniesStream = null;
+          _invitedCompaniesStream = null;
+        });
+        // Reinitialize streams after a delay to ensure the tab has changed
+        Future.delayed(Duration(milliseconds: 200), () {
+          setState(() {
+            if (_tabController.index == 0) {
+              _userCompaniesStream = _fetchUserCompanyData(widget.uid);
+            } else {
+              _invitedCompaniesStream =
+                  _fetchUserCompanyRelationships(widget.uid);
+            }
+          });
+        });
+      }
+    });
   }
 
   @override
@@ -133,7 +160,7 @@ class _CompanyPageState extends State<CompanyPage>
       children: [
         Expanded(
           child: StreamBuilder<List<Map<String, dynamic>>>(
-            stream: _fetchUserCompanyData(widget.uid),
+            stream: _tabController.index == 0 ? _userCompaniesStream : null,
             builder: (context, companySnapshot) {
               if (companySnapshot.connectionState == ConnectionState.waiting) {
                 return Center(child: LoadingScreen());
@@ -148,7 +175,8 @@ class _CompanyPageState extends State<CompanyPage>
                     ),
                   ),
                 );
-              } else if (companySnapshot.data!.isEmpty) {
+              } else if (companySnapshot.data == null ||
+                  companySnapshot.data!.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -200,7 +228,7 @@ class _CompanyPageState extends State<CompanyPage>
       children: [
         Expanded(
           child: StreamBuilder<List<Map<String, dynamic>>>(
-            stream: _fetchUserCompanyRelationships(widget.uid),
+            stream: _tabController.index == 1 ? _invitedCompaniesStream : null,
             builder: (context, relationshipSnapshot) {
               if (relationshipSnapshot.connectionState ==
                   ConnectionState.waiting) {
@@ -216,7 +244,8 @@ class _CompanyPageState extends State<CompanyPage>
                     ),
                   ),
                 );
-              } else if (relationshipSnapshot.data!.isEmpty) {
+              } else if (relationshipSnapshot.data == null ||
+                  relationshipSnapshot.data!.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -297,45 +326,22 @@ class _CompanyPageState extends State<CompanyPage>
           .snapshots()
           .map((snapshot) => snapshot.docs
               .map((doc) => doc.data() as Map<String, dynamic>)
-              .toList())
-          .asyncExpand((ownerCompanies) {
-        return FirebaseFirestore.instance
-            .collection('companies')
-            .where('co-ownerUid', isEqualTo: uid)
-            .snapshots()
-            .map((snapshot) => snapshot.docs
-                .map((doc) => doc.data() as Map<String, dynamic>)
-                .toList())
-            .map((coOwnerCompanies) {
-          ownerCompanies.addAll(coOwnerCompanies);
-          return ownerCompanies;
-        });
-      });
-    } else {
-      return Stream.empty();
+              .toList());
     }
+    return Stream.value([]);
   }
 
   Stream<List<Map<String, dynamic>>> _fetchUserCompanyRelationships(
       String? uid) {
     if (uid != null) {
       return FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
+          .collection('relationships')
+          .where('userUid', isEqualTo: uid)
           .snapshots()
-          .map((snapshot) {
-        if (snapshot.exists) {
-          Map<String, dynamic> userData =
-              snapshot.data() as Map<String, dynamic>;
-          var companyRelationships =
-              userData['companyRelationship'] as List<dynamic>? ?? [];
-          return companyRelationships.cast<Map<String, dynamic>>();
-        } else {
-          return [];
-        }
-      });
-    } else {
-      return Stream.empty();
+          .map((snapshot) => snapshot.docs
+              .map((doc) => doc.data() as Map<String, dynamic>)
+              .toList());
     }
+    return Stream.value([]);
   }
 }
