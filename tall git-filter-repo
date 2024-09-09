@@ -1,0 +1,23 @@
+[33mcommit 69b6031a70a64de7dc0aae247f81d486f7059d8f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m
+Author: Fede Dellavalle <fededellavalle02@gmail.com>
+Date:   Thu Aug 22 08:20:50 2024 -0300
+
+    Configurar Git LFS y eliminar lib.rar
+
+[33mcommit b9f81715bbd5ed4fa0ce260f64d807a61b504b3e[m
+Author: Fede Dellavalle <fededellavalle02@gmail.com>
+Date:   Wed May 22 19:14:38 2024 -0300
+
+    Tratando de terminar la app
+
+[33mcommit 543d87b38fdaab8e5e053b9356d622eec7a5937c[m
+Author: Fede Dellavalle <fededellavalle02@gmail.com>
+Date:   Wed Apr 24 15:34:25 2024 -0300
+
+    Terminando con la parte de las listas
+
+[33mcommit e97a1e3fd984580619a257dac90d9692ca5fb9cf[m
+Author: Fede Dellavalle <fededellavalle02@gmail.com>
+Date:   Wed Apr 3 15:53:29 2024 -0300
+
+    Terminando con los textField

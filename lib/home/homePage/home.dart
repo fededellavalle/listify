@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
+import 'package:video_player/video_player.dart';
 
 class HomePage extends StatefulWidget {
   final String? uid;
@@ -22,6 +23,7 @@ class _HomePageState extends State<HomePage> {
   int _desactiveEvents = 0;
   DateTime _selectedDate = DateTime.now();
   String? _profileImageUrl;
+  late VideoPlayerController _controller;
 
   @override
   void initState() {
@@ -29,6 +31,21 @@ class _HomePageState extends State<HomePage> {
     _getFirstName(widget.uid);
     _countEvents();
     _getProfileImageUrl();
+    _controller =
+        VideoPlayerController.asset('lib/assets/videos/banner_video.mp4')
+          ..initialize().then((_) {
+            setState(() {
+              _controller.setLooping(true);
+              _controller.play();
+              _controller.setVolume(0.0);
+            });
+          });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   Future<void> _getFirstName(String? uid) async {
@@ -280,14 +297,15 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildAdvertisementBanner(double scaleFactor) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12 * scaleFactor),
-        child: Image.asset(
-          'lib/assets/images/logo-exodo.png',
-          height: 100 * scaleFactor,
+        child: Container(
+          height: 150 * scaleFactor,
           width: double.infinity,
-          fit: BoxFit.cover,
+          child: _controller.value.isInitialized
+              ? VideoPlayer(_controller)
+              : Center(child: CircularProgressIndicator()),
         ),
       ),
     );
@@ -327,7 +345,7 @@ class _HomePageState extends State<HomePage> {
                   child: Text(
                     date.day.toString(),
                     style: TextStyle(
-                      color: Colors.white,
+                      color: isSelected ? Colors.black : Colors.white,
                       fontWeight:
                           isSelected ? FontWeight.bold : FontWeight.normal,
                       fontFamily: 'SFPro',

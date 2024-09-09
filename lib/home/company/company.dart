@@ -335,12 +335,17 @@ class _CompanyPageState extends State<CompanyPage>
       String? uid) {
     if (uid != null) {
       return FirebaseFirestore.instance
-          .collection('relationships')
-          .where('userUid', isEqualTo: uid)
+          .collection('users')
+          .doc(uid)
           .snapshots()
-          .map((snapshot) => snapshot.docs
-              .map((doc) => doc.data() as Map<String, dynamic>)
-              .toList());
+          .map((doc) {
+        if (doc.exists && doc.data()!.containsKey('companyRelationship')) {
+          return List<Map<String, dynamic>>.from(
+              doc.data()!['companyRelationship']);
+        } else {
+          return [];
+        }
+      });
     }
     return Stream.value([]);
   }

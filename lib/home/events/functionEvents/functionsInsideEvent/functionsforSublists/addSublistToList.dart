@@ -50,7 +50,11 @@ class _AddSublistsToListState extends State<AddSublistsToList> {
     });
     FocusScope.of(context).unfocus();
     final sublistName = _sublistNameController.text.trim();
+
     if (sublistName.isNotEmpty) {
+      // Formatear el nombre de la sublista para que la primera letra de cada palabra sea mayúscula
+      String formattedSublistName = _capitalizeName(sublistName);
+
       try {
         DocumentReference listDoc = FirebaseFirestore.instance
             .collection('companies')
@@ -65,38 +69,19 @@ class _AddSublistsToListState extends State<AddSublistsToList> {
         var listData = listSnapshot.data() as Map<String, dynamic>?;
 
         if (listData != null && listData.containsKey('sublists')) {
-          var sublists = listData['sublists'] as Map<String, dynamic>;
-
-          if (sublists.containsKey(userId) &&
-              (sublists[userId] as Map<String, dynamic>).length >= 6) {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text(
-                    'Error',
-                    style: TextStyle(fontFamily: 'SFPro'),
-                  ),
-                  content: Text(
-                    'No puedes añadir más de 6 sublistas.',
-                    style: TextStyle(fontFamily: 'SFPro'),
-                  ),
-                  actions: <Widget>[
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(
-                        'OK',
-                        style: TextStyle(fontFamily: 'SFPro'),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            );
-            setState(() {
-              isLoading = false;
-            });
-            return;
+          var sublists = listData['sublists'];
+          if (sublists is List) {
+            sublists = <String, dynamic>{};
+          } else if (sublists is Map<String, dynamic>) {
+            if (sublists.containsKey(userId) &&
+                (sublists[userId] as Map<String, dynamic>).length >= 6) {
+              _showErrorDialog(
+                  'No puedes añadir más de 6 sublistas.'); // Reutilizando la función de diálogo
+              setState(() {
+                isLoading = false;
+              });
+              return;
+            }
           }
         }
 
@@ -112,38 +97,21 @@ class _AddSublistsToListState extends State<AddSublistsToList> {
         for (var doc in allListsSnapshot.docs) {
           var data = doc.data() as Map<String, dynamic>?;
           if (data != null && data.containsKey('sublists')) {
-            var allSublists = data['sublists'] as Map<String, dynamic>;
-            for (var key in allSublists.keys) {
-              var userSublists = allSublists[key] as Map<String, dynamic>;
-              if (userSublists.containsKey(sublistName)) {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Text(
-                        'Error',
-                        style: TextStyle(fontFamily: 'SFPro'),
-                      ),
-                      content: Text(
-                        'El nombre de la sublista ya existe en otra lista de otro usuario.',
-                        style: TextStyle(fontFamily: 'SFPro'),
-                      ),
-                      actions: <Widget>[
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: Text(
-                            'OK',
-                            style: TextStyle(fontFamily: 'SFPro'),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                );
-                setState(() {
-                  isLoading = false;
-                });
-                return;
+            var allSublists = data['sublists'];
+            if (allSublists is List) {
+              allSublists = <String, dynamic>{};
+            }
+            if (allSublists is Map<String, dynamic>) {
+              for (var key in allSublists.keys) {
+                var userSublists = allSublists[key] as Map<String, dynamic>;
+                if (userSublists.containsKey(formattedSublistName)) {
+                  _showErrorDialog(
+                      'El nombre de la sublista ya existe en otra lista de otro usuario.');
+                  setState(() {
+                    isLoading = false;
+                  });
+                  return;
+                }
               }
             }
           }
@@ -151,9 +119,9 @@ class _AddSublistsToListState extends State<AddSublistsToList> {
 
         // Agregar la nueva sublista con el creador en 'members'
         await listDoc.update({
-          'sublists.$userId.$sublistName': {
+          'sublists.$userId.$formattedSublistName': {
             'members': [
-              {'name': sublistName, 'assisted': false}
+              {'name': formattedSublistName, 'assisted': false}
             ]
           },
         });
@@ -181,6 +149,42 @@ class _AddSublistsToListState extends State<AddSublistsToList> {
         ),
       );
     }
+  }
+
+  String _capitalizeName(String name) {
+    return name
+        .split(' ')
+        .map((word) => word.isNotEmpty
+            ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}'
+            : '')
+        .join(' ');
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Error',
+            style: TextStyle(fontFamily: 'SFPro'),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(fontFamily: 'SFPro'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'OK',
+                style: TextStyle(fontFamily: 'SFPro'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _deleteSublist(String sublistName) async {
@@ -310,7 +314,9 @@ class _AddSublistsToListState extends State<AddSublistsToList> {
                 fontSize: 14 * scaleFactor,
               ),
               inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
+                FilteringTextInputFormatter.allow(
+                  RegExp(r'^[a-zA-ZñÑ,\s]+$'),
+                ),
               ],
               maxLength: 25,
             ),

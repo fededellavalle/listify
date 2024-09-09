@@ -1,4 +1,5 @@
 import 'package:app_listas/styles/color.dart';
+import 'package:app_listas/styles/helpDialog.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -50,119 +51,30 @@ class _AddPeopleToSublistState extends State<AddPeopleToSublist> {
       isLoading = true;
     });
     FocusScope.of(context).unfocus();
-    final name = _nameController.text.trim();
-    if (name.isNotEmpty) {
-      // Verificar si el nombre ya existe en la sublista actual
-      var listDoc = FirebaseFirestore.instance
-          .collection('companies')
-          .doc(widget.companyId)
-          .collection('myEvents')
-          .doc(widget.eventId)
-          .collection('eventLists')
-          .doc(widget.list['listName']);
+    final names = _nameController.text.trim();
 
-      var listSnapshot = await listDoc.get();
-      var listData = listSnapshot.data() as Map<String, dynamic>?;
+    if (names.isNotEmpty) {
+      // Dividir los nombres usando la coma como delimitador
+      List<String> nameList =
+          names.split(',').map((name) => name.trim()).toList();
 
-      if (listData != null &&
-          listData.containsKey('sublists') &&
-          listData['sublists'].containsKey(userId) &&
-          listData['sublists'][userId].containsKey(widget.sublistName)) {
-        var sublist = listData['sublists'][userId][widget.sublistName]
-            as Map<String, dynamic>;
-
-        if (sublist.containsKey('members')) {
-          var members = sublist['members'] as List<dynamic>;
-
-          if (members.length >= 25) {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: const Text(
-                    'Error',
-                    style: TextStyle(fontFamily: 'SFPro'),
-                  ),
-                  content: const Text(
-                    'No puedes añadir más de 25 personas a una sublista.',
-                    style: TextStyle(fontFamily: 'SFPro'),
-                  ),
-                  actions: <Widget>[
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text(
-                        'OK',
-                        style: TextStyle(fontFamily: 'SFPro'),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            );
-            setState(() {
-              isLoading = false;
-            });
-            return;
-          }
-
-          if (members.any((member) => member['name'] == name)) {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: const Text(
-                    'Error',
-                    style: TextStyle(fontFamily: 'SFPro'),
-                  ),
-                  content: const Text(
-                    'El nombre ya está en esta sublista.',
-                    style: TextStyle(fontFamily: 'SFPro'),
-                  ),
-                  actions: <Widget>[
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text(
-                        'OK',
-                        style: TextStyle(fontFamily: 'SFPro'),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            );
-            setState(() {
-              isLoading = false;
-            });
-            return;
-          }
+      // Verificar y agregar cada nombre
+      for (String name in nameList) {
+        if (name.isNotEmpty) {
+          await _addSinglePersonToSublist(name);
         }
       }
 
-      // El nombre no existe en la sublista actual, agregarlo a la sublista
-      try {
-        await listDoc.update({
-          'sublists.$userId.${widget.sublistName}.members':
-              FieldValue.arrayUnion([
-            {'name': name, 'assisted': false},
-          ]),
-        });
-
-        _nameController.clear();
-      } catch (e) {
-        print('Error adding person to sublist: $e');
-      } finally {
-        setState(() {
-          isLoading = false;
-        });
-      }
+      _nameController
+          .clear(); // Limpiar el campo después de agregar los nombres
     } else {
       setState(() {
         isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Debe ingresar un nombre.',
+            'Debe ingresar al menos un nombre.',
             style: TextStyle(
               fontFamily: 'SFPro',
             ),
@@ -170,10 +82,163 @@ class _AddPeopleToSublistState extends State<AddPeopleToSublist> {
         ),
       );
     }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  Future<void> _addSinglePersonToSublist(String name) async {
+    // Formatea el nombre para que la primera letra de cada palabra sea mayúscula
+    String formattedName = capitalizeName(name);
+
+    // Verifica que el nombre no exceda las 25 letras
+    if (formattedName.length > 25) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(
+              'Error',
+              style: TextStyle(fontFamily: 'SFPro'),
+            ),
+            content: Text(
+              'El nombre no puede exceder de 25 letras.',
+              style: TextStyle(fontFamily: 'SFPro'),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  'OK',
+                  style: TextStyle(fontFamily: 'SFPro'),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+      return; // Salir de la función si el nombre excede las 25 letras
+    }
+
+    var listDoc = FirebaseFirestore.instance
+        .collection('companies')
+        .doc(widget.companyId)
+        .collection('myEvents')
+        .doc(widget.eventId)
+        .collection('eventLists')
+        .doc(widget.list['listName']);
+
+    var listSnapshot = await listDoc.get();
+    var listData = listSnapshot.data() as Map<String, dynamic>?;
+
+    if (listData != null &&
+        listData.containsKey('sublists') &&
+        listData['sublists'].containsKey(userId) &&
+        listData['sublists'][userId].containsKey(widget.sublistName)) {
+      var sublist = listData['sublists'][userId][widget.sublistName]
+          as Map<String, dynamic>;
+
+      if (sublist.containsKey('members')) {
+        var members = sublist['members'] as List<dynamic>;
+
+        // Verificar si la sublista ya tiene más de 25 miembros
+        if (members.length >= 25) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text(
+                  'Error',
+                  style: TextStyle(fontFamily: 'SFPro'),
+                ),
+                content: Text(
+                  'No puedes añadir más de 25 personas a una sublista.',
+                  style: TextStyle(fontFamily: 'SFPro'),
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(
+                      'OK',
+                      style: TextStyle(fontFamily: 'SFPro'),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+          setState(() {
+            isLoading = false;
+          });
+          return;
+        }
+
+        // Verificar si el nombre ya existe en la sublista
+        if (members.any((member) => member['name'] == formattedName)) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text(
+                  'Error',
+                  style: TextStyle(fontFamily: 'SFPro'),
+                ),
+                content: Text(
+                  'El nombre "$formattedName" ya está en esta sublista.',
+                  style: TextStyle(fontFamily: 'SFPro'),
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(
+                      'OK',
+                      style: TextStyle(fontFamily: 'SFPro'),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+          setState(() {
+            isLoading = false;
+          });
+          return;
+        }
+      }
+    }
+
+    // El nombre no existe en la sublista actual, agregarlo a la sublista
+    try {
+      await listDoc.update({
+        'sublists.$userId.${widget.sublistName}.members':
+            FieldValue.arrayUnion([
+          {'name': formattedName, 'assisted': false},
+        ]),
+      });
+    } catch (e) {
+      print('Error adding person to sublist: $e');
+    }
+  }
+
+  String capitalizeName(String name) {
+    return name
+        .split(' ') // Divide el nombre en palabras
+        .map((word) => word.isNotEmpty
+            ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}'
+            : '')
+        .join(' '); // Vuelve a unir las palabras
   }
 
   void _removePerson(String name) async {
     if (name.isNotEmpty) {
+      // Verificar si el nombre que se quiere eliminar es igual al nombre de la sublista
+      if (name.toLowerCase() == widget.sublistName.toLowerCase()) {
+        _showErrorDialog(
+            'No puedes eliminar a $name porque es el nombre principal de la sublista.');
+        return;
+      }
+
       // Mostrar un diálogo de confirmación
       bool confirmDelete = await showDialog(
         context: context,
@@ -223,10 +288,7 @@ class _AddPeopleToSublistState extends State<AddPeopleToSublist> {
           await listDoc.update({
             'sublists.$userId.${widget.sublistName}.members':
                 FieldValue.arrayRemove([
-              {
-                'name': name,
-                'assisted': false
-              }, // Incluye todos los campos necesarios para identificar el elemento
+              {'name': name, 'assisted': false},
             ]),
           });
         } catch (e) {
@@ -234,6 +296,33 @@ class _AddPeopleToSublistState extends State<AddPeopleToSublist> {
         }
       }
     }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Error',
+            style: TextStyle(fontFamily: 'SFPro'),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(fontFamily: 'SFPro'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'OK',
+                style: TextStyle(fontFamily: 'SFPro'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -268,6 +357,17 @@ class _AddPeopleToSublistState extends State<AddPeopleToSublist> {
                   Navigator.of(context).pop();
                 },
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.help, // Icono de tickets
+              color: Colors.white,
+            ),
+            onPressed: () {
+              HelpDialog.showHelpDialog(context);
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: EdgeInsets.all(16 * scaleFactor),
@@ -281,7 +381,7 @@ class _AddPeopleToSublistState extends State<AddPeopleToSublist> {
                   color: Colors.grey,
                   size: 20 * scaleFactor,
                 ),
-                hintText: 'Escribir el nombre de la persona',
+                hintText: 'Escribir nombres separados por comas',
                 hintStyle: TextStyle(
                   color: Colors.white,
                   fontFamily: 'SFPro',
@@ -310,9 +410,15 @@ class _AddPeopleToSublistState extends State<AddPeopleToSublist> {
                 fontSize: 14 * scaleFactor,
               ),
               inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
+                FilteringTextInputFormatter.allow(
+                  RegExp(r'^[a-zA-ZñÑ,\s]+$'),
+                ),
               ],
-              maxLength: 25,
+              maxLength: null, // Permitir cualquier cantidad de texto
+              minLines: 1,
+              maxLines: 5,
+              keyboardType: TextInputType.multiline,
+              textInputAction: TextInputAction.newline,
             ),
             SizedBox(height: 10 * scaleFactor),
             Row(

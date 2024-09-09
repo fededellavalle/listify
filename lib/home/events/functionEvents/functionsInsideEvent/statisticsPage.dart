@@ -83,8 +83,6 @@ class StatisticsPage extends StatelessWidget {
     double ticketExtraPrice =
         eventListData['ticketExtraPrice']?.toDouble() ?? 0.0;
 
-    print(ticketPrice);
-    print(ticketExtraPrice);
     for (var memberGroup in membersList.values) {
       var members = memberGroup['members'];
       if (members != null && members is List) {
@@ -208,6 +206,7 @@ class StatisticsPage extends StatelessWidget {
           return Padding(
             padding: EdgeInsets.all(16 * scaleFactor),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (totalMembers == 0)
                   Row(
@@ -233,98 +232,56 @@ class StatisticsPage extends StatelessWidget {
                     ],
                   )
                 else ...[
-                  Text(
-                    'Total de personas registradas: $totalMembers',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontFamily: 'SFPro',
-                      fontSize: 16 * scaleFactor,
-                    ),
+                  _buildStatisticTile(
+                    'Total de personas registradas:',
+                    '$totalMembers',
+                    scaleFactor,
+                    Colors.white,
                   ),
-                  SizedBox(height: 8 * scaleFactor),
-                  Text(
-                    'Total de personas asistidas: $totalAssisted',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontFamily: 'SFPro',
-                      fontSize: 16 * scaleFactor,
-                    ),
+                  _buildStatisticTile(
+                    'Total de personas asistidas:',
+                    '$totalAssisted',
+                    scaleFactor,
+                    Colors.white,
                   ),
-                  SizedBox(height: 8 * scaleFactor),
-                  Text(
-                    'Asistencias en tiempo normal: $normalTimeCount',
-                    style: TextStyle(
-                      color: Colors.green,
-                      fontFamily: 'SFPro',
-                      fontSize: 16 * scaleFactor,
-                    ),
+                  _buildStatisticTile(
+                    'Asistencias en tiempo normal:',
+                    '$normalTimeCount',
+                    scaleFactor,
+                    Colors.green,
                   ),
-                  SizedBox(height: 8 * scaleFactor),
-                  Text(
-                    'Dinero generado en tiempo normal: \$${normalTimeMoneyCount}',
-                    style: TextStyle(
-                      color: Colors.green,
-                      fontFamily: 'SFPro',
-                      fontSize: 16 * scaleFactor,
-                    ),
-                    textAlign: TextAlign.center,
+                  _buildStatisticTile(
+                    'Dinero generado en tiempo normal:',
+                    '\$${normalTimeMoneyCount.toStringAsFixed(2)}',
+                    scaleFactor,
+                    Colors.green,
                   ),
-                  SizedBox(height: 8 * scaleFactor),
-                  Text(
-                    'Asistencias en tiempo extra: $extraTimeCount',
-                    style: TextStyle(
-                      color: Colors.blue,
-                      fontFamily: 'SFPro',
-                      fontSize: 16 * scaleFactor,
-                    ),
+                  _buildStatisticTile(
+                    'Asistencias en tiempo extra:',
+                    '$extraTimeCount',
+                    scaleFactor,
+                    Colors.blue,
                   ),
-                  SizedBox(height: 8 * scaleFactor),
-                  Text(
-                    'Dinero generado en tiempo extra: \$${extraTimeMoneyCount}',
-                    style: TextStyle(
-                      color: Colors.blue,
-                      fontFamily: 'SFPro',
-                      fontSize: 16 * scaleFactor,
-                    ),
-                    textAlign: TextAlign.center,
+                  _buildStatisticTile(
+                    'Dinero generado en tiempo extra:',
+                    '\$${extraTimeMoneyCount.toStringAsFixed(2)}',
+                    scaleFactor,
+                    Colors.blue,
                   ),
-                  SizedBox(height: 8 * scaleFactor),
-                  Text(
-                    '${frequentTime == 'No data' ? 'No hay asistencias en este momento' : 'Hora más frecuente de asistencia: ${frequentTime}h ($frequentTimeCount personas)'}',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontFamily: 'SFPro',
-                      fontSize: 16 * scaleFactor,
-                    ),
+                  _buildStatisticTile(
+                    frequentTime == 'No data'
+                        ? 'No hay asistencias en este momento'
+                        : 'Hora más frecuente de asistencia: ${frequentTime}h ($frequentTimeCount personas)',
+                    '',
+                    scaleFactor,
+                    Colors.white,
                   ),
                   SizedBox(height: 16 * scaleFactor),
-                  Expanded(
-                    child: Center(
-                      child: PieChart(
-                        dataMap: {
-                          'Registradas': totalMembers.toDouble(),
-                          'Asistidas': totalAssisted.toDouble(),
-                        },
-                        chartType: ChartType.disc,
-                        colorList: [Colors.blue, Colors.green],
-                        legendOptions: LegendOptions(
-                          showLegends: true,
-                          legendPosition: LegendPosition.right,
-                          legendTextStyle: TextStyle(
-                            color: Colors.white,
-                            fontFamily: 'SFPro',
-                          ),
-                        ),
-                        chartValuesOptions: ChartValuesOptions(
-                          showChartValuesInPercentage: true,
-                          showChartValuesOutside: true,
-                          chartValueStyle: TextStyle(
-                            color: Colors.black,
-                            fontFamily: 'SFPro',
-                          ),
-                        ),
-                      ),
-                    ),
+                  _buildPieChart(
+                    totalMembers,
+                    totalAssisted,
+                    scaleFactor,
+                    context,
                   ),
                 ],
               ],
@@ -332,6 +289,106 @@ class StatisticsPage extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildStatisticTile(
+      String title, String value, double scaleFactor, Color textColor) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4 * scaleFactor),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: textColor,
+                fontFamily: 'SFPro',
+                fontSize: 16 * scaleFactor,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: textColor,
+              fontFamily: 'SFPro',
+              fontSize: 16 * scaleFactor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPieChart(int totalMembers, int totalAssisted, double scaleFactor,
+      BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          'Distribución de Asistencias',
+          style: TextStyle(
+            color: Colors.white,
+            fontFamily: 'SFPro',
+            fontSize: 18 * scaleFactor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 20 * scaleFactor),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(16 * scaleFactor),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                spreadRadius: 5,
+                blurRadius: 15,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          padding: EdgeInsets.all(16 * scaleFactor),
+          child: Center(
+            child: PieChart(
+              dataMap: {
+                'Registradas': totalMembers.toDouble(),
+                'Asistidas': totalAssisted.toDouble(),
+              },
+              chartType: ChartType.ring,
+              ringStrokeWidth: 20 * scaleFactor,
+              baseChartColor: Colors.grey[800]!,
+              colorList: [Colors.purple, Colors.tealAccent],
+              chartLegendSpacing: 32 * scaleFactor,
+              chartRadius: MediaQuery.of(context).size.width / 2.5,
+              legendOptions: LegendOptions(
+                showLegends: true,
+                legendPosition: LegendPosition.bottom,
+                legendTextStyle: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'SFPro',
+                  fontSize: 14 * scaleFactor,
+                ),
+                legendShape: BoxShape.circle,
+              ),
+              chartValuesOptions: ChartValuesOptions(
+                showChartValuesInPercentage: true,
+                showChartValuesOutside: false,
+                chartValueStyle: TextStyle(
+                  color: Colors.black,
+                  fontFamily: 'SFPro',
+                  fontSize: 14 * scaleFactor,
+                  fontWeight: FontWeight.bold,
+                ),
+                decimalPlaces: 1,
+              ),
+              animationDuration: Duration(milliseconds: 1200),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

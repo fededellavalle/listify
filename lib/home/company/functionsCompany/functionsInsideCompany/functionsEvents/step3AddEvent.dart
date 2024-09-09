@@ -82,8 +82,8 @@ class _Step3AddEventState extends State<Step3AddEvent> {
               Row(
                 children: [
                   SizedBox(
-                    height: 225 * scaleFactor, // Altura deseada para la imagen
-                    width: 100 * scaleFactor, // Ancho deseado para la imagen
+                    height: 225 * scaleFactor,
+                    width: 100 * scaleFactor,
                     child: Image.file(
                       widget.image!,
                       fit: BoxFit.cover,
@@ -308,7 +308,30 @@ class _Step3AddEventState extends State<Step3AddEvent> {
     String uuid = Uuid().v4();
 
     try {
-      // Subir la imagen y obtener su URL
+      QuerySnapshot activeEventsSnapshot = await FirebaseFirestore.instance
+          .collection('companies')
+          .doc(widget.companyData['companyUsername'])
+          .collection('myEvents')
+          .where('eventState', whereIn: ['Active', 'Desactive', 'Live']).get();
+
+      if (activeEventsSnapshot.docs.length >= 8) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'No puedes crear más de 8 eventos en estado Active, Desactive o Live.',
+              style: TextStyle(
+                fontFamily: 'SFPro',
+                fontSize: 14,
+              ),
+            ),
+          ),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
       Reference ref = FirebaseStorage.instance.ref().child(
           'company_images/${widget.companyData['companyUsername']}/myEvents/$uuid.jpg');
       UploadTask uploadTask = ref.putFile(widget.image!);
@@ -373,6 +396,21 @@ class _Step3AddEventState extends State<Step3AddEvent> {
         QuerySnapshot categoriesSnapshot =
             await personalCategoriesCollection.get();
 
+        // Crear el documento de la lista una vez
+        DocumentReference listDoc = eventListsCollection.doc('Personal');
+
+        await listDoc.set({
+          'listName': 'Personal',
+          'listType': 'Lista de Asistencia',
+          'listStartTime': widget.startDateTime,
+          'listEndTime': widget.endDateTime,
+          'ticketPrice': widget.ticketValue,
+          'allowSublists': true,
+          'onlyWriteOwners': true,
+          'sublists': {}
+        }, SetOptions(merge: true));
+
+        // Actualizar cada sublista individualmente
         for (QueryDocumentSnapshot categoryDoc in categoriesSnapshot.docs) {
           String categoryName = categoryDoc.id;
           Map<String, dynamic> categoryData =
@@ -397,22 +435,9 @@ class _Step3AddEventState extends State<Step3AddEvent> {
             }
           }
 
-          // Crear una sublista para cada categoría
-          DocumentReference listDoc = eventListsCollection.doc('Personal');
+          print(membersWithNames);
 
-          // Inicializar el documento 'Personal' si no existe
-          await listDoc.set({
-            'listName': 'Personal',
-            'listType': 'Lista de Asistencia',
-            'listStartTime': widget.startDateTime,
-            'listEndTime': widget.endDateTime,
-            'ticketPrice': widget.ticketValue,
-            'allowSublists': true,
-            'onlyWriteOwners': true,
-            'sublists': {}
-          }, SetOptions(merge: true));
-
-          // Actualizar el documento 'Personal' con la sublista
+          // Actualizar solo la sublista correspondiente
           await listDoc.update({
             'sublists.$currentUserId.$categoryName': {
               'members': membersWithNames

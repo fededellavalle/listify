@@ -86,14 +86,14 @@ class _CompanyWidgetState extends State<CompanyWidget> {
                     });
                   }
 
-                  Navigator.of(context).pop(); // Cerrar el diálogo
+                  Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Has salido de la empresa.'),
                     ),
                   );
                 } catch (error) {
-                  Navigator.of(context).pop(); // Cerrar el diálogo
+                  Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Error al salir de la empresa.'),
@@ -107,7 +107,7 @@ class _CompanyWidgetState extends State<CompanyWidget> {
           ],
           cancelButton: CupertinoActionSheetAction(
             onPressed: () {
-              Navigator.of(context).pop(); // Cerrar el diálogo
+              Navigator.of(context).pop();
             },
             child: Text('Cancelar'),
             isDefaultAction: true,
@@ -119,7 +119,7 @@ class _CompanyWidgetState extends State<CompanyWidget> {
 
   @override
   Widget build(BuildContext context) {
-    double baseWidth = 375.0; // Base design width
+    double baseWidth = 375.0;
     double screenWidth = MediaQuery.of(context).size.width;
     double scaleFactor = screenWidth / baseWidth;
 
@@ -309,50 +309,6 @@ class _CompanyWidgetState extends State<CompanyWidget> {
                                   ),
                                   Text(
                                     'Gestionar Personal',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18 * scaleFactor,
-                                      fontFamily: 'SFPro',
-                                    ),
-                                  ),
-                                  Spacer(),
-                                  Icon(
-                                    UniconsLine.angle_right_b,
-                                    size: 20 * scaleFactor,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // Editar Personal
-                            ElevatedButton(
-                              onPressed: () {},
-                              style: buttonCompany,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue,
-                                      borderRadius: BorderRadius.circular(
-                                          8 * scaleFactor),
-                                    ),
-                                    child: Padding(
-                                      padding:
-                                          EdgeInsets.all(8.0 * scaleFactor),
-                                      child: Icon(
-                                        UniconsSolid.user_arrows,
-                                        size: 20 * scaleFactor,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: 15 * scaleFactor,
-                                  ),
-                                  Text(
-                                    'Editar Personal',
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 18 * scaleFactor,

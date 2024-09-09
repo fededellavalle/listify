@@ -21,10 +21,12 @@ Future<void> initializeFirebase() async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeFirebase();
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

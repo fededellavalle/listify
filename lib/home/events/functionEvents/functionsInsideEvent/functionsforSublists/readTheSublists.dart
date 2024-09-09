@@ -1,4 +1,5 @@
 import 'package:app_listas/home/events/functionEvents/functionsInsideEvent/functionsforSublists/functionsReadTheSublists/readTheSublist.dart';
+import 'package:app_listas/home/events/functionEvents/functionsInsideEvent/sellTickets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -69,6 +70,43 @@ class _SublistsPageState extends State<SublistsPage> {
             Navigator.of(context).pop();
           },
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.confirmation_number, // Icono de tickets
+              color: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      SellTickets(
+                    eventId: widget.eventId,
+                    companyId: widget.companyId,
+                  ),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
+                    return SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(1, 0),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.linearToEaseOut,
+                          reverseCurve: Curves.easeIn,
+                        ),
+                      ),
+                      child: child,
+                    );
+                  },
+                  transitionDuration: Duration(milliseconds: 500),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [

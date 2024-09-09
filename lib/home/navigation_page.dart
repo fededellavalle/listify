@@ -148,7 +148,6 @@ class _NavigationPageState extends State<NavigationPage>
             .where('ownerUid', isEqualTo: uid)
             .get();
 
-    // Obtener relaciones de empresas del usuario
     DocumentSnapshot<Map<String, dynamic>> userSnapshot =
         await FirebaseFirestore.instance.collection('users').doc(uid).get();
 
@@ -158,22 +157,19 @@ class _NavigationPageState extends State<NavigationPage>
       var companyRelationships =
           userData['companyRelationship'] as List<dynamic>? ?? [];
 
-      // Crear una lista para todas las empresas (propias y relacionadas)
       List<String> companyIds = [];
 
-      // Agregar empresas donde el usuario es el propietario
       for (var companyDoc in activeEventsCompanySnapshot.docs) {
         companyIds.add(companyDoc.id);
       }
 
-      // Agregar empresas relacionadas
       for (var relationship in companyRelationships) {
         String companyUsername = relationship['companyUsername'];
 
         QuerySnapshot<Map<String, dynamic>> relatedCompanySnapshot =
             await FirebaseFirestore.instance
                 .collection('companies')
-                .where('username', isEqualTo: companyUsername)
+                .where('companyUsername', isEqualTo: companyUsername)
                 .get();
 
         for (var doc in relatedCompanySnapshot.docs) {
@@ -181,9 +177,7 @@ class _NavigationPageState extends State<NavigationPage>
         }
       }
 
-      // Obtener eventos activos y en vivo para todas las empresas
       for (String companyId in companyIds) {
-        // Eventos activos
         QuerySnapshot activeEvents = await FirebaseFirestore.instance
             .collection('companies')
             .doc(companyId)
@@ -198,7 +192,6 @@ class _NavigationPageState extends State<NavigationPage>
           });
         }
 
-        // Eventos en vivo
         QuerySnapshot liveEvents = await FirebaseFirestore.instance
             .collection('companies')
             .doc(companyId)
@@ -215,7 +208,6 @@ class _NavigationPageState extends State<NavigationPage>
       }
     }
 
-    // Fetch new invitations
     QuerySnapshot invitationSnapshot = await FirebaseFirestore.instance
         .collection('invitations')
         .doc(currentUser!.email)

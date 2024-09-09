@@ -173,47 +173,6 @@ class _EventosPageState extends State<EventosPage> {
                           ],
                         ),
                       ),
-
-                      // Editar Personal
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: buttonCompany,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.blue,
-                                borderRadius:
-                                    BorderRadius.circular(8 * scaleFactor),
-                              ),
-                              child: Padding(
-                                padding: EdgeInsets.all(8.0 * scaleFactor),
-                                child: Icon(
-                                  UniconsSolid.user_arrows,
-                                  size: 20 * scaleFactor,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 15 * scaleFactor),
-                            Text(
-                              'Editar Personal',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18 * scaleFactor,
-                                fontFamily: 'SFPro',
-                              ),
-                            ),
-                            Spacer(),
-                            Icon(
-                              UniconsLine.angle_right_b,
-                              size: 20 * scaleFactor,
-                              color: Colors.grey.shade600,
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                 ),

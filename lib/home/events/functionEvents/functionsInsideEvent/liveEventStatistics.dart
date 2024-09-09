@@ -46,15 +46,50 @@ class LiveEventStatisticsPage extends StatelessWidget {
       double extraTimeMoney = 0.0;
 
       if (listData['allowSublists'] == true) {
-        var sublists = listData['sublists'] as Map<String, dynamic>;
-        sublists.forEach((userId, userSublists) {
-          if (userSublists is Map<String, dynamic>) {
-            userSublists.forEach((sublistName, sublistData) {
-              var members = sublistData['members'] as List<dynamic>;
-              for (var member in members) {
-                if (member['assisted'] == true) {
-                  var assistedAt = (member['assistedAt'] as Timestamp).toDate();
+        var sublists = listData['sublists'];
+        if (sublists is Map<String, dynamic>) {
+          sublists.forEach((userId, userSublists) {
+            if (userSublists is Map<String, dynamic>) {
+              userSublists.forEach((sublistName, sublistData) {
+                if (sublistData is Map<String, dynamic> &&
+                    sublistData.containsKey('members')) {
+                  var members = sublistData['members'];
+                  if (members is List<dynamic>) {
+                    for (var member in members) {
+                      if (member is Map<String, dynamic> &&
+                          member['assisted'] == true) {
+                        var assistedAt =
+                            (member['assistedAt'] as Timestamp).toDate();
 
+                        if (assistedAt.isAfter(listStartExtraTime!.toDate()) &&
+                            assistedAt.isBefore(listEndExtraTime!.toDate())) {
+                          extraTimeMoney += ticketExtraPrice;
+                        } else if (assistedAt
+                                .isAfter(listStartNormalTime!.toDate()) &&
+                            assistedAt.isBefore(listEndNormalTime!.toDate())) {
+                          normalTimeMoney += ticketPrice;
+                        }
+                      }
+                    }
+                  }
+                }
+              });
+            }
+          });
+        } else {
+          print("Error: 'sublists' no es un Map<String, dynamic>.");
+        }
+      } else {
+        var membersList = listData['membersList'];
+        if (membersList is Map<String, dynamic>) {
+          membersList.forEach((userId, userData) {
+            if (userData is Map<String, dynamic> &&
+                userData['members'] is List<dynamic>) {
+              var members = userData['members'] as List<dynamic>;
+              for (var member in members) {
+                if (member is Map<String, dynamic> &&
+                    member['assisted'] == true) {
+                  var assistedAt = (member['assistedAt'] as Timestamp).toDate();
                   if (assistedAt.isAfter(listStartExtraTime!.toDate()) &&
                       assistedAt.isBefore(listEndExtraTime!.toDate())) {
                     extraTimeMoney += ticketExtraPrice;
@@ -65,28 +100,11 @@ class LiveEventStatisticsPage extends StatelessWidget {
                   }
                 }
               }
-            });
-          }
-        });
-      } else {
-        var membersList = listData['membersList'] as Map<String, dynamic>;
-        membersList.forEach((userId, userData) {
-          if (userData['members'] != null) {
-            var members = userData['members'] as List<dynamic>;
-            for (var member in members) {
-              if (member['assisted'] == true) {
-                var assistedAt = (member['assistedAt'] as Timestamp).toDate();
-                if (assistedAt.isAfter(listStartExtraTime!.toDate()) &&
-                    assistedAt.isBefore(listEndExtraTime!.toDate())) {
-                  extraTimeMoney += ticketExtraPrice;
-                } else if (assistedAt.isAfter(listStartNormalTime!.toDate()) &&
-                    assistedAt.isBefore(listEndNormalTime!.toDate())) {
-                  normalTimeMoney += ticketPrice;
-                }
-              }
             }
-          }
-        });
+          });
+        } else {
+          print("Error: 'membersList' no es un Map<String, dynamic>.");
+        }
       }
 
       double listTotalMoney = normalTimeMoney + extraTimeMoney;
@@ -192,8 +210,10 @@ class LiveEventStatisticsPage extends StatelessWidget {
                 Timestamp? listStartExtraTime = listData['listStartExtraTime'];
                 Timestamp? listEndExtraTime = listData['listEndExtraTime'];
 
+                print(listData);
                 if (listData['allowSublists'] == true) {
-                  var sublists = listData['sublists'] as Map<String, dynamic>;
+                  var sublists =
+                      listData['sublists'] as Map<String, dynamic>? ?? {};
                   sublists.forEach((userId, userSublists) {
                     if (userSublists is Map<String, dynamic>) {
                       userSublists.forEach((sublistName, sublistData) {

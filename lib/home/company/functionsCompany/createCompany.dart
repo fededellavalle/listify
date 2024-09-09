@@ -185,7 +185,7 @@ class _CreateCompanyState extends State<CreateCompany> {
                   counterText: "",
                 ),
                 inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z\s]+$')),
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
                 ],
                 validator: _validateName,
                 maxLength: 25,

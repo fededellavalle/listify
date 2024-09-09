@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:app_listas/home/events/functionEvents/functionsInsideEvent/sellTickets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -160,6 +161,43 @@ class _ReadTheListState extends State<ReadTheList> {
             Navigator.of(context).pop();
           },
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.confirmation_number, // Icono de tickets
+              color: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      SellTickets(
+                    eventId: widget.eventId,
+                    companyId: widget.companyId,
+                  ),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
+                    return SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(1, 0),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.linearToEaseOut,
+                          reverseCurve: Curves.easeIn,
+                        ),
+                      ),
+                      child: child,
+                    );
+                  },
+                  transitionDuration: Duration(milliseconds: 500),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -278,7 +316,7 @@ class _ReadTheListState extends State<ReadTheList> {
                             listStartTime.toDate().isAfter(DateTime.now()))) {
                       return Center(
                         child: Text(
-                          'La lista no esta abierta.',
+                          'La lista aún no está abierta.',
                           style: TextStyle(
                             color: Colors.white,
                             fontFamily: 'SFPro',
@@ -311,25 +349,6 @@ class _ReadTheListState extends State<ReadTheList> {
                       return Center(
                         child: Text(
                           'No hay miembros en esta lista.',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontFamily: 'SFPro',
-                            fontSize: 16 * scaleFactor,
-                          ),
-                        ),
-                      );
-                    }
-
-                    if ((listStartExtraTime == null &&
-                            listStartTime.toDate().isAfter(DateTime.now())) ||
-                        (listStartExtraTime != null &&
-                            listStartExtraTime
-                                .toDate()
-                                .isAfter(DateTime.now()) &&
-                            listStartTime.toDate().isAfter(DateTime.now()))) {
-                      return Center(
-                        child: Text(
-                          'La lista aún no está abierta.',
                           style: TextStyle(
                             color: Colors.white,
                             fontFamily: 'SFPro',

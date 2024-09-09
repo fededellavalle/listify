@@ -5,6 +5,7 @@ import 'package:app_listas/home/events/functionEvents/functionsInsideEvent/liveE
 import 'package:app_listas/home/events/functionEvents/functionsInsideEvent/sellTickets.dart';
 import 'package:app_listas/styles/color.dart';
 import 'package:app_listas/styles/loading.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -178,7 +179,37 @@ class _InsideEventState extends State<InsideEvent> {
     );
 
     if (confirmed == true) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: Colors.grey.shade900,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 20),
+                Text(
+                  'Borrando evento...',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'SFPro',
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+
       try {
+        Reference ref = FirebaseStorage.instance.ref().child(
+              'company_images/${widget.companyId}/myEvents/${widget.eventId}.jpg',
+            );
+
+        await ref.delete();
+
         await FirebaseFirestore.instance
             .collection('companies')
             .doc(widget.companyId)
@@ -186,18 +217,22 @@ class _InsideEventState extends State<InsideEvent> {
             .doc(widget.eventId)
             .delete();
 
+        Navigator.of(context).pop();
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Evento borrado exitosamente'),
+            content: Text('Evento borrados exitosamente'),
           ),
         );
 
-        Navigator.of(context).pop(); // Navega de vuelta a la página anterior
+        Navigator.of(context).pop();
       } catch (e) {
-        print('Error al borrar el evento: $e');
+        Navigator.of(context).pop();
+
+        print('Error al borrar el evento o la imagen: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al borrar el evento'),
+            content: Text('Error al borrar el evento o la imagen'),
           ),
         );
       }
@@ -437,7 +472,37 @@ class _InsideEventState extends State<InsideEvent> {
                             child: Column(
                               children: [
                                 ElevatedButton(
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      PageRouteBuilder(
+                                        pageBuilder: (context, animation,
+                                                secondaryAnimation) =>
+                                            SellTickets(
+                                          eventId: widget.eventId,
+                                          companyId: widget.companyId,
+                                        ),
+                                        transitionsBuilder: (context, animation,
+                                            secondaryAnimation, child) {
+                                          return SlideTransition(
+                                            position: Tween<Offset>(
+                                              begin: const Offset(1, 0),
+                                              end: Offset.zero,
+                                            ).animate(
+                                              CurvedAnimation(
+                                                parent: animation,
+                                                curve: Curves.linearToEaseOut,
+                                                reverseCurve: Curves.easeIn,
+                                              ),
+                                            ),
+                                            child: child,
+                                          );
+                                        },
+                                        transitionDuration:
+                                            Duration(milliseconds: 500),
+                                      ),
+                                    );
+                                  },
                                   style: buttonCompany,
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.start,
@@ -650,74 +715,74 @@ class _InsideEventState extends State<InsideEvent> {
                         ),
                       ),
                     ),
-                  if (eventData['eventState'] == 'Live' ||
-                      eventData['eventState'] == 'Active')
-                    Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
-                      child: Column(
-                        children: [
-                          if (_canDeactivateEvent(eventStartTime) ||
-                              eventData['eventState'] == 'Active')
-                            ElevatedButton(
-                              onPressed: () {
-                                _updateEventState('Desactive');
-                              },
-                              style: buttonCompany,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Desactivar Evento',
-                                    style: TextStyle(
-                                      fontSize: 18 * scaleFactor,
-                                      fontFamily: 'SFPro',
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          Column(
-                            children: [
-                              if (!_canDeactivateEvent(eventStartTime) &&
-                                  eventData['eventState'] == 'Active') ...[
+                  Padding(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 10.0 * scaleFactor),
+                    child: Column(
+                      children: [
+                        if (_canDeactivateEvent(eventStartTime) ||
+                            eventData['eventState'] == 'Active')
+                          ElevatedButton(
+                            onPressed: () {
+                              _updateEventState('Desactive');
+                            },
+                            style: buttonCompany,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
                                 Text(
-                                  'No puedes desactivar el evento una vez activado y antes de que comience dentro de 6 horas',
+                                  'Desactivar Evento',
                                   style: TextStyle(
-                                    fontSize: 16 * scaleFactor,
+                                    fontSize: 18 * scaleFactor,
                                     fontFamily: 'SFPro',
-                                    color: Colors.redAccent,
+                                    color: Colors.white,
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                SizedBox(
-                                    height: 10 *
-                                        scaleFactor), // Espacio entre el texto y el botón
-                                ElevatedButton(
-                                  onPressed: () {
-                                    // Lógica para cancelar o borrar el evento
-                                    _deleteEvent();
-                                  },
-                                  style: buttonCompany,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Cancelar Evento',
-                                        style: TextStyle(
-                                          fontSize: 18 * scaleFactor,
-                                          fontFamily: 'SFPro',
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(
-                                  height: 5,
                                 ),
                               ],
+                            ),
+                          ),
+                        Column(
+                          children: [
+                            if (_canDeactivateEvent(eventStartTime) &&
+                                    eventData['eventState'] == 'Active' ||
+                                eventData['eventState'] == 'Desactive') ...[
+                              Text(
+                                'No puedes desactivar el evento una vez en vivo y antes de que comience dentro de 6 horas',
+                                style: TextStyle(
+                                  fontSize: 16 * scaleFactor,
+                                  fontFamily: 'SFPro',
+                                  color: Colors.redAccent,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(
+                                height: 10 * scaleFactor,
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  _deleteEvent();
+                                },
+                                style: buttonCompany,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Cancelar Evento',
+                                      style: TextStyle(
+                                        fontSize: 18 * scaleFactor,
+                                        fontFamily: 'SFPro',
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(
+                                height: 5,
+                              ),
+                            ],
+                            if (eventData['eventState'] == 'Live' ||
+                                eventData['eventState'] == 'Active')
                               Container(
                                 decoration: BoxDecoration(
                                   color: Colors.grey.shade700.withOpacity(0.4),
@@ -843,11 +908,11 @@ class _InsideEventState extends State<InsideEvent> {
                                   ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
                     ),
+                  ),
                   const SizedBox(
                     height: 5,
                   ),

@@ -110,6 +110,15 @@ class EventButton extends StatelessWidget {
                           fontSize: 14 * scaleFactor,
                         ),
                       ),
+                      SizedBox(height: 2 * scaleFactor),
+                      Text(
+                        'Evento de $companyId',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontFamily: 'SFPro',
+                          fontSize: 14 * scaleFactor,
+                        ),
+                      ),
                     ],
                   ),
                 ),
