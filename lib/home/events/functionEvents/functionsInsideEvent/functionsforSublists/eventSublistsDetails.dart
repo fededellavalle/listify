@@ -1,3 +1,4 @@
+import 'package:app_listas/home/events/functionEvents/functionsInsideEvent/functionsforSublists/stadisticsPageSublists.dart';
 import 'package:app_listas/styles/loading.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -77,6 +78,24 @@ class _EventSublistDetailsState extends State<EventSublistDetails> {
             Navigator.of(context).pop();
           },
         ),
+        /*
+        actions: [
+          IconButton(
+            icon: Icon(Icons.bar_chart),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => StatisticsPageSublists(
+                    eventId: widget.eventId,
+                    companyId: widget.companyId,
+                    list: widget.list,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],*/
       ),
       body: Padding(
         padding: EdgeInsets.all(16 * scaleFactor),

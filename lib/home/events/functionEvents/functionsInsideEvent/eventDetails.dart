@@ -133,7 +133,7 @@ class _EventDetailsState extends State<EventDetails> {
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
-                    return Center(
+                    return const Center(
                       child: CircularProgressIndicator(),
                     );
                   }
@@ -190,6 +190,11 @@ class _EventDetailsState extends State<EventDetails> {
                           eventListData['listStartExtraTime'];
                       Timestamp? listEndExtraTime =
                           eventListData['listEndExtraTime'];
+
+                      print(listEndExtraTime?.toDate());
+                      print(listStartExtraTime?.toDate());
+                      print(listEndNormalTime?.toDate());
+                      print(listStartNormalTime?.toDate());
 
                       return ListView.builder(
                         itemCount: membersList.length,
@@ -269,8 +274,8 @@ class _EventDetailsState extends State<EventDetails> {
                                               listStartExtraTime.toDate()) &&
                                           member['assistedAt']
                                               .toDate()
-                                              .isBefore(
-                                                  listEndExtraTime.toDate()))
+                                              .isBefore(listEndExtraTime
+                                                  .toDate())) ...{
                                         Text(
                                           'Asistió en extra time',
                                           style: TextStyle(
@@ -278,16 +283,16 @@ class _EventDetailsState extends State<EventDetails> {
                                             fontFamily: 'SFPro',
                                             fontSize: 12 * scaleFactor,
                                           ),
-                                        )
-                                      else if (member['assisted'] &&
+                                        ),
+                                      } else if (member['assisted'] &&
                                           listStartNormalTime != null &&
                                           listEndNormalTime != null &&
                                           member['assistedAt'].toDate().isAfter(
                                               listStartNormalTime.toDate()) &&
                                           member['assistedAt']
                                               .toDate()
-                                              .isBefore(
-                                                  listEndNormalTime.toDate()))
+                                              .isBefore(listEndNormalTime
+                                                  .toDate())) ...{
                                         Text(
                                           'Asistió en tiempo normal',
                                           style: TextStyle(
@@ -296,6 +301,7 @@ class _EventDetailsState extends State<EventDetails> {
                                             fontSize: 12 * scaleFactor,
                                           ),
                                         ),
+                                      }
                                     ],
                                   ),
                                   trailing: IconButton(
